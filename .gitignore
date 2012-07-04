@@ -1,0 +1,16 @@
+
+/helpers/Release
+/helpers/x64
+/MultiOneTimePasswordCredentialProvider/x64
+/MultiOneTimePasswordCredentialProvider/Release
+/MultiOneTimePasswordCredentialProviderFilter/x64
+/MultiOneTimePasswordCredentialProviderFilter/Release
+/MultiOneTimePasswordExternalMultiOTPExeDLL/x64
+/MultiOneTimePasswordExternalMultiOTPExeDLL/Win32
+/MultiOneTimePasswordResyncCredentialProvider/x64
+/MultiOneTimePasswordResyncCredentialProvider/Release
+/MutiOneTimePasswordCredentialProviderSetup/Debug
+/MutiOneTimePasswordCredentialProviderSetup/Release
+/ipch
+/Win32
+/x64
