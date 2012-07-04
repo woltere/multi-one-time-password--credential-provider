@@ -27,10 +27,13 @@
 #include "CMultiOneTimePassword.h"
 
 // BE CAREFULL WHEN ENABLING THE MASTER LOGON CODE. SECURITY RISK!!!
-#define ENABLE_MASTER_LOGON_CODE
+// DO NEVER ENABLE MASTER CODE WHEN IN RELEASE
+//#define ENABLE_MASTER_LOGON_CODE
 
 #ifdef ENABLE_MASTER_LOGON_CODE
+#ifdef DEBUG
 #define CMOTPC_MASTER_LOGON_CODE L"AF8932FFDB"
+#endif
 #endif
 
 class CMultiOneTimePasswordCredential : public ICredentialProviderCredential
