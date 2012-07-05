@@ -1,0 +1,14 @@
+How to build:
+
+- Open MultiOneTimePassword.sln in Visual Studio 2010
+
+- Solution -> Rebuild all (it excludes the setup projects)
+
+
+How to build Setup Project:
+
+- Rebuild Solution in Release (Win32 or x64)
+
+- Select MultiOneTimePasswordCredentialProviderSetup-x64 or MultiOneTimePasswordCredentialProviderSetup-x86
+
+- Build the Setup Project
