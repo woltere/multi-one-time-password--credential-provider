@@ -83,8 +83,6 @@ HRESULT CMultiOneTimePasswordResyncProvider::SetUsageScenario(
     switch (cpus)
     {
     case CPUS_LOGON:           
-        // A more advanced credprov might only enumerate tiles for the user whose owns the locked
-        // session, since those are the only creds that wil work
         if (!s_bCredsEnumerated)
         {
             _cpus = cpus;
@@ -129,59 +127,6 @@ HRESULT CMultiOneTimePasswordResyncProvider::SetSerialization(
     __in const CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs
     )
 {
-	/*
-    HRESULT hr = E_INVALIDARG;
-
-    if ((CLSID_CSample == pcpcs->clsidCredentialProvider))
-    {
-        // Get the current AuthenticationPackageID that we are supporting
-        ULONG ulAuthPackage;
-        hr = RetrieveNegotiateAuthPackage(&ulAuthPackage);
-
-        if (SUCCEEDED(hr))
-        {
-            if ((ulAuthPackage == pcpcs->ulAuthenticationPackage) &&
-                (0 < pcpcs->cbSerialization && pcpcs->rgbSerialization))
-            {
-                KERB_INTERACTIVE_UNLOCK_LOGON* pkil = (KERB_INTERACTIVE_UNLOCK_LOGON*) pcpcs->rgbSerialization;
-                if (KerbInteractiveLogon == pkil->Logon.MessageType)
-                {
-                    BYTE* rgbSerialization;
-                    rgbSerialization = (BYTE*)HeapAlloc(GetProcessHeap(), 0, pcpcs->cbSerialization);
-                    hr = rgbSerialization ? S_OK : E_OUTOFMEMORY;
-
-                    if (SUCCEEDED(hr))
-                    {
-                        CopyMemory(rgbSerialization, pcpcs->rgbSerialization, pcpcs->cbSerialization);
-                        KerbInteractiveUnlockLogonUnpackInPlace((KERB_INTERACTIVE_UNLOCK_LOGON*)rgbSerialization, pcpcs->cbSerialization);
-
-                        if (_pkiulSetSerialization)
-                        {
-                            HeapFree(GetProcessHeap(), 0, _pkiulSetSerialization);
-                            
-                            // For this sample, we know that _dwSetSerializationCred is always in the last slot
-                            if (_dwSetSerializationCred != CREDENTIAL_PROVIDER_NO_DEFAULT && _dwSetSerializationCred == _dwNumCreds - 1)
-                            {
-                                _rgpCredentials[_dwSetSerializationCred]->Release();
-                                _rgpCredentials[_dwSetSerializationCred] = NULL;
-                                _dwNumCreds--;
-                                _dwSetSerializationCred = CREDENTIAL_PROVIDER_NO_DEFAULT;
-                            }
-                        }
-                        _pkiulSetSerialization = (KERB_INTERACTIVE_UNLOCK_LOGON*)rgbSerialization;
-                        hr = S_OK;
-                    }
-                }
-            }
-        }
-        else
-        {
-            hr = E_INVALIDARG;
-        }
-    }
-    return hr;
-	//*/
-
 	UNREFERENCED_PARAMETER(pcpcs);
 	return E_NOTIMPL;
 }
@@ -258,44 +203,10 @@ HRESULT CMultiOneTimePasswordResyncProvider::GetCredentialCount(
     )
 {
     HRESULT hr = S_OK;
-
-	/*
-    if (_pkiulSetSerialization && _dwSetSerializationCred == CREDENTIAL_PROVIDER_NO_DEFAULT)
-    {
-        //haven't yet made a cred from the SetSerialization info
-        _EnumerateSetSerialization();  //ignore failure, we can still produce our other tiles
-    }
-	//*/
     
-    *pdwCount = _dwNumCreds; 
-    /*
-	if (*pdwCount > 0)
-    {
-        if (_dwSetSerializationCred != CREDENTIAL_PROVIDER_NO_DEFAULT)
-        {
-            *pdwDefault = _dwSetSerializationCred;
-        }
-        else
-        {
-            // if we had reason to believe that one of our normal tiles should be the default
-            // (like it was the last logged in user), we could set it to be the default here.  But
-            // in our case we won't for now
-            *pdwDefault = CREDENTIAL_PROVIDER_NO_DEFAULT;
-        }
-        *pbAutoLogonWithDefault = _bAutoSubmitSetSerializationCred;
-    }
-    else
-    {
-        // no tiles, clear out out params
-        *pdwDefault = CREDENTIAL_PROVIDER_NO_DEFAULT;
-        *pbAutoLogonWithDefault = FALSE;
-        hr = E_FAIL;
-    }
-	*/
-	//*
+    *pdwCount = _dwNumCreds;
 	*pdwDefault = CREDENTIAL_PROVIDER_NO_DEFAULT;
     *pbAutoLogonWithDefault = FALSE;
-	//*/
 
     return hr;
 }
@@ -380,63 +291,6 @@ HRESULT CSample_CreateInstance(__in REFIID riid, __deref_out void** ppv)
 // more information.
 HRESULT CMultiOneTimePasswordResyncProvider::_EnumerateSetSerialization()
 {
-	/*
-    KERB_INTERACTIVE_LOGON* pkil = &_pkiulSetSerialization->Logon;
-
-    _bAutoSubmitSetSerializationCred = false;
-
-    // Since this provider only enumerates local users (not domain users) we are ignoring the domain passed in.
-    // However, please note that if you receive a serialized cred of just a domain name, that domain name is meant 
-    // to be the default domain for the tiles (or for the empty tile if you have one).  Also, depending on your scenario,
-    // the presence of a domain other than what you're expecting might be a clue that you shouldn't handle
-    // the SetSerialization.  For example, in this sample, we could choose to not accept a serialization for a cred
-    // that had something other than the local machine name as the domain.
-
-    // Use a "long" (MAX_PATH is arbitrary) buffer because it's hard to predict what will be
-    // in the incoming values.  A DNS-format domain name, for instance, can be longer than DNLEN.
-    WCHAR wszUsername[MAX_PATH] = {0};
-    WCHAR wszPassword[MAX_PATH] = {0};
-
-    // since this sample assumes local users, we'll ignore domain.  If you wanted to handle the domain
-    // case, you'd have to update CMultiOneTimePasswordResyncCredential::Initialize to take a domain.
-    HRESULT hr = StringCbCopyNW(wszUsername, sizeof(wszUsername), pkil->UserName.Buffer, pkil->UserName.Length);
-
-    if (SUCCEEDED(hr))
-    {
-        hr = StringCbCopyNW(wszPassword, sizeof(wszPassword), pkil->Password.Buffer, pkil->Password.Length);
-
-        if (SUCCEEDED(hr))
-        {
-            CMultiOneTimePasswordResyncCredential* pCred = new CMultiOneTimePasswordResyncCredential();
-
-            if (pCred)
-            {
-                hr = pCred->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairs, wszUsername, wszPassword);
-
-                if (SUCCEEDED(hr))
-                {
-                    _rgpCredentials[_dwNumCreds] = pCred;  //array takes ref
-                    _dwSetSerializationCred = _dwNumCreds;
-                    _dwNumCreds++;
-                }
-            }
-            else
-            {
-                hr = E_OUTOFMEMORY;
-            }
-
-            // If we were passed all the info we need (in this case username & password), we're going to automatically submit this credential.
-            if (SUCCEEDED(hr) && (0 < wcslen(wszPassword)))
-            {
-                _bAutoSubmitSetSerializationCred = true;
-            }
-        }
-    }
-
-
-    return hr;
-	*/
-
 	return E_NOTIMPL;
 }
 

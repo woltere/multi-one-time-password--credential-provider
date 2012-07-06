@@ -406,9 +406,11 @@ HRESULT CMultiOneTimePasswordResyncCredential::GetSerialization(
     UNREFERENCED_PARAMETER(ppwszOptionalStatusText);
     UNREFERENCED_PARAMETER(pcpsiOptionalStatusIcon);
 
+	// The actors
 	CMultiOneTimePassword pMOTP;
 	PWSTR uname, otp1, otp2;
 
+	// Prepare
 	uname = (PWSTR) CoTaskMemAlloc( (lstrlen(_rgFieldStrings[SFI_USERNAME]) + 1) * sizeof(WCHAR) );
 	otp1  = (PWSTR) CoTaskMemAlloc( (lstrlen(_rgFieldStrings[SFI_OTP_1])    + 1) * sizeof(WCHAR) );
 	otp2  = (PWSTR) CoTaskMemAlloc( (lstrlen(_rgFieldStrings[SFI_OTP_2])    + 1) * sizeof(WCHAR) );
@@ -421,6 +423,7 @@ HRESULT CMultiOneTimePasswordResyncCredential::GetSerialization(
 	SHStrDupW( _rgFieldStrings[SFI_OTP_1],    &otp1  );	
 	SHStrDupW( _rgFieldStrings[SFI_OTP_2],    &otp2  );
 
+	// Call
 	HRESULT hr = pMOTP.OTPResync(uname, otp1, otp2);
 
 	// Clean up
@@ -431,6 +434,7 @@ HRESULT CMultiOneTimePasswordResyncCredential::GetSerialization(
 	CoTaskMemFree(uname);
 	CoTaskMemFree(otp1);
 	CoTaskMemFree(otp2);
+	//////////
 
 	if (SUCCEEDED(hr)) 
 	{
@@ -476,23 +480,6 @@ HRESULT CMultiOneTimePasswordResyncCredential::GetSerialization(
     return S_FALSE;
 }
 
-/*
-struct REPORT_RESULT_STATUS_INFO
-{
-    NTSTATUS ntsStatus;
-    NTSTATUS ntsSubstatus;
-    PWSTR     pwzMessage;
-    CREDENTIAL_PROVIDER_STATUS_ICON cpsi;
-};
-
-
-static const REPORT_RESULT_STATUS_INFO s_rgLogonStatusInfo[] =
-{
-    { STATUS_LOGON_FAILURE, STATUS_SUCCESS, L"Incorrect password or username.", CPSI_ERROR, },
-    { STATUS_ACCOUNT_RESTRICTION, STATUS_ACCOUNT_DISABLED, L"The account is disabled.", CPSI_WARNING },
-};
-//*/
-
 // ReportResult is completely optional.  Its purpose is to allow a credential to customize the string
 // and the icon displayed in the case of a logon failure.  For example, we have chosen to 
 // customize the error shown in the case of bad username/password and in the case of the account
@@ -504,44 +491,6 @@ HRESULT CMultiOneTimePasswordResyncCredential::ReportResult(
     __out CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon
     )
 {
-	/*
-    *ppwszOptionalStatusText = NULL;
-    *pcpsiOptionalStatusIcon = CPSI_NONE;
-
-    DWORD dwStatusInfo = (DWORD)-1;
-
-    // Look for a match on status and substatus.
-    for (DWORD i = 0; i < ARRAYSIZE(s_rgLogonStatusInfo); i++)
-    {
-        if (s_rgLogonStatusInfo[i].ntsStatus == ntsStatus && s_rgLogonStatusInfo[i].ntsSubstatus == ntsSubstatus)
-        {
-            dwStatusInfo = i;
-            break;
-        }
-    }
-
-    if ((DWORD)-1 != dwStatusInfo)
-    {
-        if (SUCCEEDED(SHStrDupW(s_rgLogonStatusInfo[dwStatusInfo].pwzMessage, ppwszOptionalStatusText)))
-        {
-            *pcpsiOptionalStatusIcon = s_rgLogonStatusInfo[dwStatusInfo].cpsi;
-        }
-    }
-
-    // If we failed the logon, try to erase the password field.
-    if (!SUCCEEDED(HRESULT_FROM_NT(ntsStatus)))
-    {
-        if (_pCredProvCredentialEvents)
-        {
-            _pCredProvCredentialEvents->SetFieldString(this, SFI_PASSWORD, L"");
-        }
-    }
-
-    // Since NULL is a valid value for *ppwszOptionalStatusText and *pcpsiOptionalStatusIcon
-    // this function can't fail.
-    return S_OK;
-	*/
-
 	UNREFERENCED_PARAMETER(ntsStatus);
     UNREFERENCED_PARAMETER(ntsSubstatus);
 	UNREFERENCED_PARAMETER(ppwszOptionalStatusText);

@@ -321,7 +321,8 @@ HRESULT CMultiOneTimePasswordProvider::GetCredentialCount(
     {
         *pdwCount = _dwCredentialCount;
         *pdwDefault = dwDefault;
-        *pbAutoLogonWithDefault = bAutoLogonWithDefault;
+        //*pbAutoLogonWithDefault = bAutoLogonWithDefault;
+		*pbAutoLogonWithDefault = FALSE; // This has to be false in order to show a UI to enter an OTP. Password CP does not know about us ;)
     }
 
     return hr;

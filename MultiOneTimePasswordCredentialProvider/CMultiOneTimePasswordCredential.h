@@ -36,6 +36,9 @@
 #endif
 #endif
 
+#define PWCP_SFI_USERNAME 0
+#define PWCP_SFI_PASSWORD 3
+
 class CMultiOneTimePasswordCredential : public ICredentialProviderCredential
 {
     public:

@@ -49,6 +49,7 @@ Requirements:
   * mOTP-CP will add a new virtual user account to your system called "Resync OTP". 
     In case that your can not logon to your account using OTPs, you can resynchronize them before logging in again.
 
+
 Howto:
 
   1. Download multiotp (www.multiotp.net)
@@ -69,7 +70,18 @@ Howto:
   5. Lock your workstation (WIN + L) or log your session off to see your beautiful new OTP logon screen
 
 
+Account locking / OTPs out of sync:
+
+mOTP-CP will add a virtual user account to your system called "Resync OTP". In case that you can not logon to your account using OTPs, they may be out of sync. You may resynchronize them before logging in again.
+
+By default multiotp.exe from SysCo? locks accounts after six failed authorization requests. You may resychronize your OTPs and logon again.
 
 mOTP-CP will add a new virtual user account to your system called "Resync OTP". 
 In case that your can not logon to your account using OTPs, you can resynchronize them before logging in again.
 
+
+
+CHANGELOG:
+
+1.0.1:
+  - support for users that do not have a Windows account password set. An OTP will still be asked for.

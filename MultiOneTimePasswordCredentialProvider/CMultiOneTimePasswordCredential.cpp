@@ -94,21 +94,10 @@ HRESULT CMultiOneTimePasswordCredential::Initialize(
     }
 
     // Initialize the String value of all of our fields.
-	//*
 	if (SUCCEEDED(hr))
     {
         hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_PASSWORD_TEXT]);
-    }//*/
-    /*
-	if (SUCCEEDED(hr))
-    {
-        hr = SHStrDupW(L"I Work In:", &_rgFieldStrings[SFI_I_WORK_IN_STATIC]);
     }
-    if (SUCCEEDED(hr))
-    {
-        hr = SHStrDupW(L"Database", &_rgFieldStrings[SFI_DATABASE_COMBOBOX]);
-    }
-	//*/
 
     return hr;
 }
@@ -171,11 +160,18 @@ HRESULT CMultiOneTimePasswordCredential::UnAdvise()
 HRESULT CMultiOneTimePasswordCredential::SetSelected(__out BOOL* pbAutoLogon)  
 {
     HRESULT hr = E_UNEXPECTED;
+	BOOL bAutoLogon = FALSE;
 
     if (_pWrappedCredential != NULL)
     {
-        hr = _pWrappedCredential->SetSelected(pbAutoLogon);
+        hr = _pWrappedCredential->SetSelected(&bAutoLogon);
     }
+
+	if (bAutoLogon) // Hide Password CP's password field as it seems to be not needed
+		_pCredProvCredentialEvents->SetFieldState(this, PWCP_SFI_PASSWORD, CPFS_HIDDEN);
+	
+	//*pbAutoLogon = bAutoLogon;
+	*pbAutoLogon = FALSE; // This has to be false in order to show a UI to enter an OTP. Password CP does not know about us ;)
 
     return hr;
 }
@@ -346,22 +342,6 @@ HRESULT CMultiOneTimePasswordCredential::GetComboBoxValueCount(
         {
             hr = _pWrappedCredential->GetComboBoxValueCount(dwFieldID, pcItems, pdwSelectedItem);
         }
-        // Otherwise determine if we need to handle it.
-        /*
-		else
-        {
-            FIELD_STATE_PAIR *pfsp = _LookupLocalFieldStatePair(dwFieldID);
-            if (pfsp != NULL)
-            {
-                *pcItems = ARRAYSIZE(s_rgDatabases);
-                *pdwSelectedItem = _dwDatabaseIndex;
-                hr = S_OK;
-            }
-            else
-            {
-                hr = E_INVALIDARG;
-            }
-        }//*/
     }
 
     return hr;
@@ -386,20 +366,6 @@ HRESULT CMultiOneTimePasswordCredential::GetComboBoxValueAt(
         {
             hr = _pWrappedCredential->GetComboBoxValueAt(dwFieldID, dwItem, ppwszItem);
         }
-        // Otherwise determine if we need to handle it.
-        /*
-		else
-        {
-            FIELD_STATE_PAIR *pfsp = _LookupLocalFieldStatePair(dwFieldID);
-            if ((pfsp != NULL) && (dwItem < ARRAYSIZE(s_rgDatabases)))
-            {
-                hr = SHStrDupW(s_rgDatabases[dwItem], ppwszItem);
-            }
-            else
-            {
-                hr = E_INVALIDARG;
-            }
-        }//*/
     }
 
     return hr;
@@ -422,21 +388,6 @@ HRESULT CMultiOneTimePasswordCredential::SetComboBoxSelectedValue(
         {
             hr = _pWrappedCredential->SetComboBoxSelectedValue(dwFieldID, dwSelectedItem);
         }
-        // Otherwise determine if we need to handle it.
-        /*
-		else
-        {
-            FIELD_STATE_PAIR *pfsp = _LookupLocalFieldStatePair(dwFieldID);
-            if ((pfsp != NULL) && (dwSelectedItem < ARRAYSIZE(s_rgDatabases)))
-            {
-                _dwDatabaseIndex = dwSelectedItem;
-                hr = S_OK;
-            }
-            else
-            {
-                hr = E_INVALIDARG;
-            }
-        }//*/
     }
 
     return hr;
@@ -474,6 +425,7 @@ HRESULT CMultiOneTimePasswordCredential::GetSubmitButtonValue(
     {
         hr = _pWrappedCredential->GetSubmitButtonValue(dwFieldID, pdwAdjacentTo);
 
+		// We want the submit button adjacent to our last field. Looks better and preserves TAB-order.
 		if (SUCCEEDED(hr)) {
 			*pdwAdjacentTo = SFI_OTP_PASSWORD_TEXT + _dwWrappedDescriptorCount;
 		}
@@ -580,7 +532,7 @@ HRESULT CMultiOneTimePasswordCredential::_CheckOtp()
 #endif
 
 	PWSTR username;
-	HRESULT getUserName = _pWrappedCredential->GetStringValue(0, &username);
+	HRESULT getUserName = _pWrappedCredential->GetStringValue(PWCP_SFI_USERNAME, &username);
 
 	PWSTR password = _rgFieldStrings[SFI_OTP_PASSWORD_TEXT];
 
