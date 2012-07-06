@@ -28,10 +28,13 @@
     <ClInclude Include="CMultiOneTimePassword.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lang_de.h">
+    <ClInclude Include="lang.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="lang.h">
+    <ClInclude Include="lang_en.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lang_de.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -7,8 +7,14 @@ How to build:
 
 How to build Setup Project:
 
-- Rebuild Solution in Release (Win32 or x64)
+- Rebuild Solution in Release [Win32|{Eng, Ger}], [x64|{Eng, Ger}]
 
 - Select MultiOneTimePasswordCredentialProviderSetup-x64 or MultiOneTimePasswordCredentialProviderSetup-x86
+
+- The currently active configuration will be packaged into the installer, so
+
+  : when running x64-installer-builds make sure a x64 platform is targeted and vice versa
+
+  : the release language will be packaged
 
 - Build the Setup Project

@@ -18,4 +18,10 @@
 
 #pragma once
 
+#if defined LANG_GER
 #include "lang_de.h"
+#elif defined LANG_ENG
+#include "lang_en.h"
+#else
+#include "lang_en.h"
+#endif
