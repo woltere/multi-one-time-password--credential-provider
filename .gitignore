@@ -1,0 +1,6 @@
+# git ignore file
+/CustomKSP/SampleKSP/config/_UpgradeReport_Files
+/CustomKSP/SampleKSP/provider/_UpgradeReport_Files
+/CustomKSP/SampleKSP/provider/ipch
+/CustomKSP/SampleKSP/config/UpgradeLog.XML
+/CustomKSP/SampleKSP/provider/UpgradeLog.XML
