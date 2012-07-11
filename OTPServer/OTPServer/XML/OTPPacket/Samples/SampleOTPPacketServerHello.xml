@@ -1,0 +1,6 @@
+﻿<?xml version="1.0"?>
+<!-- A friendly Hello-packet from the server, he wants to tell us our brand-new PID -->
+<OTPPacket version="1">
+  <PID>1234</PID>
+  <Message type="HELLO" { status="200" }/>
+</OTPPacket>

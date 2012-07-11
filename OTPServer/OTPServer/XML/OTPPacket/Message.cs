@@ -8,7 +8,7 @@ namespace OTPServer.XML.OTPPacket
 {
     class Message
     {
-        public readonly enum TYPE : int
+        public enum TYPE : int
         {
             NONE    = 0,
 
@@ -21,7 +21,7 @@ namespace OTPServer.XML.OTPPacket
             ERROR   = 1
         }
 
-        public readonly enum STATUS : int
+        public enum STATUS : int
         {
             NONE = 0,
 
@@ -33,17 +33,6 @@ namespace OTPServer.XML.OTPPacket
             E_NOT_FOUND    = 404, // Data (e.g. user or pid) not found
             E_INCOMPLETE   = 480, // Incomplete data. E.g. verification: one or all of Username, OTP or Public Key are not set. comm: client didn't send a MAC
             E_UNKNOWN      = 500  // Unspecified error 
-        }
-
-        public readonly enum LEGAL_ATTRIBUTES
-        {
-            type   = 1,
-            status = 1,
-            mac    = 1
-        }
-
-        public readonly enum LEGAL_ELEMENTS
-        {
         }
 
         private TYPE _Type;
@@ -87,7 +76,7 @@ namespace OTPServer.XML.OTPPacket
             MAC = "";
         }
 
-        public ~Message() 
+        ~Message() 
         {
             Content = null;
             Type = TYPE.NONE;
@@ -103,10 +92,10 @@ namespace OTPServer.XML.OTPPacket
             MAC = "";
         }
 
-        public bool setFromXML(XmlTextReader xmlReader)
+        public bool setFromXMLReader(XmlTextReader xmlReader)
         {
-            if (!xmlReader.HasAttributes || xmlReader.NodeType != XmlNodeType.Element)
-                return false;
+            //if (!xmlReader.HasAttributes || xmlReader.NodeType != XmlNodeType.Element)
+            //    return false;
 
             Content = xmlReader.ReadContentAsObject();
             bool success = parseAttributes(xmlReader);
@@ -125,11 +114,6 @@ namespace OTPServer.XML.OTPPacket
             for (int i = 0; i < attributeCount; i++)
             {
                 xmlReader.MoveToAttribute(i);
-                if (!Enum.GetNames(typeof(LEGAL_ATTRIBUTES)).Contains(xmlReader.Name))
-                {
-                    success = false;
-                    goto Return;
-                }
                 if (xmlReader.Name.Equals("type"))
                 {
                     if (!Enum.GetNames(typeof(TYPE)).Contains(xmlReader.Value) || Type != TYPE.NONE)
@@ -166,8 +150,7 @@ namespace OTPServer.XML.OTPPacket
                 }
                 else if (xmlReader.Name.Equals("mac"))
                 {
-                    //if (!Enum.GetNames(typeof(STATUS)).Contains(xmlReader.Value) || StatusCode != STATUS.NONE)
-                    if (MAC.Length == 0)
+                    if (MAC.Length != 0)
                     {
                         success = false;
                         goto Return;

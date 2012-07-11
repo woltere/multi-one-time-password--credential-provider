@@ -8,22 +8,13 @@ namespace OTPServer.XML.OTPPacket
 {
     class Data
     {
-        public readonly enum TYPE
+        public enum TYPE
         {
             NONE        = 0,
             PUBLIC_KEY  = 1,
             USERNAME    = 1,
             OTP         = 1,
             CERTIFICATE = 1
-        }
-
-        public readonly enum LEGAL_ATTRIBUTES
-        {
-            type = 1
-        }
-
-        public readonly enum LEGAL_ELEMENTS
-        {
         }
 
         private TYPE _Type;
@@ -89,7 +80,7 @@ namespace OTPServer.XML.OTPPacket
             Type = TYPE.NONE;
         }
 
-        public ~Data() 
+        ~Data() 
         {
             Content = null;
             Type = TYPE.NONE;
@@ -101,10 +92,10 @@ namespace OTPServer.XML.OTPPacket
             Type = TYPE.NONE;
         }
 
-        public bool setFromXML(XmlTextReader xmlReader)
+        public bool setFromXMLReader(XmlTextReader xmlReader)
         {
-            if (!xmlReader.HasAttributes || xmlReader.NodeType != XmlNodeType.Element)
-                return false;            
+            //if (!xmlReader.HasAttributes || xmlReader.NodeType != XmlNodeType.Element)
+            //    return false;            
 
             Content = xmlReader.ReadContentAsObject();
             bool success = parseAttributes(xmlReader);            
@@ -123,11 +114,6 @@ namespace OTPServer.XML.OTPPacket
             for (int i = 0; i < attributeCount; i++)
             {
                 xmlReader.MoveToAttribute(i);
-                if (!Enum.GetNames(typeof(LEGAL_ATTRIBUTES)).Contains(xmlReader.Name))
-                {
-                    success = false;
-                    goto Return;
-                }
                 if (xmlReader.Name.Equals("type"))
                 {
                     if (!Enum.GetNames(typeof(TYPE)).Contains(xmlReader.Value) || Type != TYPE.NONE)

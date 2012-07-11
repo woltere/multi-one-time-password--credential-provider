@@ -4,25 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 using System.IO;
+using System.Xml.Schema;
 
 namespace OTPServer.XML.OTPPacket
 {
     class OTPPacket
     {
-        public static const int PROTOCOL_VERSION = 1;
-
-        public readonly enum LEGAL_ELEMENTS
-        {
-            OTPPacket = 1, // Value is the protocol version where Name was introduced
-            PID       = 1,
-            Message   = 1,
-            Data      = 1
-        }
-
-        public readonly enum LEGAL_ATTRIBUTES
-        {
-            version = 1
-        }
+        public const int __PROTOCOL_VERSION = 1;
 
         private Message _Message;
         public Message Message
@@ -51,7 +39,7 @@ namespace OTPServer.XML.OTPPacket
             this._DataItems = new List<Data>();
         }
 
-        public ~OTPPacket()
+        ~OTPPacket()
         {
             this._DataItems = null;
             this._Message   = null;
@@ -86,10 +74,58 @@ namespace OTPServer.XML.OTPPacket
             return null;
         }
 
-        public bool setFromXML(XmlTextReader xmlReader)
+        public bool validateXMLString(string xmlString)
         {
-            bool success = true;
+            byte[] byteArray = Encoding.ASCII.GetBytes(xmlString);
+            MemoryStream stream = new MemoryStream(byteArray);
+            return validateXMLStream(stream);
+        }
 
+        public bool validateXMLStream(Stream xmlStream)
+        {
+            XmlTextReader xmlReader = new XmlTextReader(xmlStream);
+            return validateXMLReader(xmlReader);
+        }
+
+        public bool validateXMLReader(XmlTextReader xmlTextReader)
+        {
+            XmlValidatingReader xmlReader = new XmlValidatingReader(xmlTextReader);
+
+            XmlSchemaCollection schemaCollection = new XmlSchemaCollection();
+            schemaCollection.Add("", @"Schema\OTPPacketSchema.xsd");
+            xmlReader.Schemas.Add(schemaCollection);
+
+            bool validationSuccessfull = true;
+            xmlReader.ValidationEventHandler += new ValidationEventHandler(
+                (object sender, ValidationEventArgs e) => 
+                    {
+                        validationSuccessfull = false;
+                    }
+                );
+            while (xmlReader.Read() && validationSuccessfull) ;
+
+            return validationSuccessfull;
+        }
+
+        public bool setFromXMLString(string xmlString)
+        {
+            byte[] byteArray = Encoding.ASCII.GetBytes(xmlString);
+            MemoryStream stream = new MemoryStream(byteArray);
+            return setFromXMLStream(stream);
+        }
+
+        public bool setFromXMLStream(Stream xmlStream)
+        {
+            XmlTextReader xmlReader = new XmlTextReader(xmlStream);
+            return setFromXMLReader(xmlReader);
+        }
+
+        public bool setFromXMLReader(XmlTextReader xmlReader)
+        {
+            if (!validateXMLReader(xmlReader))
+                return false;
+
+            bool success = true;
             while (xmlReader.Read() && success)
             {
                 XmlNodeType nType = xmlReader.NodeType;
@@ -110,33 +146,20 @@ namespace OTPServer.XML.OTPPacket
         {
             bool success = true;
 
-            bool thisIsTheRoot = true;
-            bool itWasTheCorrectRoot = false;
-
-            string[] legalElements = Enum.GetNames(typeof(LEGAL_ELEMENTS));
-
-            if (!legalElements.Contains(xmlReader.Name))
+            if (xmlReader.Name.Equals("OTPPacket"))
             {
-                success = false;
-                goto Return;
-            }
-
-            if (xmlReader.Name.Equals("OTPPacket") && thisIsTheRoot)
-            {
-                thisIsTheRoot &= itWasTheCorrectRoot == true;
-
                 success = parseAttributes(xmlReader);
                 goto Return;
             }
-            else if (xmlReader.Name.Equals("Message") && !thisIsTheRoot)
+            else if (xmlReader.Name.Equals("Message"))
             {
-                success = this._Message.setFromXML(xmlReader);
+                success = this._Message.setFromXMLReader(xmlReader);
                 goto Return;
             }
-            else if (xmlReader.Name.Equals("Data") && !thisIsTheRoot)
+            else if (xmlReader.Name.Equals("Data"))
             {
                 Data item = new Data();
-                success = item.setFromXML(xmlReader);
+                success = item.setFromXMLReader(xmlReader);
 
                 this._DataItems.Add(item);
                 goto Return;
@@ -155,18 +178,11 @@ namespace OTPServer.XML.OTPPacket
         {
             bool success = true;
 
-            string[] legalAttributes = Enum.GetNames(typeof(LEGAL_ATTRIBUTES));
-
             if (xmlReader.HasAttributes && xmlReader.MoveToFirstAttribute())
             {
                 do
                 {
-                    if (!legalAttributes.Contains(xmlReader.Name))
-                    {
-                        success = false;
-                        goto Return;
-                    }
-                    if (xmlReader.Name.Equals("version") && XmlConvert.ToChar(xmlReader.Value) > PROTOCOL_VERSION)
+                    if (xmlReader.Name.Equals("version") && XmlConvert.ToChar(xmlReader.Value) > __PROTOCOL_VERSION)
                     {
                         success = false;
                         goto Return;

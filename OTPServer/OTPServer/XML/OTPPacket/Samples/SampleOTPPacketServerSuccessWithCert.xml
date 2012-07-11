@@ -1,0 +1,9 @@
+﻿<?xml version="1.0"?>
+<!-- This packet could be sent in case of successfull verification -->
+<OTPPacket version="1">
+  <PID>1234</PID>
+  <Message type="SUCCESS" status="200"/>
+  <Data type="CERTIFICATE">
+    ...
+  </Data>
+</OTPPacket>

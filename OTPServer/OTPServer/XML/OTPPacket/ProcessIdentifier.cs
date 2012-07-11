@@ -8,14 +8,6 @@ namespace OTPServer.XML.OTPPacket
 {
     class ProcessIdentifier
     {
-        public readonly enum LEGAL_ATTRIBUTES
-        {
-        }
-
-        public readonly enum LEGAL_ELEMENTS
-        {
-        }
-
         private int _ID = 0;
         public int ID
         {
@@ -23,12 +15,12 @@ namespace OTPServer.XML.OTPPacket
             set { this._ID = value; }
         }
 
-        public bool setFromXML(XmlTextReader xmlReader)
+        public bool setFromXMLReader(XmlTextReader xmlReader)
         {
-            bool success = true;
+            //if (xmlReader.HasAttributes || xmlReader.NodeType != XmlNodeType.Element)
+            //    return false;
 
-            if (xmlReader.HasAttributes || xmlReader.NodeType != XmlNodeType.Element)
-                return false;
+            bool success = true;
 
             this._ID = xmlReader.ReadContentAsInt();
 

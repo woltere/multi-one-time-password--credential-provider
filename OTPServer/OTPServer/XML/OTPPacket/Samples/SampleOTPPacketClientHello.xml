@@ -1,0 +1,5 @@
+﻿<?xml version="1.0"?>
+<!-- A friendly Hello-packet from the client -->
+<OTPPacket version="1">
+  <Message type="HELLO"/>
+</OTPPacket>

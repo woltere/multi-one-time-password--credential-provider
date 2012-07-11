@@ -1,18 +1,18 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OTPServer", "OTPServer\OTPServer.vcxproj", "{E5AB422A-0D08-4BB4-9C7B-E35FDDD05D76}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTPServer", "OTPServer\OTPServer.csproj", "{2E925779-5189-4E22-83D9-D1E0CFD7E76B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|Win32 = Debug|Win32
-		Release|Win32 = Release|Win32
+		Debug|x86 = Debug|x86
+		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E5AB422A-0D08-4BB4-9C7B-E35FDDD05D76}.Debug|Win32.ActiveCfg = Debug|Win32
-		{E5AB422A-0D08-4BB4-9C7B-E35FDDD05D76}.Debug|Win32.Build.0 = Debug|Win32
-		{E5AB422A-0D08-4BB4-9C7B-E35FDDD05D76}.Release|Win32.ActiveCfg = Release|Win32
-		{E5AB422A-0D08-4BB4-9C7B-E35FDDD05D76}.Release|Win32.Build.0 = Release|Win32
+		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Debug|x86.ActiveCfg = Debug|x86
+		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Debug|x86.Build.0 = Debug|x86
+		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Release|x86.ActiveCfg = Release|x86
+		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -1,0 +1,8 @@
+﻿<?xml version="1.0"?>
+<!-- This packet could be sent in a case of failure -->
+<OTPPacket version="1">
+  <PID>1234</PID>
+  <Message type="ERROR" status="401">
+    The OTP could not be verified
+  </Message>
+</OTPPacket>
