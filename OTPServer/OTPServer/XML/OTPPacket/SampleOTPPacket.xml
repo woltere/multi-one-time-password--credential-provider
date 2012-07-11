@@ -1,0 +1,67 @@
+﻿<!-- A friendly Hello-packet from the client -->
+<!--
+<OTPPacket version="1">
+  <Message type="HELLO"/>
+</OTPPacket>
+-->
+
+<!-- A friendly Hello-packet from the server, he wants to tell us our brand-new PID -->
+<!--
+<OTPPacket version="1">
+  <PID>1234</PID>
+  <Message type="HELLO" { status="200" }/>
+</OTPPacket>
+-->
+
+<!-- This packet could be sent by a client to issue OTP verification -->
+<OTPPacket version="1">
+  <PID>1234</PID>
+  <Message type="VERIFY" mac="{PID timestamp}(sig:c)"/>
+  <Data type="PUBLIC_KEY">
+    ...
+  </Data>
+  <Data type="OTP">
+    224488
+  </Data>
+  <Data type="USERNAME">
+    user@example.com
+  </Data>
+</OTPPacket>
+
+<!-- This packet could be sent by a client to issue OTP resynchronization -->
+<!--
+<OTPPacket version="1">
+  <PID>1234</PID>
+  <Message type="RESYNC" mac="{PID timestamp}(sig:c)/>
+  <Data type="OTP">
+    224488
+  </Data>
+  <Data type="OTP">
+    112244
+  </Data>
+  <Data type="USERNAME">
+    user@example.com
+  </Data>
+</OTPPacket>
+-->
+
+<!-- This packet could be sent in a case of failure -->
+<!--
+<OTPPacket version="1">
+  <PID>1234</PID>
+  <Message type="ERROR" status="401">
+    The OTP could not be verified
+  </Message>
+</OTPPacket>
+-->
+
+<!-- This packet could be sent in case of successfull verification -->
+<!--
+<OTPPacket version="1">
+  <PID>1234</PID>
+  <Message type="SUCCESS" status="200"/>
+  <Data type="CERTIFICATE">
+    ...
+  </Data>
+</OTPPacket>
+-->
