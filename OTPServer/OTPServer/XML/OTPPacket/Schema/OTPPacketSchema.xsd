@@ -11,9 +11,10 @@
 
   <xsd:complexType name="ElemOTPPacketType">
     <xsd:sequence>
-      <xsd:element name="PID" type="xsd:int" minOccurs="0" default="0"/>
-      <xsd:element name="Message" type="ElemMessageType"/>
-      <xsd:element name="Data" type="ElemDataType" minOccurs="0" maxOccurs="unbounded"/>
+      <xsd:element name="PID"     type="xsd:int"         minOccurs="0"                       default="0" />
+      <xsd:element name="Message" type="ElemMessageType"                                                 />
+      <xsd:element name="Data"    type="ElemDataType"    minOccurs="0" maxOccurs="unbounded"             />
+      <xsd:element name="KeyData" type="ElemKeyDataType" minOccurs="0" maxOccurs="1"                     />
     </xsd:sequence>
     <xsd:attribute name="version" type="xsd:int" use="required"/>
   </xsd:complexType>
@@ -21,9 +22,9 @@
   <xsd:complexType name="ElemMessageType">
     <xsd:simpleContent>
       <xsd:extension base="xsd:string">
-        <xsd:attribute name="type" type="AttrMessageTypeType" use="required"/>
-        <xsd:attribute name="mac" type="xsd:string" use="optional"/>
-        <xsd:attribute name="status" type="xsd:int" use="optional"/>
+        <xsd:attribute name="type"   type="AttrMessageType" use="required" />
+        <xsd:attribute name="mac"    type="xsd:string"          use="optional" />
+        <xsd:attribute name="status" type="xsd:int"             use="optional" />
       </xsd:extension>
     </xsd:simpleContent>
   </xsd:complexType>
@@ -31,34 +32,48 @@
   <xsd:complexType name="ElemDataType">
     <xsd:simpleContent>
       <xsd:extension base="xsd:string">
-        <xsd:attribute name="type" type="AttrDataTypeType"/>
+        <xsd:attribute name="type" type="AttrDataType"/>
       </xsd:extension>
     </xsd:simpleContent>
   </xsd:complexType>
 
-  <xsd:simpleType name="AttrTypeType">
+  <xsd:complexType name="ElemKeyDataType">
+    <xsd:choice>
+      <!-- RSA Public Key -->
+      <xsd:element name="RSAKeyValue">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Modulus"  type="xsd:int" />
+            <xsd:element name="Exponent" type="xsd:int" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <!-- Other key formats -->
+    </xsd:choice>
+  </xsd:complexType>
+
+  <xsd:simpleType name="AttrBaseType">
     <xsd:restriction base="xsd:string">
       <xsd:pattern value="[A-Z_]+"/>
     </xsd:restriction> 
   </xsd:simpleType>
 
-  <xsd:simpleType name="AttrMessageTypeType">
-    <xsd:restriction base="AttrTypeType">
-      <xsd:enumeration value="HELLO"/>
-      <xsd:enumeration value="ADD"/>
-      <xsd:enumeration value="VERIFY"/>
-      <xsd:enumeration value="RESYNC"/>
-      <xsd:enumeration value="SUCCESS"/>
-      <xsd:enumeration value="ERROR"/>
+  <xsd:simpleType name="AttrMessageType">
+    <xsd:restriction base="AttrBaseType">
+      <xsd:enumeration value="HELLO"   />
+      <xsd:enumeration value="ADD"     />
+      <xsd:enumeration value="VERIFY"  />
+      <xsd:enumeration value="RESYNC"  />
+      <xsd:enumeration value="SUCCESS" />
+      <xsd:enumeration value="ERROR"   />
     </xsd:restriction>
   </xsd:simpleType>
 
-  <xsd:simpleType name="AttrDataTypeType">
-    <xsd:restriction base="AttrTypeType">
-      <xsd:enumeration value="PUBLIC_KEY"/>
-      <xsd:enumeration value="USERNAME"/>
-      <xsd:enumeration value="OTP"/>
-      <xsd:enumeration value="CERTIFICATE"/>
+  <xsd:simpleType name="AttrDataType">
+    <xsd:restriction base="AttrBaseType">
+      <xsd:enumeration value="USERNAME"    />
+      <xsd:enumeration value="OTP"         />
+      <xsd:enumeration value="CERTIFICATE" />
     </xsd:restriction>
   </xsd:simpleType>
 </xsd:schema>

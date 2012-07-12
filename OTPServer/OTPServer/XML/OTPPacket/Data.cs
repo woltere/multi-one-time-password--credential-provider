@@ -11,7 +11,6 @@ namespace OTPServer.XML.OTPPacket
         public enum TYPE
         {
             NONE        = 0,
-            PUBLIC_KEY  = 1,
             USERNAME    = 1,
             OTP         = 1,
             CERTIFICATE = 1
@@ -29,17 +28,6 @@ namespace OTPServer.XML.OTPPacket
         {
             get { return this._Content; }
             set { this._Content = value; }
-        }
-
-        public string PublicKey
-        {
-            set
-            {
-                Content = value;
-                Type = TYPE.PUBLIC_KEY;
-            }
-
-            get { return (string)Content; }
         }
 
         public string Username
@@ -92,11 +80,8 @@ namespace OTPServer.XML.OTPPacket
             Type = TYPE.NONE;
         }
 
-        public bool setFromXMLReader(XmlTextReader xmlReader)
+        public bool SetFromXMLReader(XmlTextReader xmlReader)
         {
-            //if (!xmlReader.HasAttributes || xmlReader.NodeType != XmlNodeType.Element)
-            //    return false;            
-
             Content = xmlReader.ReadContentAsObject();
             bool success = parseAttributes(xmlReader);            
 
@@ -106,7 +91,7 @@ namespace OTPServer.XML.OTPPacket
             return success;
         }
 
-        private bool parseAttributes(XmlTextReader xmlReader)
+        private bool ParseAttributes(XmlTextReader xmlReader)
         {
             bool success = true;
 
@@ -116,15 +101,7 @@ namespace OTPServer.XML.OTPPacket
                 xmlReader.MoveToAttribute(i);
                 if (xmlReader.Name.Equals("type"))
                 {
-                    if (!Enum.GetNames(typeof(TYPE)).Contains(xmlReader.Value) || Type != TYPE.NONE)
-                    {
-                        success = false;
-                        goto Return;
-                    }
-
-                    if (xmlReader.Value.Equals("PUBLIC_KEY"))
-                        Type = TYPE.PUBLIC_KEY;
-                    else if (xmlReader.Value.Equals("USERNAME"))
+                    if (xmlReader.Value.Equals("USERNAME"))
                         Type = TYPE.USERNAME;
                     else if (xmlReader.Value.Equals("OTP"))
                         Type = TYPE.OTP;

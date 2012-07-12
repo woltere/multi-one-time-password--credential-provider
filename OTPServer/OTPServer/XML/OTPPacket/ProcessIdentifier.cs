@@ -15,15 +15,10 @@ namespace OTPServer.XML.OTPPacket
             set { this._ID = value; }
         }
 
-        public bool setFromXMLReader(XmlTextReader xmlReader)
+        public bool SetFromXMLReader(XmlTextReader xmlReader)
         {
-            //if (xmlReader.HasAttributes || xmlReader.NodeType != XmlNodeType.Element)
-            //    return false;
-
             bool success = true;
-
             this._ID = xmlReader.ReadContentAsInt();
-
             return success;
         }
     }

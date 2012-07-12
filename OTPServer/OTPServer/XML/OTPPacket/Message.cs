@@ -92,11 +92,8 @@ namespace OTPServer.XML.OTPPacket
             MAC = "";
         }
 
-        public bool setFromXMLReader(XmlTextReader xmlReader)
+        public bool SetFromXMLReader(XmlTextReader xmlReader)
         {
-            //if (!xmlReader.HasAttributes || xmlReader.NodeType != XmlNodeType.Element)
-            //    return false;
-
             Content = xmlReader.ReadContentAsObject();
             bool success = parseAttributes(xmlReader);
 
@@ -106,7 +103,7 @@ namespace OTPServer.XML.OTPPacket
             return success;
         }
 
-        private bool parseAttributes(XmlTextReader xmlReader)
+        private bool ParseAttributes(XmlTextReader xmlReader)
         {
             bool success = true;
 
@@ -116,12 +113,6 @@ namespace OTPServer.XML.OTPPacket
                 xmlReader.MoveToAttribute(i);
                 if (xmlReader.Name.Equals("type"))
                 {
-                    if (!Enum.GetNames(typeof(TYPE)).Contains(xmlReader.Value) || Type != TYPE.NONE)
-                    {
-                        success = false;
-                        goto Return;
-                    }
-
                     if (xmlReader.Value.Equals("HELLO"))
                         Type = TYPE.HELLO;
                     else if (xmlReader.Value.Equals("ADD"))
@@ -138,24 +129,11 @@ namespace OTPServer.XML.OTPPacket
                 }
                 else if (xmlReader.Name.Equals("status"))
                 {
-                    //if (!Enum.GetNames(typeof(STATUS)).Contains(xmlReader.Value) || StatusCode != STATUS.NONE)
-                    if (StatusCode != STATUS.NONE)
-                    {
-                        success = false;
-                        goto Return;
-                    }
-
                     StatusCode = (STATUS)XmlConvert.ToInt32(xmlReader.Value);
                     goto Return;
                 }
                 else if (xmlReader.Name.Equals("mac"))
                 {
-                    if (MAC.Length != 0)
-                    {
-                        success = false;
-                        goto Return;
-                    }
-
                     MAC = xmlReader.Value;
                     goto Return;
                 }

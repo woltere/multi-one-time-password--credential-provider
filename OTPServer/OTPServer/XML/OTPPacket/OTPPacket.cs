@@ -8,7 +8,7 @@ using System.Xml.Schema;
 
 namespace OTPServer.XML.OTPPacket
 {
-    class OTPPacket
+    public class OTPPacket
     {
         public const int __PROTOCOL_VERSION = 1;
 
@@ -32,17 +32,26 @@ namespace OTPServer.XML.OTPPacket
             get { return this._DataItems; }
         }
 
+        private KeyData _KeyData;
+        public KeyData KeyData
+        {
+            get { return this._KeyData; }
+            set { this._KeyData = value; }
+        }
+
         public OTPPacket()
         {
             this._ProcessIdentifier = new ProcessIdentifier();
             this._Message   = new Message();
             this._DataItems = new List<Data>();
+            this._KeyData   = new KeyData();
         }
 
         ~OTPPacket()
         {
             this._DataItems = null;
             this._Message   = null;
+            this._KeyData   = null;
             this._ProcessIdentifier = null;
         }
 
@@ -50,79 +59,82 @@ namespace OTPServer.XML.OTPPacket
         {
             this._DataItems = new List<Data>();
             this._Message   = new Message();
+            this._KeyData   = new KeyData();
             this._ProcessIdentifier = new ProcessIdentifier();
         }
 
-        public int addDataItem(Data item)
+        public int AddDataItem(Data item)
         {
             this._DataItems.Add(item);
             return _DataItems.Count - 1;
         }
 
-        public Data getDataItemAt(int index)
+        public Data GetDataItemAt(int index)
         {
             return this._DataItems.ElementAt(index);
         }
 
-        public void removeDataItemAt(int index)
+        public void RemoveDataItemAt(int index)
         {
             this._DataItems.RemoveAt(index);
         }
 
-        public Stream convertToXML()
+        public Stream ConvertToXML()
         {
             return null;
         }
 
-        public bool validateXMLString(string xmlString)
+        public bool ValidateXML(string xmlString)
         {
             byte[] byteArray = Encoding.ASCII.GetBytes(xmlString);
             MemoryStream stream = new MemoryStream(byteArray);
-            return validateXMLStream(stream);
+            return ValidateXML(stream);
         }
 
-        public bool validateXMLStream(Stream xmlStream)
+        public bool ValidateXML(Stream xmlStream)
         {
             XmlTextReader xmlReader = new XmlTextReader(xmlStream);
-            return validateXMLReader(xmlReader);
+            return ValidateXML(xmlReader);
         }
 
-        public bool validateXMLReader(XmlTextReader xmlTextReader)
+        public bool ValidateXML(XmlTextReader xmlTextReader)
         {
-            XmlValidatingReader xmlReader = new XmlValidatingReader(xmlTextReader);
+            XmlReaderSettings xmlSettings = new XmlReaderSettings();
+            xmlSettings.Schemas.Add("", "OTPPacketSchema.xsd");
+            xmlSettings.ValidationType = ValidationType.Schema;
+            xmlSettings.XmlResolver = null;
 
-            XmlSchemaCollection schemaCollection = new XmlSchemaCollection();
-            schemaCollection.Add("", @"Schema\OTPPacketSchema.xsd");
-            xmlReader.Schemas.Add(schemaCollection);
+            XmlReader xmlReader = XmlReader.Create(xmlTextReader, xmlSettings);
 
-            bool validationSuccessfull = true;
-            xmlReader.ValidationEventHandler += new ValidationEventHandler(
-                (object sender, ValidationEventArgs e) => 
-                    {
-                        validationSuccessfull = false;
-                    }
-                );
-            while (xmlReader.Read() && validationSuccessfull) ;
+            bool validationSuccess = true;
+            try
+            {
+                while (xmlReader.Read()) { }
+            }
+            catch (XmlException)
+            {
+                validationSuccess = false;
+            }
 
-            return validationSuccessfull;
+            return validationSuccess;
         }
 
-        public bool setFromXMLString(string xmlString)
+        public bool SetFromXML(string xmlString, bool partialData)
         {
             byte[] byteArray = Encoding.ASCII.GetBytes(xmlString);
             MemoryStream stream = new MemoryStream(byteArray);
-            return setFromXMLStream(stream);
+            return SetFromXML(stream, partialData);
         }
 
-        public bool setFromXMLStream(Stream xmlStream)
+        public bool SetFromXML(Stream xmlStream, bool partialData)
         {
             XmlTextReader xmlReader = new XmlTextReader(xmlStream);
-            return setFromXMLReader(xmlReader);
+            return SetFromXML(xmlReader, partialData);
         }
 
-        public bool setFromXMLReader(XmlTextReader xmlReader)
+        public bool SetFromXML(XmlTextReader xmlReader, bool partialData)
         {
-            if (!validateXMLReader(xmlReader))
+            if (!partialData && !ValidateXML(xmlReader))
                 return false;
 
             bool success = true;
@@ -131,7 +143,7 @@ namespace OTPServer.XML.OTPPacket
                 XmlNodeType nType = xmlReader.NodeType;
                 if (nType == XmlNodeType.Element)
                 {
-                    success = parseElementNode(xmlReader);
+                    success = ParseElementNode(xmlReader);
                     continue;
                 }
             }
@@ -142,26 +154,31 @@ namespace OTPServer.XML.OTPPacket
             return success;
         }
 
-        private bool parseElementNode(XmlTextReader xmlReader)
+        private bool ParseElementNode(XmlTextReader xmlReader)
         {
             bool success = true;
 
             if (xmlReader.Name.Equals("OTPPacket"))
             {
-                success = parseAttributes(xmlReader);
+                success = ParseAttributes(xmlReader);
                 goto Return;
             }
             else if (xmlReader.Name.Equals("Message"))
             {
-                success = this._Message.setFromXMLReader(xmlReader);
+                success = this._Message.SetFromXMLReader(xmlReader);
                 goto Return;
             }
             else if (xmlReader.Name.Equals("Data"))
             {
                 Data item = new Data();
-                success = item.setFromXMLReader(xmlReader);
+                success = item.SetFromXMLReader(xmlReader);
 
                 this._DataItems.Add(item);
+                goto Return;
+            }
+            else if (xmlReader.Name.Equals("KeyData"))
+            {
+                success = this._KeyData.SetFromXMLReader(xmlReader);
                 goto Return;
             }
             else
@@ -174,7 +191,7 @@ namespace OTPServer.XML.OTPPacket
             return success;
         }
 
-        private bool parseAttributes(XmlTextReader xmlReader)
+        private bool ParseAttributes(XmlTextReader xmlReader)
         {
             bool success = true;
 
