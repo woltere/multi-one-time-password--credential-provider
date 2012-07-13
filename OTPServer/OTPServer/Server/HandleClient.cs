@@ -7,6 +7,8 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Security.Authentication;
+using OTPServer.XML.OTPPacket;
+using System.IO;
 
 namespace OTPServer.Server
 {
@@ -64,9 +66,40 @@ namespace OTPServer.Server
                     this._Active = false;
                 }
 
-                while (Active)
+                if (Active)
                 {
+                    OTPPacket otpPacket = new OTPPacket();
+                    bool success = otpPacket.SetFromXML(sslStream, false);
+                    if (!success)
+                    {
+                        this._Active = false;
+                        WritePacketToStream(sslStream, GetErrorPacket(0, "Malformed packet or wrong protocol version", Message.STATUS.E_ERROR));
+                    }
+                    // TODO: Send packet to the Authority for further inspection
                 }
+            }
+        }
+
+        private OTPPacket GetErrorPacket(int pid, string message, Message.STATUS statusCode)
+        {
+            OTPPacket otpPacket = new OTPPacket();
+
+            otpPacket.ProcessIdentifier.ID = pid;
+            otpPacket.Message.Type = Message.TYPE.ERROR;
+            otpPacket.Message.TextMessage = message;
+            otpPacket.Message.StatusCode = statusCode;
+
+            return otpPacket;
+        }
+
+        private void WritePacketToStream(Stream stream, OTPPacket otpPacket)
+        {
+            string otpPacketAsString = otpPacket.ToXMLString();
+            byte[] otpPacketAsByteArray = Encoding.ASCII.GetBytes(otpPacketAsString);
+
+            using (StreamWriter streamWriter = new StreamWriter(stream))
+            {
+                streamWriter.Write(otpPacketAsByteArray);
             }
         }
     }

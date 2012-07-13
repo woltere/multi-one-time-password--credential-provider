@@ -6,7 +6,7 @@ using System.Xml;
 
 namespace OTPServer.XML.OTPPacket
 {
-    class Data
+    class Data : ISerializable
     {
         public enum TYPE
         {

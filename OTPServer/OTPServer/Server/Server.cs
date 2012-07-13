@@ -55,12 +55,13 @@ namespace OTPServer.Server
 
         public void Listen()
         {
+            // TODO: Get IP and port from a config
             TcpListener listener = new TcpListener(IPADDR, PORT);
             listener.Start();
 
             while (Active)
             {
-                // Check Active state in frequent intervall (avoid blocking forever, when shutting down)
+                // TODO: Check Active state in frequent intervall (avoid blocking forever, when shutting down)
                 TcpClient clientSocket = listener.AcceptTcpClient();
                 HandleClient client = new HandleClient(clientSocket, this._ConnectionCount++);
                 client.Start();

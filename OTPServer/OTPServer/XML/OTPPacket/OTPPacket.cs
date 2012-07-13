@@ -5,10 +5,12 @@ using System.Text;
 using System.Xml;
 using System.IO;
 using System.Xml.Schema;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 
 namespace OTPServer.XML.OTPPacket
 {
-    public class OTPPacket
+    public class OTPPacket : ISerializable
     {
         public const int __PROTOCOL_VERSION = 1;
 
@@ -79,7 +81,7 @@ namespace OTPServer.XML.OTPPacket
             this._DataItems.RemoveAt(index);
         }
 
-        public Stream ConvertToXML()
+        public string ToXMLString()
         {
             return null;
         }
