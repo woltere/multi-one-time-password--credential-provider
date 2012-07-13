@@ -5,12 +5,11 @@ using System.Text;
 using System.Xml;
 using System.IO;
 using System.Xml.Schema;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
 
 namespace OTPServer.XML.OTPPacket
 {
-    public class OTPPacket : ISerializable
+    [Serializable]
+    public class OTPPacket
     {
         public const int __PROTOCOL_VERSION = 1;
 

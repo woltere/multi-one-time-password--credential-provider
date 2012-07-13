@@ -6,7 +6,8 @@ using System.Xml;
 
 namespace OTPServer.XML.OTPPacket
 {
-    class ProcessIdentifier : ISerializable
+    [Serializable]
+    class ProcessIdentifier
     {
         private int _ID = 0;
         public int ID

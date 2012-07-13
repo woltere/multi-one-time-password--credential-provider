@@ -42,20 +42,18 @@ namespace OTPServer.Server
         {
             this._Active = true;
             Listen();
-
             return true;
         }
 
         public bool Stop()
         {
             this._Active = false;
-
             return true;
         }
 
         public void Listen()
         {
-            // TODO: Get IP and port from a config
+            // TODO: Get IP and port from a config (or Authority?)
             TcpListener listener = new TcpListener(IPADDR, PORT);
             listener.Start();
 
