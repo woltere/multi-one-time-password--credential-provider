@@ -16,9 +16,7 @@ namespace OTPServer
             ServiceBase[] ServicesToRun;
             ServicesToRun = new ServiceBase[] 
 			{ 
-				new OneTimePasswordAuthority(),
-                new OneTimePasswordAgent(),
-                new OneTimePasswordServer()
+                new OneTimePasswordServer()              
 			};
             ServiceBase.Run(ServicesToRun);
         }

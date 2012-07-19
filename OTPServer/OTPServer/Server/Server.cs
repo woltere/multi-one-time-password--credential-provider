@@ -6,64 +6,161 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net;
 using System.Net.Sockets;
 using System.Net.Security;
+using System.Threading;
 
 namespace OTPServer.Server
 {
     public class Server
     {
-        public const int PORT = 16588;
-        public const IPAddress IPADDR = IPAddress.Any;
+        // TODO: Move to config
+        public const int       PORT            = 16588;
+        public const IPAddress IPADDR          = IPAddress.Any;
+        public const int       CLIENT_MAX_AGE  = 1; // Minutes
+        public const int       MAX_CONNECTIONS = 250;
 
-        private int _ConnectionCount;
-        public int ConnectionCount
+        private static Dictionary<int, HandleClient> __ClientHandles;
+        private Thread _MaintainingThread = null;
+        private Thread _ListeningThread = null;
+
+        public static int ConnectionCount
         {
-            get { return this._ConnectionCount; }
+            get { return __ClientHandles.Count; }
         }
 
-        private bool _Active;
-        public bool Active
+        private static bool __Active;
+        public static bool Active
         {
-            get { return this._Active; }
+            get { return __Active; }
         }
 
-        public Server()
+        private static Server __Instance = null;
+        public static Server Instance
         {
-            this._ConnectionCount = 0;
-            this._Active = false;
+            get
+            {
+                if (__Instance == null)
+                    __Instance = new Server();
+                return __Instance;
+            }
+        }
+
+        private Server()
+        {
+            __Active = false;
+            if (__ClientHandles == null)
+                __ClientHandles = new Dictionary<int, HandleClient>();            
         }
 
         ~Server()
         {
-            this._ConnectionCount = 0;
-            this._Active = false;
+            __Active = false;
+            __ClientHandles = null;
+
+            _ListeningThread = null;
+            _MaintainingThread = null;
         }
 
         public bool Start()
         {
-            this._Active = true;
-            Listen();
+            __Active = true;
+
+            Listen(false);
+            MaintainClientHandles(false);
+
             return true;
         }
 
         public bool Stop()
         {
-            this._Active = false;
+            __Active = false;
+
+            if (_MaintainingThread != null)
+                _MaintainingThread.Interrupt();
+
+            if (_ListeningThread != null)
+                _ListeningThread.Interrupt();
+
             return true;
         }
 
-        public void Listen()
+        private void Listen()
         {
-            // TODO: Get IP and port from a config (or Authority?)
-            TcpListener listener = new TcpListener(IPADDR, PORT);
-            listener.Start();
+            Listen(true);
+        }
 
-            while (Active)
-            {
-                // TODO: Check Active state in frequent intervall (avoid blocking forever, when shutting down)
-                TcpClient clientSocket = listener.AcceptTcpClient();
-                HandleClient client = new HandleClient(clientSocket, this._ConnectionCount++);
-                client.Start();
+        private void Listen(bool isThread)
+        {
+            TcpListener listener;
+
+            if (!isThread && _ListeningThread == null)
+            {                
+                _ListeningThread = new Thread(Listen);
+                _ListeningThread.Start();
+                return;
             }
+            else
+            {
+                listener = new TcpListener(IPADDR, PORT);
+                listener.Start();
+            }
+
+            while (Active && isThread)
+            {
+                if (ConnectionCount <= MAX_CONNECTIONS)
+                {
+                    // TODO: Check Active state in frequent intervall (avoid blocking forever, when shutting down). BeginAcceptTcpClient() (asynchronous)?
+                    TcpClient clientSocket = listener.AcceptTcpClient();
+                    HandleClient client = new HandleClient(clientSocket);
+
+                    lock (__ClientHandles)
+                        __ClientHandles.Add(Now(), client);
+                    
+                    client.Start();
+                }
+            }
+        }
+
+        private void MaintainClientHandles()
+        {
+            MaintainClientHandles(true);
+        }
+
+        private void MaintainClientHandles(bool isThread)
+        {
+            if (!isThread && _MaintainingThread == null)
+            {
+                _MaintainingThread = new Thread(MaintainClientHandles);
+                _MaintainingThread.Start();
+                return;
+            }
+
+            while (Active && isThread)
+            {
+                // TODO: Wait/Hold when there are no Handles (AutoResetWait)
+                Thread.Sleep(500);
+                foreach (KeyValuePair<int, HandleClient> client in __ClientHandles)
+                {
+                    if (client.Value.Active == false)
+                        lock (__ClientHandles)
+                            __ClientHandles.Remove(client.Key);
+
+                    if (Now() - client.Key > CLIENT_MAX_AGE * 60)
+                    {
+                        client.Value.Stop(true);
+
+                        lock (__ClientHandles)
+                            __ClientHandles.Remove(client.Key);
+                    }
+                }
+            }
+        }
+
+        private static int Now()
+        {
+            DateTime epochStart = new DateTime(1970, 1, 1);
+            DateTime now = DateTime.Now;
+            TimeSpan ts = new TimeSpan(now.Ticks - epochStart.Ticks);
+            return (Convert.ToInt32(ts.TotalSeconds));
         }
     }
 }

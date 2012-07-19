@@ -11,20 +11,20 @@ namespace OTPServer.Authority.Storage
 {
     class ProcessDataStorage
     {
-        private static Dictionary<int, ProcessData> __ProcessIdentifierProcessDataMap = new Dictionary<int,ProcessData>();
-        private static LinkedList<ProcessAge> __TimeProcessIdentifierMap = new LinkedList<ProcessAge>();
+        private static Dictionary<int, ProcessData> __ProcessIdentifierToProcessDataMap = new Dictionary<int,ProcessData>();
+        private static LinkedList<ProcessAge> __TimeToProcessIdentifierMap = new LinkedList<ProcessAge>();
 
         public int ProcessExists(OTPPacket otpPacket)
         {
-            if (otpPacket.ProcessIdentifier.ID <= 0)
-                return 0;
+            if (otpPacket.ProcessIdentifier.ID <= ProcessIdentifier.NONE)
+                return 0; // LOOK: The first valid pid is 1!
 
             return ProcessExists(otpPacket.ProcessIdentifier.ID);
         }
 
         public int ProcessExists(int pid)
         {
-            if (__ProcessIdentifierProcessDataMap.ContainsKey(pid))
+            if (__ProcessIdentifierToProcessDataMap.ContainsKey(pid))
                 return pid;
             return 0;
         }
@@ -32,14 +32,14 @@ namespace OTPServer.Authority.Storage
         public int CreateProcess(OTPPacket otpPacket)
         {
             if (otpPacket.Message.Type != Message.TYPE.HELLO)
-                return 0; // LOOK: The first valid pid is 1!
+                return 0;
 
             int processIdentifier = CreateProcessIdentifier();            
             ProcessAge processAge = new ProcessAge(processIdentifier);
             ProcessData processData = new ProcessData(processAge);
 
-            __ProcessIdentifierProcessDataMap.Add(processIdentifier, processData);
-            __TimeProcessIdentifierMap.AddLast(processAge);
+            __ProcessIdentifierToProcessDataMap.Add(processIdentifier, processData);
+            __TimeToProcessIdentifierMap.AddLast(processAge);
 
             return processIdentifier;
         }
@@ -51,7 +51,7 @@ namespace OTPServer.Authority.Storage
 
         public ProcessData GetProcess(OTPPacket otpPacket)
         {
-            if (otpPacket.ProcessIdentifier.ID <= 0)
+            if (otpPacket.ProcessIdentifier.ID <= ProcessIdentifier.NONE)
                 return null;
 
             return GetProcess(otpPacket.ProcessIdentifier.ID);
@@ -60,7 +60,7 @@ namespace OTPServer.Authority.Storage
         public ProcessData GetProcess(int pid)
         {
             ProcessData processData;
-            bool success = __ProcessIdentifierProcessDataMap.TryGetValue(pid, out processData);
+            bool success = __ProcessIdentifierToProcessDataMap.TryGetValue(pid, out processData);
 
             if (!success)
                 return null;
@@ -79,7 +79,7 @@ namespace OTPServer.Authority.Storage
 
         public ProcessAge GetOldestProcess()
         {
-            LinkedListNode<ProcessAge> oldestProcess = __TimeProcessIdentifierMap.First;
+            LinkedListNode<ProcessAge> oldestProcess = __TimeToProcessIdentifierMap.First;
             return oldestProcess.Value;
         }        
 
@@ -98,8 +98,8 @@ namespace OTPServer.Authority.Storage
             if (processData == null)
                 return;
 
-            __TimeProcessIdentifierMap.Remove(processData.ProcessAgeRef);
-            __ProcessIdentifierProcessDataMap.Remove(processData.ProcessIdentifier);
+            __TimeToProcessIdentifierMap.Remove(processData.ProcessAgeRef);
+            __ProcessIdentifierToProcessDataMap.Remove(processData.ProcessIdentifier);
         }
 
         private class ProcessData
