@@ -31,8 +31,10 @@ namespace OTPServer.Authority.Storage
 
         public int CreateProcess(OTPPacket otpPacket)
         {
+            /*
             if (otpPacket.Message.Type != Message.TYPE.HELLO)
                 return 0;
+            */
 
             int processIdentifier = CreateProcessIdentifier();            
             ProcessAge processAge = new ProcessAge(processIdentifier);
