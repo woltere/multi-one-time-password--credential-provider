@@ -13,8 +13,10 @@ namespace OTPServer.XML.OTPPacket
         {
             NONE        = 0,
             USERNAME    = 1,
-            OTP         = 1,
-            CERTIFICATE = 1
+            OTP         = 2,
+            CERTIFICATE = 3,
+
+            PROTOCOL_VERSION_1_END = 4,
         }
 
         private TYPE _Type;
@@ -84,7 +86,7 @@ namespace OTPServer.XML.OTPPacket
         public bool SetFromXMLReader(XmlTextReader xmlReader)
         {
             Content = xmlReader.ReadContentAsObject();
-            bool success = parseAttributes(xmlReader);            
+            bool success = ParseAttributes(xmlReader);            
 
             if (!success)
                 CleanUp();
@@ -113,6 +115,22 @@ namespace OTPServer.XML.OTPPacket
             }
         Return:
             return success;
+        }
+
+        public void ToXmlString(ref XmlWriter xmlWriter)
+        {
+            xmlWriter.WriteStartElement("Data");
+
+            xmlWriter.WriteAttributeString("type", Enum.GetName(typeof(TYPE), ((int)this._Type)));
+
+            if (this._Type == TYPE.USERNAME)
+                xmlWriter.WriteString(this.Username);
+            else if (this._Type == TYPE.OTP)
+                xmlWriter.WriteString(this.OneTimePassword);
+            else if (this._Type == TYPE.CERTIFICATE)
+                xmlWriter.WriteString(this.Certificate);
+
+            xmlWriter.WriteEndElement();
         }
     }
 }

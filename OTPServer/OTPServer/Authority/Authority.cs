@@ -96,10 +96,7 @@ namespace OTPServer.Authority
                 if (reqObj.Request.Message.Type == Message.TYPE.HELLO)
                 {
                     int pid = __ProcessDataStorage.CreateProcess(reqObj.Request);
-
-                    reqObj.Response.SimpleResponse = true;
-                    reqObj.Response.ComplexResponse.ProcessIdentifier = pid;
-                    reqObj.Response.ComplexResponse.StatusCode = Message.STATUS.S_OK;
+                    AnswerSuccess(ref reqObj, pid, Message.STATUS.S_OK);
                 }
                 else if (reqObj.Request.Message.Type == Message.TYPE.ERROR || reqObj.Request.Message.Type == Message.TYPE.SUCCESS)
                 {
@@ -108,13 +105,20 @@ namespace OTPServer.Authority
                 }
                 else
                 {
+                    // These requests need to be authorized, except an ADD containing KeyData only.
                     bool reqAuthorized = false;
-                    if (__ProcessDataStorage.ProcessExists(reqObj.Request) > 0 && __ProcessDataStorage.GetProcess(reqObj.Request).KeyData.Type != KeyData.TYPE.NONE)
+                    if (__ProcessDataStorage.ProcessExists(reqObj.Request) > 0
+                     && __ProcessDataStorage.GetProcess(reqObj.Request).KeyData.Type != KeyData.TYPE.NONE)
                         reqAuthorized = CheckMessageAuthenticationCode(reqObj.Request);
+                    else if (__ProcessDataStorage.ProcessExists(reqObj.Request) > 0
+                          && reqObj.Request.Message.Type == Message.TYPE.ADD 
+                          && reqObj.Request.KeyData.Type != KeyData.TYPE.NONE
+                          && reqObj.Request.DataItems.Count == 0)
+                        reqAuthorized = true;
 
                     if (!reqAuthorized)
                     {
-                        NotAuthorizedAnswer(ref reqObj);
+                        AnswerNotAuthorized(ref reqObj);
                         goto NotifyAndReturn;
                     }
 
@@ -122,17 +126,11 @@ namespace OTPServer.Authority
                     { 
                         if (__ProcessDataStorage.AddDataFromPacketToProcess(reqObj.Request))
                         {
-                            reqObj.Response.SimpleResponse = true;
-                            reqObj.Response.ComplexResponse.ProcessIdentifier = reqObj.Request.ProcessIdentifier.ID;
-                            reqObj.Response.ComplexResponse.StatusCode = Message.STATUS.S_OK;
+                            AnswerSuccess(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.S_OK);
                         }
                         else
                         {
-                            reqObj.Response.SimpleResponse = false;
-                            reqObj.Response.ComplexResponse.ProcessIdentifier = reqObj.Request.ProcessIdentifier.ID;
-                            reqObj.Response.ComplexResponse.StatusCode = Message.STATUS.E_ERROR;
-                            reqObj.Response.ComplexResponse.TextMessage = "Could not add data.";
-
+                            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_ERROR, "Could not add data. Maybe duplicate data was sent.");
                         }
                     }
                     else if (reqObj.Request.Message.Type == Message.TYPE.VERIFY)
@@ -145,10 +143,7 @@ namespace OTPServer.Authority
                     }
                     else
                     {
-                        reqObj.Response.SimpleResponse = false;
-                        reqObj.Response.ComplexResponse.ProcessIdentifier = reqObj.Request.ProcessIdentifier.ID;
-                        reqObj.Response.ComplexResponse.StatusCode = Message.STATUS.E_ERROR;
-                        reqObj.Response.ComplexResponse.TextMessage = "Malformed message. Dont know what to do.";
+                        AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_ERROR, "Malformed message. Dont know what to do.");
                     }
                 }
 
@@ -158,17 +153,32 @@ namespace OTPServer.Authority
             }
         }
 
-        private void NotAuthorizedAnswer(ref RequestObject<OTPPacket, AuthorityResponseObject> reqObj)
+        private void AnswerNotAuthorized(ref RequestObject<OTPPacket, AuthorityResponseObject> reqObj)
         {
-            reqObj.Response.SimpleResponse = false;
-            reqObj.Response.ComplexResponse.ProcessIdentifier = reqObj.Request.ProcessIdentifier.ID;
-            reqObj.Response.ComplexResponse.StatusCode = Message.STATUS.E_ERROR;
-            reqObj.Response.ComplexResponse.TextMessage = "Request not authorized. Please provide your public key first.";
+            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_ERROR, "Request not authorized. No public key provided or MAC is wrong.");
         }
 
         private bool CheckMessageAuthenticationCode(OTPPacket otpPacket)
         {
             return false;
+        }
+
+        private void AnswerSuccess(ref RequestObject<OTPPacket, AuthorityResponseObject> reqObj, int pid, Message.STATUS statusCode)
+        {
+            Answer(ref reqObj, true, pid, statusCode, String.Empty);
+        }
+
+        private void AnswerFailure(ref RequestObject<OTPPacket, AuthorityResponseObject> reqObj, int pid, Message.STATUS statusCode, string textMessage)
+        {
+            Answer(ref reqObj, false, pid, statusCode, textMessage);
+        }
+
+        private void Answer(ref RequestObject<OTPPacket, AuthorityResponseObject> reqObj, bool simpleResponse, int pid, Message.STATUS statusCode, string textMessage)
+        {
+            reqObj.Response.SimpleResponse = simpleResponse;
+            reqObj.Response.ComplexResponse.ProcessIdentifier = pid;
+            reqObj.Response.ComplexResponse.StatusCode = statusCode;
+            reqObj.Response.ComplexResponse.TextMessage = textMessage;
         }
 
         public static RequestObject<OTPPacket, AuthorityResponseObject> Request(Observer observer, OTPPacket otpPacket)

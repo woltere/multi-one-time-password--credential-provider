@@ -82,7 +82,28 @@ namespace OTPServer.XML.OTPPacket
 
         public string ToXMLString()
         {
-            return null;
+            string xmlString = String.Empty;
+            using (StringWriter stringWriter = new StringWriter())
+            {
+                XmlWriter xmlWriter = XmlWriter.Create(stringWriter);
+
+                xmlWriter.WriteStartDocument();
+                xmlWriter.WriteStartElement("OTPPacket");
+                xmlWriter.WriteAttributeString("version", __PROTOCOL_VERSION.ToString());
+
+                this.ProcessIdentifier.ToXmlString(ref xmlWriter);
+                this.Message.ToXmlString(ref xmlWriter);
+
+                foreach (Data item in DataItems)
+                    item.ToXmlString(ref xmlWriter);
+
+                xmlWriter.WriteEndElement();
+                xmlWriter.WriteEndDocument();
+
+                xmlString = stringWriter.ToString();
+                xmlWriter.Close();
+            }
+            return xmlString;
         }
 
         public bool ValidateXML(string xmlString)

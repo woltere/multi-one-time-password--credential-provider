@@ -12,7 +12,9 @@ namespace OTPServer.XML.OTPPacket
         public enum TYPE : int
         {
             NONE    = 0,
-            RSA     = 1
+            RSA     = 1,
+
+            PROTOCOL_VERSION_1_END = 2,
         }
 
         private TYPE _Type;
@@ -65,7 +67,7 @@ namespace OTPServer.XML.OTPPacket
                 XmlNodeType nType = xmlReader.NodeType;
                 if (nType == XmlNodeType.Element)
                 {
-                    success = parseElementNode(xmlReader);
+                    success = ParseElementNode(xmlReader);
                     continue;
                 }
             }

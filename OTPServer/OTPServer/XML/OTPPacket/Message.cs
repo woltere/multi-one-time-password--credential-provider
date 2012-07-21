@@ -13,13 +13,15 @@ namespace OTPServer.XML.OTPPacket
         {
             NONE    = 0,
 
-            HELLO   = 1,
-            ADD     = 1, // Add partial data such as Username, OTP, Public Key etc.
-            VERIFY  = 1,
-            RESYNC  = 1,
-
             SUCCESS = 1,
-            ERROR   = 1
+            ERROR   = 2,
+
+            HELLO   = 3,
+            ADD     = 4, // Add partial data such as Username, OTP, Public Key etc.
+            VERIFY  = 5,
+            RESYNC  = 6,
+
+            PROTOCOL_VERSION_1_END = 7,
         }
 
         public enum STATUS : int
@@ -96,7 +98,7 @@ namespace OTPServer.XML.OTPPacket
         public bool SetFromXMLReader(XmlTextReader xmlReader)
         {
             Content = xmlReader.ReadContentAsObject();
-            bool success = parseAttributes(xmlReader);
+            bool success = ParseAttributes(xmlReader);
 
             if (!success)
                 CleanUp();
@@ -142,6 +144,24 @@ namespace OTPServer.XML.OTPPacket
 
         Return:
             return success;
+        }
+
+        public void ToXmlString(ref XmlWriter xmlWriter)
+        {
+            xmlWriter.WriteStartElement("Message");
+
+            xmlWriter.WriteAttributeString("type", Enum.GetName(typeof(TYPE), ((int)this._Type)));
+
+            if (this._StatusCode != STATUS.NONE)
+                xmlWriter.WriteAttributeString("status", Enum.GetName(typeof(STATUS), ((int)this._StatusCode)));
+
+            if (this._MAC != String.Empty)
+                xmlWriter.WriteAttributeString("mac", this._MAC);
+
+            if (this.TextMessage != String.Empty)
+                xmlWriter.WriteString(this.TextMessage);
+
+            xmlWriter.WriteEndElement();
         }
     }
 }

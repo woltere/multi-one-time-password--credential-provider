@@ -24,5 +24,11 @@ namespace OTPServer.XML.OTPPacket
             this._ID = xmlReader.ReadContentAsInt();
             return success;
         }
+
+        public void ToXmlString(ref XmlWriter xmlWriter)
+        {
+            if (this._ID > NONE)
+                xmlWriter.WriteElementString("PID", this._ID.ToString());
+        }
     }
 }
