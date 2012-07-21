@@ -55,9 +55,14 @@ HRESULT CMultiOneTimePasswordCredentialProviderFilter::Filter(CREDENTIAL_PROVIDE
             { 
 				if ( i < dwFlags )
 				{ } 
-				if (IsEqualGUID(rgclsidProviders[i], CLSID_PasswordCredentialProvider)) 
-				rgbAllow[i] = FALSE; 
-            } 
+				//if (IsEqualGUID(rgclsidProviders[i], CLSID_PasswordCredentialProvider))
+				// Only allow OTP CPs (Logon and Resync)
+				if (IsEqualGUID(rgclsidProviders[i], CLSID_COTP_LOGON) || IsEqualGUID(rgclsidProviders[i], CLSID_COTP_RESYNC)) {
+					rgbAllow[i] = TRUE; 
+				} else {
+					rgbAllow[i] = FALSE; 
+				}
+            }
             return S_OK; 
 			break;         
         case CPUS_CREDUI: 
