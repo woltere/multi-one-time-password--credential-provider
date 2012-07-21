@@ -533,12 +533,11 @@ HRESULT CMultiOneTimePasswordCredential::_CheckOtp()
 
 	PWSTR username;
 	HRESULT getUserName = _pWrappedCredential->GetStringValue(PWCP_SFI_USERNAME, &username);
-
-	PWSTR password = _rgFieldStrings[SFI_OTP_PASSWORD_TEXT];
+	PWSTR password = _rgFieldStrings[SFI_OTP_PASSWORD_TEXT];	
 
 	if (SUCCEEDED(getUserName) && username) {
 		CMultiOneTimePassword pMOTP;
-		PWSTR uname, pass;
+		PWSTR uname, pass;		
 
 		uname = (PWSTR) CoTaskMemAlloc( (lstrlen(username) + 1) * sizeof(WCHAR));
 		pass  = (PWSTR) CoTaskMemAlloc( (lstrlen(password) + 1) * sizeof(WCHAR));
@@ -549,6 +548,16 @@ HRESULT CMultiOneTimePasswordCredential::_CheckOtp()
 		SHStrDupW( username, &uname );		
 		SHStrDupW( password, &pass );
 
+		// Get the last part of the username.
+		// John = John, DOMAIN\John = John, DOMAIN.TLD\John = John
+		wchar_t *token, *next;
+		token = wcstok_s(uname, L"\\", &next);
+		while (token != NULL)
+		{
+			uname = token;
+			token = wcstok_s(NULL, L"\\", &next);
+		}
+
 		hr = pMOTP.OTPCheckPassword(uname, pass);
 
 		// Clean up
@@ -557,8 +566,6 @@ HRESULT CMultiOneTimePasswordCredential::_CheckOtp()
 
 		CoTaskMemFree(uname);
 		CoTaskMemFree(pass);
-
-		return hr;
 	}
 	
 	return hr;
