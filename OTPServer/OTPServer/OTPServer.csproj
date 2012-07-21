@@ -59,18 +59,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="OneTimePasswordAgent.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="OneTimePasswordAgent.Designer.cs">
-      <DependentUpon>OneTimePasswordAgent.cs</DependentUpon>
-    </Compile>
-    <Compile Include="OneTimePasswordAuthority.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="OneTimePasswordAuthority.Designer.cs">
-      <DependentUpon>OneTimePasswordAuthority.cs</DependentUpon>
-    </Compile>
+    <Compile Include="Agent\Agent.cs" />
+    <Compile Include="Authority\Authority.cs" />
+    <Compile Include="Authority\Storage\ProcessDataStorage.cs" />
+    <Compile Include="Communication\Local\AuthorityResponseObject.cs" />
+    <Compile Include="Communication\Local\Observer\Observable.cs" />
+    <Compile Include="Communication\Local\Observer\Observer.cs" />
+    <Compile Include="Communication\Local\RequestObject.cs" />
+    <Compile Include="Communication\Local\RequestQueue.cs" />
+    <Compile Include="Communication\Local\ResponseObject.cs" />
     <Compile Include="OneTimePasswordServer.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -79,7 +76,10 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Server\HandleClient.cs" />
+    <Compile Include="Server\Server.cs" />
     <Compile Include="XML\OTPPacket\Data.cs" />
+    <Compile Include="XML\OTPPacket\KeyData.cs" />
     <Compile Include="XML\OTPPacket\Message.cs" />
     <Compile Include="XML\OTPPacket\OTPPacket.cs" />
     <Compile Include="XML\OTPPacket\ProcessIdentifier.cs" />
@@ -97,6 +97,7 @@
   <ItemGroup>
     <None Include="XML\OTPPacket\Schema\OTPPacketSchema.xsd">
       <SubType>Designer</SubType>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Include="XML\OTPPacket\Samples\SampleOTPPacketClientHello.xml">
       <SubType>Designer</SubType>
@@ -144,6 +145,7 @@
       <Install>true</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

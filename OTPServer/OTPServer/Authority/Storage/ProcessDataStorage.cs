@@ -104,7 +104,7 @@ namespace OTPServer.Authority.Storage
             __ProcessIdentifierToProcessDataMap.Remove(processData.ProcessIdentifier);
         }
 
-        private class ProcessData
+        public class ProcessData
         {
             private ProcessAge _ProcessAgeRef;
             public ProcessAge ProcessAgeRef
@@ -328,7 +328,7 @@ namespace OTPServer.Authority.Storage
             }
         }
 
-        private class ProcessAge
+        public class ProcessAge
         {
             private int _ProcessStartedAt;
             public int ProcessStartedAt
