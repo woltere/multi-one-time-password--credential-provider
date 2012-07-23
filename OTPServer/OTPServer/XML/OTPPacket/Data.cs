@@ -7,7 +7,7 @@ using System.Xml;
 namespace OTPServer.XML.OTPPacket
 {
     [Serializable]
-    class Data
+    public class Data
     {
         public enum TYPE
         {
@@ -83,7 +83,7 @@ namespace OTPServer.XML.OTPPacket
             Type = TYPE.NONE;
         }
 
-        public bool SetFromXMLReader(XmlTextReader xmlReader)
+        public bool SetFromXMLReader(XmlReader xmlReader)
         {
             Content = xmlReader.ReadContentAsObject();
             bool success = ParseAttributes(xmlReader);            
@@ -94,7 +94,7 @@ namespace OTPServer.XML.OTPPacket
             return success;
         }
 
-        private bool ParseAttributes(XmlTextReader xmlReader)
+        private bool ParseAttributes(XmlReader xmlReader)
         {
             bool success = true;
 

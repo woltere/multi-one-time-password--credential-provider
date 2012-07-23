@@ -7,20 +7,29 @@ using System.Net;
 using System.Net.Sockets;
 using System.Net.Security;
 using System.Threading;
+using System.Diagnostics;
+using System.IO;
 
 namespace OTPServer.Server
 {
     public class Server
     {
         // TODO: Move to config
-        public const int       PORT            = 16588;
-        public const IPAddress IPADDR          = IPAddress.Any;
+        public const int PORT = 16588;
         public const int       CLIENT_MAX_AGE  = 1; // Minutes
         public const int       MAX_CONNECTIONS = 250;
+
+        public static EventLog Logger;
 
         private static Dictionary<int, HandleClient> __ClientHandles;
         private Thread _MaintainingThread = null;
         private Thread _ListeningThread = null;
+
+        private static IPAddress __IPADDR = null;
+        public static IPAddress IPADDR
+        {
+            get { return __IPADDR; }
+        }
 
         public static int ConnectionCount
         {
@@ -46,6 +55,8 @@ namespace OTPServer.Server
 
         private Server()
         {
+            __IPADDR = IPAddress.Any;
+
             __Active = false;
             if (__ClientHandles == null)
                 __ClientHandles = new Dictionary<int, HandleClient>();            
@@ -110,12 +121,14 @@ namespace OTPServer.Server
                 {
                     // TODO: Check Active state in frequent intervall (avoid blocking forever, when shutting down). BeginAcceptTcpClient() (asynchronous)?
                     TcpClient clientSocket = listener.AcceptTcpClient();
-                    HandleClient client = new HandleClient(clientSocket);
 
-                    lock (__ClientHandles)
-                        __ClientHandles.Add(Now(), client);
-                    
-                    client.Start();
+                    using (HandleClient client = new HandleClient(clientSocket))
+                    {
+                        lock (__ClientHandles)
+                            __ClientHandles.Add(Now(), client);
+
+                        client.Start();
+                    }
                 }
             }
         }
@@ -136,22 +149,42 @@ namespace OTPServer.Server
 
             while (Active && isThread)
             {
-                // TODO: Wait/Hold when there are no Handles (AutoResetWait)
-                Thread.Sleep(500);
-                foreach (KeyValuePair<int, HandleClient> client in __ClientHandles)
+                try
                 {
-                    if (client.Value.Active == false)
-                        lock (__ClientHandles)
-                            __ClientHandles.Remove(client.Key);
+                    Thread.Sleep(500);
 
-                    if (Now() - client.Key > CLIENT_MAX_AGE * 60)
-                    {
-                        client.Value.Stop(true);
+                    // TODO: Wait/Hold when there are no Handles (AutoResetWait)
+                    while (__ClientHandles.Count <= 0)
+                        Thread.Sleep(500);
 
+                        List<KeyValuePair<int, HandleClient>> tempList;
                         lock (__ClientHandles)
-                            __ClientHandles.Remove(client.Key);
-                    }
+                            tempList = new List<KeyValuePair<int, HandleClient>>(__ClientHandles);
+
+                        foreach (KeyValuePair<int, HandleClient> client in tempList)
+                        {
+                            if (client.Value.Active == false)
+                            {
+                                File.AppendAllText("C:\\maintainer.log", "client.Value.Active == false;\n");
+                                lock (__ClientHandles)
+                                    __ClientHandles.Remove(client.Key);
+                            }
+
+                            if (Now() - client.Key > CLIENT_MAX_AGE * 60)
+                            {
+                                File.AppendAllText("C:\\maintainer.log", "Now() - client.Key > CLIENT_MAX_AGE * 60;\n");
+                                client.Value.Stop(true);
+                                lock (__ClientHandles)
+                                    __ClientHandles.Remove(client.Key);
+                            }
+                        }
                 }
+                catch (ThreadAbortException)
+                {
+                    break;
+                }
+                catch (Exception)
+                { }
             }
         }
 

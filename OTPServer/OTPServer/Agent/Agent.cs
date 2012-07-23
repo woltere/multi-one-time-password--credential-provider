@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Diagnostics;
 
 namespace OTPServer.Agent
 {
     class Agent
     {
+        public static EventLog Logger;
+
         private static Agent __Instance = null;
         public static Agent Instance
         {

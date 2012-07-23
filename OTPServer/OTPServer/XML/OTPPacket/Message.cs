@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using System.IO;
 
 namespace OTPServer.XML.OTPPacket
 {
     [Serializable]
-    class Message
+    public class Message
     {
         public enum TYPE : int
         {
@@ -95,10 +96,13 @@ namespace OTPServer.XML.OTPPacket
             MAC = "";
         }
 
-        public bool SetFromXMLReader(XmlTextReader xmlReader)
+        public bool SetFromXMLReader(XmlReader xmlReader)
         {
-            Content = xmlReader.ReadContentAsObject();
+            Content = xmlReader.Value;
             bool success = ParseAttributes(xmlReader);
+
+            File.AppendAllText("C:\\logloglog.log", "Content: " + Content.ToString() + ";\n");
+            File.AppendAllText("C:\\logloglog.log", "Success: " + success + ";\n");
 
             if (!success)
                 CleanUp();
@@ -106,16 +110,18 @@ namespace OTPServer.XML.OTPPacket
             return success;
         }
 
-        private bool ParseAttributes(XmlTextReader xmlReader)
+        private bool ParseAttributes(XmlReader xmlReader)
         {
             bool success = true;
 
             int attributeCount = xmlReader.AttributeCount;
             for (int i = 0; i < attributeCount; i++)
             {
+                File.AppendAllText("C:\\logloglog.log", "ENTER LOOP (" + i + " < " + attributeCount + ");\n");
                 xmlReader.MoveToAttribute(i);
                 if (xmlReader.Name.Equals("type"))
                 {
+                    File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"type\");\n");
                     if (xmlReader.Value.Equals("HELLO"))
                         Type = TYPE.HELLO;
                     else if (xmlReader.Value.Equals("ADD"))
@@ -128,21 +134,24 @@ namespace OTPServer.XML.OTPPacket
                         Type = TYPE.SUCCESS;
                     else if (xmlReader.Value.Equals("ERROR"))
                         Type = TYPE.ERROR;
-                    goto Return;
+                    File.AppendAllText("C:\\logloglog.log", "TYPE: " + Type.ToString() + ";\n");
+                    continue;
                 }
                 else if (xmlReader.Name.Equals("status"))
                 {
+                    File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"status\");\n");
                     StatusCode = (STATUS)XmlConvert.ToInt32(xmlReader.Value);
-                    goto Return;
+                    continue;
                 }
                 else if (xmlReader.Name.Equals("mac"))
                 {
+                    File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"mac\");\n");
                     MAC = xmlReader.Value;
-                    goto Return;
+                    continue;
                 }
             }
 
-        Return:
+            File.AppendAllText("C:\\logloglog.log", "OTPPacket.Message.ParseAttributes.success: " + success + ";\n");
             return success;
         }
 
@@ -153,7 +162,7 @@ namespace OTPServer.XML.OTPPacket
             xmlWriter.WriteAttributeString("type", Enum.GetName(typeof(TYPE), ((int)this._Type)));
 
             if (this._StatusCode != STATUS.NONE)
-                xmlWriter.WriteAttributeString("status", Enum.GetName(typeof(STATUS), ((int)this._StatusCode)));
+                xmlWriter.WriteAttributeString("status", ((int)this._StatusCode).ToString());
 
             if (this._MAC != String.Empty)
                 xmlWriter.WriteAttributeString("mac", this._MAC);

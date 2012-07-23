@@ -8,8 +8,8 @@ namespace OTPServer.Communication.Local
 {
     class AuthorityResponseObject : ResponseObject
     {
-        private override AuthorityResponse _ComplexResponse = new AuthorityResponse();
-        public override AuthorityResponse ComplexResponse
+        private AuthorityResponse _ComplexResponse = new AuthorityResponse();
+        public AuthorityResponse ComplexResponse
         {
             get { return this._ComplexResponse; }
             set { this._ComplexResponse = value; }

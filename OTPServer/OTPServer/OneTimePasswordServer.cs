@@ -48,6 +48,20 @@ namespace OTPServer
         public OneTimePasswordServer()
         {
             InitializeComponent();
+            
+            /*
+            if (!System.Diagnostics.EventLog.SourceExists("OTPServerService"))
+            {
+                System.Diagnostics.EventLog.CreateEventSource(
+                    "OTPServerService", "OTPServerLog");
+            }
+            eventLog.Source = "OTPServerService";
+            eventLog.Log = "OTPServerLog";
+
+            Authority.Authority.Logger = eventLog;
+            Agent.Agent.Logger = eventLog;
+            Server.Server.Logger = eventLog;
+            */
         }
 
         protected override void OnStart(string[] args)

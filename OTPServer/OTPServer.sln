@@ -3,16 +3,44 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTPServer", "OTPServer\OTPServer.csproj", "{2E925779-5189-4E22-83D9-D1E0CFD7E76B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTPClient", "OTPClient\OTPClient.csproj", "{6E3A1DAA-7EBF-4EA6-A73D-36C68989B699}"
+EndProject
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "OTPServerSetup-x64", "OTPServerSetup-x64\OTPServerSetup-x64.vdproj", "{B4D8553A-F9B6-45B4-B53F-19128F17065C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Certs", "Certs", "{075AF4E7-AD74-4500-BE81-CA70E3BE78BD}"
+	ProjectSection(SolutionItems) = preProject
+		Certs\0EB21.p12 = Certs\0EB21.p12
+		Certs\A1833.pfx = Certs\A1833.pfx
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Debug|x64.ActiveCfg = Debug|x64
+		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Debug|x64.Build.0 = Debug|x64
 		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Debug|x86.ActiveCfg = Debug|x86
 		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Debug|x86.Build.0 = Debug|x86
+		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Release|x64.ActiveCfg = Release|x64
+		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Release|x64.Build.0 = Release|x64
 		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Release|x86.ActiveCfg = Release|x86
 		{2E925779-5189-4E22-83D9-D1E0CFD7E76B}.Release|x86.Build.0 = Release|x86
+		{6E3A1DAA-7EBF-4EA6-A73D-36C68989B699}.Debug|x64.ActiveCfg = Debug|x64
+		{6E3A1DAA-7EBF-4EA6-A73D-36C68989B699}.Debug|x64.Build.0 = Debug|x64
+		{6E3A1DAA-7EBF-4EA6-A73D-36C68989B699}.Debug|x86.ActiveCfg = Debug|x86
+		{6E3A1DAA-7EBF-4EA6-A73D-36C68989B699}.Debug|x86.Build.0 = Debug|x86
+		{6E3A1DAA-7EBF-4EA6-A73D-36C68989B699}.Release|x64.ActiveCfg = Release|x64
+		{6E3A1DAA-7EBF-4EA6-A73D-36C68989B699}.Release|x64.Build.0 = Release|x64
+		{6E3A1DAA-7EBF-4EA6-A73D-36C68989B699}.Release|x86.ActiveCfg = Release|x86
+		{6E3A1DAA-7EBF-4EA6-A73D-36C68989B699}.Release|x86.Build.0 = Release|x86
+		{B4D8553A-F9B6-45B4-B53F-19128F17065C}.Debug|x64.ActiveCfg = Debug
+		{B4D8553A-F9B6-45B4-B53F-19128F17065C}.Debug|x86.ActiveCfg = Debug
+		{B4D8553A-F9B6-45B4-B53F-19128F17065C}.Release|x64.ActiveCfg = Release
+		{B4D8553A-F9B6-45B4-B53F-19128F17065C}.Release|x86.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

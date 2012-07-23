@@ -36,7 +36,12 @@ namespace OTPServer.Authority.Storage
                 return 0;
             */
 
-            int processIdentifier = CreateProcessIdentifier();            
+            int processIdentifier = ProcessIdentifier.NONE;
+            if (otpPacket.ProcessIdentifier.ID != ProcessIdentifier.NONE && ProcessExists(otpPacket) <= ProcessIdentifier.NONE)
+                processIdentifier = otpPacket.ProcessIdentifier.ID;     
+            else
+                processIdentifier = CreateProcessIdentifier();
+
             ProcessAge processAge = new ProcessAge(processIdentifier);
             ProcessData processData = new ProcessData(processAge);
 
@@ -48,7 +53,7 @@ namespace OTPServer.Authority.Storage
 
         private int CreateProcessIdentifier()
         {
-            return ProcessAge.Now();
+            return ProcessAge.Now() - 123456789;
         }
 
         public ProcessData GetProcess(OTPPacket otpPacket)

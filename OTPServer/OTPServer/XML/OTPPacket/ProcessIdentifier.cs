@@ -7,7 +7,7 @@ using System.Xml;
 namespace OTPServer.XML.OTPPacket
 {
     [Serializable]
-    class ProcessIdentifier
+    public class ProcessIdentifier
     {
         public const int NONE = 0;
 

@@ -14,11 +14,13 @@ namespace OTPServer.Communication.Local
             set { _SimpleResponse = value; }
         }
 
+        /*
         private Object _ComplexResponse = new Object();
         public Object ComplexResponse
         {
             get { return this._ComplexResponse; }
             set { this._ComplexResponse = value; }
         }
+        */
     }
 }

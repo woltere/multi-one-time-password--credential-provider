@@ -100,98 +100,139 @@ namespace OTPServer.XML.OTPPacket
                 xmlWriter.WriteEndElement();
                 xmlWriter.WriteEndDocument();
 
-                xmlString = stringWriter.ToString();
                 xmlWriter.Close();
+                xmlString = stringWriter.ToString();
+
+                File.AppendAllText("C:\\logloglog.log", " Content:( " + xmlString + " );\n");
             }
             return xmlString;
         }
 
-        public bool ValidateXML(string xmlString)
-        {
-            byte[] byteArray = Encoding.ASCII.GetBytes(xmlString);
-            MemoryStream stream = new MemoryStream(byteArray);
-            return ValidateXML(stream);
-        }
-
-        public bool ValidateXML(Stream xmlStream)
-        {
-            XmlTextReader xmlReader = new XmlTextReader(xmlStream);
-            return ValidateXML(xmlReader);
-        }
-
-        public bool ValidateXML(XmlTextReader xmlTextReader)
+        private XmlReaderSettings GetXMLReaderSettings(bool validateXml)
         {
             XmlReaderSettings xmlSettings = new XmlReaderSettings();
-            xmlSettings.Schemas.Add("", "OTPPacketSchema.xsd");
-            xmlSettings.ValidationType = ValidationType.Schema;
+
+            xmlSettings.Schemas.Add("", "C:\\OTPPacketSchema.xsd");
+            xmlSettings.ValidationType = (validateXml) ? ValidationType.Schema : ValidationType.None;
             xmlSettings.XmlResolver = null;
 
+            return xmlSettings;
+        }
+
+        public bool SetFromXML(string xmlString, bool validateXml)
+        {
+            byte[] byteArray = Encoding.UTF8.GetBytes(xmlString);
+
+            using (MemoryStream stream = new MemoryStream(byteArray))
+            {
+                XmlTextReader xmlTextReader = new XmlTextReader(stream);
+                return SetFromXML(xmlTextReader, validateXml);
+            }
+        }
+
+        public bool SetFromXML(Stream xmlStream, bool validateXml)
+        {
+            string packet = ReadOTPPacketFromStream(xmlStream);
+            return SetFromXML(packet, validateXml);
+        }
+
+        public bool SetFromXML(XmlTextReader xmlTextReader, bool validateXml)
+        {
+            XmlReaderSettings xmlSettings = GetXMLReaderSettings(validateXml);
             XmlReader xmlReader = XmlReader.Create(xmlTextReader, xmlSettings);
 
-            bool validationSuccess = true;
+            bool success = true;
             try
             {
-                while (xmlReader.Read()) { }
-            }
-            catch (XmlException)
-            {
-                validationSuccess = false;
-            }
-
-            return validationSuccess;
-        }
-
-        public bool SetFromXML(string xmlString, bool partialData)
-        {
-            byte[] byteArray = Encoding.ASCII.GetBytes(xmlString);
-            MemoryStream stream = new MemoryStream(byteArray);
-            return SetFromXML(stream, partialData);
-        }
-
-        public bool SetFromXML(Stream xmlStream, bool partialData)
-        {
-            XmlTextReader xmlReader = new XmlTextReader(xmlStream);
-            return SetFromXML(xmlReader, partialData);
-        }
-
-        public bool SetFromXML(XmlTextReader xmlReader, bool partialData)
-        {
-            if (!partialData && !ValidateXML(xmlReader))
-                return false;
-
-            bool success = true;
-            while (xmlReader.Read() && success)
-            {
-                XmlNodeType nType = xmlReader.NodeType;
-                if (nType == XmlNodeType.Element)
+                File.AppendAllText("C:\\logloglog.log", "MAIN LOOP;\n");
+                while (xmlReader.Read() && success)
                 {
-                    success = ParseElementNode(xmlReader);
-                    continue;
+                    File.AppendAllText("C:\\logloglog.log", "MAIN LOOP CYCLE BEGIN;\n");
+                    File.AppendAllText("C:\\logloglog.log", "xmlReader.Read() && success;\n");
+                    File.AppendAllText("C:\\logloglog.log", "xmlReader.Name = " + xmlReader.Name + "; xmlReader.NodeType = " + xmlReader.NodeType.ToString() + ";\n");
+                    XmlNodeType nType = xmlReader.NodeType;
+                    if (nType == XmlNodeType.Element)
+                    {
+                        File.AppendAllText("C:\\logloglog.log", "nType == XmlNodeType.Element: " + xmlReader.Name + ";\n");
+                        success = ParseElementNode(xmlReader);
+                        continue;
+                    }
+                    File.AppendAllText("C:\\logloglog.log", "MAIN LOOP CYCLE END;\n");
+                    File.AppendAllText("C:\\logloglog.log", "END MAIN LOOP;\n");
                 }
+                File.AppendAllText("C:\\logloglog.log", "END MAIN LOOP;\n");
             }
+            catch (Exception e)
+            {
+                File.AppendAllText("C:\\logloglog.log", "Exception: " + e.Message + ";\n");
+                // Validation failed
+                success = false;
+            }
+
+            File.AppendAllText("C:\\logloglog.log", "OTPPacket.SetFromXML.success: " + success + ";\n");
 
             if (!success)
                 CleanUp();
 
+            File.AppendAllText("C:\\logloglog.log", "EXIT SetFromXML();\n");
+
             return success;
         }
 
-        private bool ParseElementNode(XmlTextReader xmlReader)
+        public static string ReadOTPPacketFromStream(Stream stream)
+        {
+            // Read the  message sent by the server.
+            // The end of the message is signaled using the
+            // "</OTPPacket>" marker.
+            byte[] buffer = new byte[2048];
+            StringBuilder messageData = new StringBuilder();
+            int bytes = -1;
+            do
+            {
+                try
+                {
+                    bytes = stream.Read(buffer, 0, buffer.Length);
+
+                    // Use Decoder class to convert from bytes to UTF8
+                    // in case a character spans two buffers.
+                    Decoder decoder = Encoding.UTF8.GetDecoder();
+                    char[] chars = new char[decoder.GetCharCount(buffer, 0, bytes)];
+                    decoder.GetChars(buffer, 0, bytes, chars, 0);
+                    messageData.Append(chars);
+                    // Check for EOF.
+                    if (messageData.ToString().IndexOf("</OTPPacket>") != -1)
+                    {
+                        break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    throw e;
+                }
+            } while (bytes != 0);
+
+            return messageData.ToString();
+        }
+
+        private bool ParseElementNode(XmlReader xmlReader)
         {
             bool success = true;
 
             if (xmlReader.Name.Equals("OTPPacket"))
             {
+                File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"OTPPacket\");\n");
                 success = ParseAttributes(xmlReader);
                 goto Return;
             }
             else if (xmlReader.Name.Equals("Message"))
             {
+                File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"Message\");\n");
                 success = this._Message.SetFromXMLReader(xmlReader);
                 goto Return;
             }
             else if (xmlReader.Name.Equals("Data"))
             {
+                File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"Data\");\n");
                 Data item = new Data();
                 success = item.SetFromXMLReader(xmlReader);
 
@@ -200,33 +241,40 @@ namespace OTPServer.XML.OTPPacket
             }
             else if (xmlReader.Name.Equals("KeyData"))
             {
+                File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"KeyData\");\n");
                 success = this._KeyData.SetFromXMLReader(xmlReader);
                 goto Return;
             }
             else
             {
+                File.AppendAllText("C:\\logloglog.log", "ParseElementNode not recognized;\n");
                 success = false;
                 goto Return;
             }
 
         Return:
+            File.AppendAllText("C:\\logloglog.log", "EXIT ParseElementNode();\n");
             return success;
         }
 
-        private bool ParseAttributes(XmlTextReader xmlReader)
+        private bool ParseAttributes(XmlReader xmlReader)
         {
             bool success = true;
 
             if (xmlReader.HasAttributes && xmlReader.MoveToFirstAttribute())
             {
+                File.AppendAllText("C:\\logloglog.log", "xmlReader.HasAttributes && xmlReader.MoveToFirstAttribute();\n");
                 do
                 {
-                    if (xmlReader.Name.Equals("version") && XmlConvert.ToChar(xmlReader.Value) > __PROTOCOL_VERSION)
+                    File.AppendAllText("C:\\logloglog.log", "ENTER LOOP;\n");
+                    if (xmlReader.Name.Equals("version") && XmlConvert.ToInt32(xmlReader.Value) > __PROTOCOL_VERSION)
                     {
+                        File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"version\") && XmlConvert.ToInt32(" + xmlReader.Value + ") > __PROTOCOL_VERSION;\n");
                         success = false;
                         goto Return;
                     }
                 } while (xmlReader.MoveToNextAttribute());
+                File.AppendAllText("C:\\logloglog.log", "LEAVE LOOP;\n");
             }
             else
             {
@@ -235,6 +283,7 @@ namespace OTPServer.XML.OTPPacket
             }
 
         Return:
+            File.AppendAllText("C:\\logloglog.log", "EXIT ParseAttributes();\n");
             return success;
         }
     }

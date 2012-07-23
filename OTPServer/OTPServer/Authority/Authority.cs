@@ -7,16 +7,20 @@ using OTPServer.XML.OTPPacket;
 using OTPServer.Communication.Local.Observer;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
+using System.Diagnostics;
+using System.IO;
 
 namespace OTPServer.Authority
 {
     class Authority : Observer
     {
+        public static EventLog Logger;
+
         private static Storage.ProcessDataStorage __ProcessDataStorage = null;
-        private static RequestQueue<OTPPacket, AuthorityResponseObject> __Requests = null;
+        private static volatile RequestQueue<OTPPacket, AuthorityResponseObject> __Requests = null;
 
         private static X509Certificate __ServerCertificate = null;
-        private static AutoResetEvent __Waiting = new AutoResetEvent(false);
+        private static volatile AutoResetEvent __Waiting = new AutoResetEvent(false);
 
         private static Thread __ProcessRequestsThread = null;
 
@@ -85,26 +89,37 @@ namespace OTPServer.Authority
 
         private void ProcessRequests()
         {
+            File.AppendAllText("C:\\authlog2.log", "AUTH: STARTING ProcessRequests;\n");
             while (Active)
             {
+                File.AppendAllText("C:\\authlog2.log", "AUTH: IS ACTIVE;\n");
                 if (__Requests.Empty())
+                {
+                    File.AppendAllText("C:\\authlog2.log", "AUTH: QUEUE EMPTY; WAITING;\n");
                     __Waiting.WaitOne();
+                }
+
+                File.AppendAllText("C:\\authlog2.log", "AUTH: PROCESSING;\n");
 
                 RequestObject<OTPPacket, AuthorityResponseObject> reqObj = __Requests.Dequeue();
 
                 // TODO: Check ProcessAge when existing (for life time check). Implement maintainer thread to check ProcessDataStorage.GetOldestProcess().
                 if (reqObj.Request.Message.Type == Message.TYPE.HELLO)
                 {
+                    File.AppendAllText("C:\\authlog2.log", "AUTH: HELLO;\n");
+                    reqObj.Request.ProcessIdentifier.ID = ProcessIdentifier.NONE; // Clients can not choose a PID
                     int pid = __ProcessDataStorage.CreateProcess(reqObj.Request);
                     AnswerSuccess(ref reqObj, pid, Message.STATUS.S_OK);
                 }
                 else if (reqObj.Request.Message.Type == Message.TYPE.ERROR || reqObj.Request.Message.Type == Message.TYPE.SUCCESS)
                 {
+                    File.AppendAllText("C:\\authlog2.log", "AUTH: SUCC||ERR;\n");
                     // TODO: Server should filter out ERROR and SUCCESS messages from client to avoid filling up the RequestQueue.
                     // DO NOTHING
                 }
                 else
                 {
+                    File.AppendAllText("C:\\authlog2.log", "AUTH: OTHER MESSAGE TYPES;\n");
                     // These requests need to be authorized, except an ADD containing KeyData only.
                     bool reqAuthorized = false;
                     if (__ProcessDataStorage.ProcessExists(reqObj.Request) > 0
@@ -114,16 +129,20 @@ namespace OTPServer.Authority
                           && reqObj.Request.Message.Type == Message.TYPE.ADD 
                           && reqObj.Request.KeyData.Type != KeyData.TYPE.NONE
                           && reqObj.Request.DataItems.Count == 0)
-                        reqAuthorized = true;
+                        reqAuthorized = true;                    
 
                     if (!reqAuthorized)
                     {
+                        File.AppendAllText("C:\\authlog2.log", "AUTH: REQ DENIED;\n");
                         AnswerNotAuthorized(ref reqObj);
-                        goto NotifyAndReturn;
+                        goto NotifyAndContinue;
                     }
 
+                    File.AppendAllText("C:\\authlog2.log", "AUTH: REQ AUTHED;\n");
+
                     if (reqObj.Request.Message.Type == Message.TYPE.ADD)
-                    { 
+                    {
+                        File.AppendAllText("C:\\authlog2.log", "AUTH: ADD;\n");
                         if (__ProcessDataStorage.AddDataFromPacketToProcess(reqObj.Request))
                         {
                             AnswerSuccess(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.S_OK);
@@ -135,21 +154,24 @@ namespace OTPServer.Authority
                     }
                     else if (reqObj.Request.Message.Type == Message.TYPE.VERIFY)
                     {
+                        File.AppendAllText("C:\\authlog2.log", "AUTH: VERIFY;\n");
                         // TODO: add (optional) data to process and verify (through Agent). send verify result.
                     }
                     else if (reqObj.Request.Message.Type == Message.TYPE.RESYNC)
                     {
+                        File.AppendAllText("C:\\authlog2.log", "AUTH: RESYNC;\n");
                         // TODO: add (optional) data to process and resync (through Agent). send resync result.
                     }
                     else
                     {
+                        File.AppendAllText("C:\\authlog2.log", "AUTH: UNKNOWN/MALFORMED;\n");
                         AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_ERROR, "Malformed message. Dont know what to do.");
                     }
                 }
 
-            NotifyAndReturn:
+            NotifyAndContinue:
+                File.AppendAllText("C:\\authlog2.log", "AUTH: NOTIFY AND CONTINUE;\n");
                 reqObj.Notify();
-                return;
             }
         }
 
@@ -183,15 +205,28 @@ namespace OTPServer.Authority
 
         public static RequestObject<OTPPacket, AuthorityResponseObject> Request(Observer observer, OTPPacket otpPacket)
         {
+            File.AppendAllText("C:\\authlog.log", "AUTH: Getting request to enqueue;\n");
+
             AuthorityResponseObject repObj = new AuthorityResponseObject();
-            return __Requests.EnqueueAndObserve(observer, otpPacket, repObj);
+            RequestObject<OTPPacket, AuthorityResponseObject> reqObj = null;
+            lock (__Requests)
+                reqObj = __Requests.EnqueueAndObserve(observer, otpPacket, repObj);
+
+            return reqObj;
         }
 
         public static X509Certificate GetServerCertificate()
         {
             if (__ServerCertificate == null) // TODO: Get certificate data from config
-                __ServerCertificate = new X509Certificate("..\\path\\to\\Certificate.pfx", "ThisPasswordIsTheSameForInstallingTheCertificate");
+                __ServerCertificate = new X509Certificate2("C:\\A1833.pfx", "LpVA90");
             return __ServerCertificate;
+        }
+
+        public override void Update()
+        {
+            File.AppendAllText("C:\\authlog.log", "AUTH: Update();\n");
+            __Waiting.Set();
+            File.AppendAllText("C:\\authlog.log", "AUTH: Update: __Waiting.Set()'ed;\n");
         }
     }
 }
