@@ -1,5 +1,0 @@
-S:\Dev\MultiOneTimePasswordCredentialProvider\OTPServer\OTPClient\bin\Release\OTPClient.exe
-S:\Dev\MultiOneTimePasswordCredentialProvider\OTPServer\OTPClient\bin\Release\OTPClient.pdb
-S:\Dev\MultiOneTimePasswordCredentialProvider\OTPServer\OTPClient\obj\x86\Release\ResolveAssemblyReference.cache
-S:\Dev\MultiOneTimePasswordCredentialProvider\OTPServer\OTPClient\obj\x86\Release\OTPClient.exe
-S:\Dev\MultiOneTimePasswordCredentialProvider\OTPServer\OTPClient\obj\x86\Release\OTPClient.pdb

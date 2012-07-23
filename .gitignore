@@ -2,3 +2,10 @@
 /OTPServer/ipch
 /OTPServer/OTPServer/bin
 /OTPServer/OTPServer/obj
+/OTPServer/OTPServerSetup-x64/Debug
+/OTPServer/OTPServerSetup-x64/Release
+/OTPServer/OTPServerSetup-x64/Release/OTPServerSetup-x64.msi
+/OTPServer/OTPServerSetup-x64/Release/setup.exe
+/OTPServer/OTPServerSetup-x64/Debug/OTPServerSetup-x64.tmp
+/OTPServer/OTPClient/obj
+/OTPServer/OTPClient/bin
