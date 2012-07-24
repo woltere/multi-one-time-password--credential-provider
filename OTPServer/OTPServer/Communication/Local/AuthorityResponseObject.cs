@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using OTPServer.XML.OTPPacket;
+using OTPHelpers.XML.OTPPacket;
 
 namespace OTPServer.Communication.Local
 {

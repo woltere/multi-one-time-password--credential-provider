@@ -9,3 +9,5 @@
 /OTPServer/OTPServerSetup-x64/Debug/OTPServerSetup-x64.tmp
 /OTPServer/OTPClient/obj
 /OTPServer/OTPClient/bin
+/OTPServer/OTPHelpers/obj
+/OTPServer/OTPHelpers/bin

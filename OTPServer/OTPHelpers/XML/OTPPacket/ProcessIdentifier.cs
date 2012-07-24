@@ -5,7 +5,7 @@ using System.Text;
 using System.Xml;
 using System.IO;
 
-namespace OTPServer.XML.OTPPacket
+namespace OTPHelpers.XML.OTPPacket
 {
     [Serializable]
     public class ProcessIdentifier

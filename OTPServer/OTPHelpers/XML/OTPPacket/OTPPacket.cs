@@ -6,7 +6,7 @@ using System.Xml;
 using System.IO;
 using System.Xml.Schema;
 
-namespace OTPServer.XML.OTPPacket
+namespace OTPHelpers.XML.OTPPacket
 {
     [Serializable]
     public class OTPPacket

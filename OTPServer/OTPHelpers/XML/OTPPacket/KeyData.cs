@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Xml;
 
-namespace OTPServer.XML.OTPPacket
+namespace OTPHelpers.XML.OTPPacket
 {
     [Serializable]
     public class KeyData

@@ -7,7 +7,7 @@ using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Security.Authentication;
-using OTPServer.XML.OTPPacket;
+using OTPHelpers.XML.OTPPacket;
 using System.IO;
 using OTPServer.Communication.Local.Observer;
 using OTPServer.Communication.Local;
