@@ -177,7 +177,7 @@ namespace OTPServer.Authority
 
         private void AnswerNotAuthorized(ref RequestObject<OTPPacket, AuthorityResponseObject> reqObj)
         {
-            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_ERROR, "Request not authorized. No public key provided or MAC is wrong.");
+            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_ERROR, "Request not authorized or incomplete. No public key provided or MAC is wrong.");
         }
 
         private bool CheckMessageAuthenticationCode(OTPPacket otpPacket)
