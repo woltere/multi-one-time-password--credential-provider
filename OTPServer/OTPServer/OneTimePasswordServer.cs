@@ -11,7 +11,9 @@ using System.Threading;
 namespace OTPServer
 {
     public partial class OneTimePasswordServer : ServiceBase
-    {        
+    {
+        public static EventLog LOG;
+
         private static Authority.Authority __Authority = null;
         private static Agent.Agent         __Agent     = null;
         private static Server.Server       __Server    = null;
@@ -49,7 +51,6 @@ namespace OTPServer
         {
             InitializeComponent();
             
-            /*
             if (!System.Diagnostics.EventLog.SourceExists("OTPServerService"))
             {
                 System.Diagnostics.EventLog.CreateEventSource(
@@ -58,10 +59,7 @@ namespace OTPServer
             eventLog.Source = "OTPServerService";
             eventLog.Log = "OTPServerLog";
 
-            Authority.Authority.Logger = eventLog;
-            Agent.Agent.Logger = eventLog;
-            Server.Server.Logger = eventLog;
-            */
+            LOG = eventLog;
         }
 
         protected override void OnStart(string[] args)

@@ -8,8 +8,6 @@ namespace OTPServer.Agent
 {
     class Agent
     {
-        public static EventLog Logger;
-
         private static Agent __Instance = null;
         public static Agent Instance
         {

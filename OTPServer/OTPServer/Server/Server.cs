@@ -19,8 +19,6 @@ namespace OTPServer.Server
         public const int       CLIENT_MAX_AGE  = 1; // Minutes
         public const int       MAX_CONNECTIONS = 250;
 
-        public static EventLog Logger;
-
         private static Dictionary<int, HandleClient> __ClientHandles;
         private Thread _MaintainingThread = null;
         private Thread _ListeningThread = null;
@@ -166,7 +164,6 @@ namespace OTPServer.Server
                         {
                             if (client.Value.Active == false)
                             {
-                                File.AppendAllText("C:\\maintainer.log", "client.Value.Active == false;\n");
                                 lock (__ClientHandles)
                                     __ClientHandles.Remove(client.Key);
                                 client.Value.Dispose();
@@ -174,7 +171,6 @@ namespace OTPServer.Server
 
                             if (Now() - client.Key > CLIENT_MAX_AGE * 60)
                             {
-                                File.AppendAllText("C:\\maintainer.log", "Now() - client.Key > CLIENT_MAX_AGE * 60;\n");
                                 client.Value.Stop(true);
                                 lock (__ClientHandles)                                    
                                     __ClientHandles.Remove(client.Key);

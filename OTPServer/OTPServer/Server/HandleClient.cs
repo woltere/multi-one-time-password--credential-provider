@@ -85,11 +85,8 @@ namespace OTPServer.Server
                         OTPPacket otpPacket = new OTPPacket();
                         bool success = otpPacket.SetFromXML(sslStream, true);
 
-                        File.AppendAllText("C:\\logloglog.log", otpPacket.Message.Type.ToString() + ";\n");
-
                         if (!success)
                         {
-                            File.AppendAllText("C:\\logloglog.log", "NO SUCCESS;\n");
                             // TODO: Client and server should manage to set-up a matching protocol version. (Now server rejects any request thats above himself)
 
                             OTPPacket errorPacket = CreateErrorPacket(
@@ -103,7 +100,6 @@ namespace OTPServer.Server
 
                         RequestObject<OTPPacket, AuthorityResponseObject> reqObj = Authority.Authority.Request(this, otpPacket);
 
-                        File.AppendAllText("C:\\logloglog.log", "WAITING FOR RESPONSE;\n");
                         // Wait for answer from RequestQueue (Observer, see Update())
                         this._Waiting.WaitOne();
 
@@ -134,18 +130,9 @@ namespace OTPServer.Server
                     }
                     catch (AuthenticationException)
                     {
-                        File.AppendAllText("C:\\logloglog.log", "Exception: AuthenticationException;\n");
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
-                        File.AppendAllText("C:\\logloglog.log", "Exception: Exception;\n");
-
-                        File.AppendAllText("C:\\logloglog.log", e.InnerException.ToString());
-                        File.AppendAllText("C:\\logloglog.log", e.Message.ToString());
-                        File.AppendAllText("C:\\logloglog.log", e.Source.ToString());
-                        File.AppendAllText("C:\\logloglog.log", e.Data.ToString());
-                        File.AppendAllText("C:\\logloglog.log", e.StackTrace.ToString() + ";\n");
-
                         lock (sslStream)
                             if (sslStream.CanWrite)
                             {
@@ -180,7 +167,6 @@ namespace OTPServer.Server
 
         private OTPPacket CreateErrorPacket(int pid, string message, Message.STATUS statusCode)
         {
-            File.AppendAllText("C:\\logloglog.log", "Creating MESSAGE packet; ERROR;\n");
             OTPPacket otpPacket = CreatePacket(pid);
             SetMessageAttributes(ref otpPacket, Message.TYPE.ERROR, message, statusCode);
 
@@ -189,7 +175,6 @@ namespace OTPServer.Server
 
         private OTPPacket CreateSuccessPacket(int pid, string message, Message.STATUS statusCode)
         {
-            File.AppendAllText("C:\\logloglog.log", "Creating MESSAGE packet; SUCCESS;\n");
             OTPPacket otpPacket = CreatePacket(pid);
             SetMessageAttributes(ref otpPacket, Message.TYPE.SUCCESS, message, statusCode);
 
@@ -198,7 +183,6 @@ namespace OTPServer.Server
 
         private OTPPacket CreateHelloPacket(int pid)
         {
-            File.AppendAllText("C:\\logloglog.log", "Creating HELLO packet;\n");
             OTPPacket otpPacket = CreatePacket(pid);
             SetMessageAttributes(ref otpPacket, Message.TYPE.HELLO, String.Empty, Message.STATUS.NONE);
 
@@ -207,13 +191,6 @@ namespace OTPServer.Server
 
         private void WritePacketToStream(SslStream stream, OTPPacket otpPacket)
         {
-            File.AppendAllText("C:\\logloglog.log", "Writing packet to stream:\n");
-
-            
-            File.AppendAllText("C:\\logloglog.log", "  " + otpPacket.ProcessIdentifier.ID);
-            File.AppendAllText("C:\\logloglog.log", "  " + otpPacket.Message.Type.ToString());
-            File.AppendAllText("C:\\logloglog.log", "  " + otpPacket.DataItems.Count);
-
             string otpPacketAsString = otpPacket.ToXMLString();
             byte[] otpPacketAsByteArray = Encoding.UTF8.GetBytes(otpPacketAsString);
             
@@ -223,7 +200,6 @@ namespace OTPServer.Server
 
         public override void Update()
         {
-            File.AppendAllText("C:\\logloglog.log", "WE WERE NOTIFIED AND CAN PROCEED;\n");
             // Returning from a RequestQueue
             this._Waiting.Set();
         }

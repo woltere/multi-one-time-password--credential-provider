@@ -101,9 +101,6 @@ namespace OTPServer.XML.OTPPacket
             bool success = ParseAttributes(xmlReader);
             Content = xmlReader.ReadElementContentAsString();
 
-            File.AppendAllText("C:\\logloglog.log", "Content: " + Content.ToString() + ";\n");
-            File.AppendAllText("C:\\logloglog.log", "Success: " + success + ";\n");
-
             if (!success)
                 CleanUp();
 
@@ -117,11 +114,9 @@ namespace OTPServer.XML.OTPPacket
             int attributeCount = xmlReader.AttributeCount;
             for (int i = 0; i < attributeCount; i++)
             {
-                File.AppendAllText("C:\\logloglog.log", "ENTER LOOP (" + i + " < " + attributeCount + ");\n");
                 xmlReader.MoveToAttribute(i);
                 if (xmlReader.Name.Equals("type"))
                 {
-                    File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"type\");\n");
                     if (xmlReader.Value.Equals("HELLO"))
                         Type = TYPE.HELLO;
                     else if (xmlReader.Value.Equals("ADD"))
@@ -134,24 +129,20 @@ namespace OTPServer.XML.OTPPacket
                         Type = TYPE.SUCCESS;
                     else if (xmlReader.Value.Equals("ERROR"))
                         Type = TYPE.ERROR;
-                    File.AppendAllText("C:\\logloglog.log", "TYPE: " + Type.ToString() + ";\n");
                     continue;
                 }
                 else if (xmlReader.Name.Equals("status"))
                 {
-                    File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"status\");\n");
                     StatusCode = (STATUS)XmlConvert.ToInt32(xmlReader.Value);
                     continue;
                 }
                 else if (xmlReader.Name.Equals("mac"))
                 {
-                    File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"mac\");\n");
                     MAC = xmlReader.Value;
                     continue;
                 }
             }
 
-            File.AppendAllText("C:\\logloglog.log", "OTPPacket.Message.ParseAttributes.success: " + success + ";\n");
             return success;
         }
 
