@@ -182,6 +182,12 @@ namespace OTPServer.Authority
 
         private bool CheckMessageAuthenticationCode(OTPPacket otpPacket)
         {
+            // MAC = (PID + TIMESTAMP)sigC = ("1234" + "1000000000")sigC = ("12341000000000")sigC = af&.'548&25lPqGgr6%%...
+            // 1. decrypt MAC with client's pubkey
+            // 2. strip PID.ToString().Length characters from the beginning of MAC (real PID = "1234", PID from MAC = "1234") and do a PID==PID_FROM_MAC
+            // 3. use the rest of the MAC as timestamp
+            // 4. see last saved MAC-authorized timestamp and do a new-timestamp > saved-timestamp
+            // 5. save new timestamp to __ProcessDataStorage.ProcessData.LastAuthedTimestamp
             return false;
         }
 

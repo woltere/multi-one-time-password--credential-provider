@@ -111,6 +111,13 @@ namespace OTPServer.Authority.Storage
 
         public class ProcessData
         {
+            private int _LastAuthedTimestamp = 0;
+            public int LastAuthedTimestamp
+            {
+                get { return this._LastAuthedTimestamp; }
+                set { this._LastAuthedTimestamp = value; }
+            }
+
             private ProcessAge _ProcessAgeRef;
             public ProcessAge ProcessAgeRef
             {
