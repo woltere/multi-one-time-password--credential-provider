@@ -85,7 +85,7 @@ namespace OTPServer.XML.OTPPacket
 
         public bool SetFromXMLReader(XmlReader xmlReader)
         {
-            Content = xmlReader.ReadContentAsObject();
+            Content = xmlReader.Value;
             bool success = ParseAttributes(xmlReader);            
 
             if (!success)

@@ -89,12 +89,12 @@ namespace OTPServer.XML.OTPPacket
             }
             else if (xmlReader.Name.Equals("Exponent"))
             {
-                Exponent = xmlReader.ReadContentAsInt();
+                Exponent = XmlConvert.ToInt32(xmlReader.Value);
                 goto Return;
             }
             else if (xmlReader.Name.Equals("Modulus"))
             {
-                Modulus = xmlReader.ReadContentAsInt();
+                Modulus = XmlConvert.ToInt32(xmlReader.Value);
                 goto Return;
             }
             else
@@ -105,6 +105,11 @@ namespace OTPServer.XML.OTPPacket
 
         Return:
             return success;
+        }
+
+        public void ToXmlString(ref XmlWriter xmlWriter)
+        {
+            // Server should not send any KeyData
         }
     }
 }

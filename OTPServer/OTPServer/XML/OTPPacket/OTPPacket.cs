@@ -97,6 +97,9 @@ namespace OTPServer.XML.OTPPacket
                 foreach (Data item in DataItems)
                     item.ToXmlString(ref xmlWriter);
 
+                // Server should never send any KeyData
+                //this.KeyData.ToXmlString(ref xmlWriter);
+
                 xmlWriter.WriteEndElement();
                 xmlWriter.WriteEndDocument();
 
@@ -222,6 +225,12 @@ namespace OTPServer.XML.OTPPacket
             {
                 File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"OTPPacket\");\n");
                 success = ParseAttributes(xmlReader);
+                goto Return;
+            }
+            else if (xmlReader.Name.Equals("PID"))
+            {
+                File.AppendAllText("C:\\logloglog.log", "xmlReader.Name.Equals(\"PID\");\n");
+                success = this._ProcessIdentifier.SetFromXMLReader(xmlReader);
                 goto Return;
             }
             else if (xmlReader.Name.Equals("Message"))

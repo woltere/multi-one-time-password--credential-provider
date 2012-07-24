@@ -59,13 +59,16 @@ namespace OTPServer.Server
 
         public void Stop(bool stopThread)
         {
-            this._Active = false;            
+            this._Active = false;
 
             if (stopThread && _ClientThread != null)
+            {
                 _ClientThread.Abort();
-            _ClientThread.Join();
+                _ClientThread.Join();
+            }
 
-            this._ClientSocket.Close();
+            if (_ClientSocket != null)
+                this._ClientSocket.Close();
         }
 
         private void CommunicationThread()
@@ -77,97 +80,72 @@ namespace OTPServer.Server
                 {
                     try
                     {
-                        try
+                        sslStream.AuthenticateAsServer(certificate);
+
+                        OTPPacket otpPacket = new OTPPacket();
+                        bool success = otpPacket.SetFromXML(sslStream, true);
+
+                        File.AppendAllText("C:\\logloglog.log", otpPacket.Message.Type.ToString() + ";\n");
+
+                        if (!success)
                         {
-                            sslStream.AuthenticateAsServer(certificate);
+                            File.AppendAllText("C:\\logloglog.log", "NO SUCCESS;\n");
+                            // TODO: Client and server should manage to set-up a matching protocol version. (Now server rejects any request thats above himself)
+
+                            OTPPacket errorPacket = CreateErrorPacket(
+                                ProcessIdentifier.NONE,
+                                "Malformed packet or wrong protocol version",
+                                Message.STATUS.E_ERROR);
+                            WritePacketToStream(sslStream, errorPacket);
+
+                            return;
                         }
-                        catch (AuthenticationException)
+
+                        RequestObject<OTPPacket, AuthorityResponseObject> reqObj = Authority.Authority.Request(this, otpPacket);
+
+                        File.AppendAllText("C:\\logloglog.log", "WAITING FOR RESPONSE;\n");
+                        // Wait for answer from RequestQueue (Observer, see Update())
+                        this._Waiting.WaitOne();
+
+                        if (reqObj.Response.SimpleResponse)
                         {
-                            this._Active = false;
-                        }
-
-                        /*
-                        string test = ReadPacketFromStream(sslStream);
-
-                        byte[] stringAsByteArray = Encoding.UTF8.GetBytes(test);
-                        sslStream.Write(stringAsByteArray);
-
-                        this._Active = false;
-                        */
-
-                        if (Active)
-                        {
-                            OTPPacket otpPacket = new OTPPacket();
-                            bool success = false;
-
-                            try
-                            {
-                                success = otpPacket.SetFromXML(sslStream, true);
-                            }
-                            catch (Exception e)
-                            {
-                                File.AppendAllText("C:\\logloglog.log", e.InnerException.ToString());
-                                File.AppendAllText("C:\\logloglog.log", e.Message.ToString());
-                                File.AppendAllText("C:\\logloglog.log", e.Source.ToString());
-                                File.AppendAllText("C:\\logloglog.log", e.Data.ToString());
-                                File.AppendAllText("C:\\logloglog.log", e.StackTrace.ToString() + ";\n");
-
-                                throw e;
-                            }
-
-                            // create a writer and open the file
-                            File.AppendAllText("C:\\logloglog.log", otpPacket.Message.Type.ToString() + ";\n");
-
-                            if (!success)
-                            {
-                                File.AppendAllText("C:\\logloglog.log", "NO SUCCESS;\n");
-                                // TODO: Client and server should manage to set-up a matching protocol version. (Now server rejects any request thats above himself)
-
-                                OTPPacket errorPacket = CreateErrorPacket(
-                                    ProcessIdentifier.NONE,
-                                    "Malformed packet or wrong protocol version",
-                                    Message.STATUS.E_ERROR);
-                                WritePacketToStream(sslStream, errorPacket);
-
-                                Stop(false); // We don't need to interrupt the thread itself. We already reached the end.
-                                return;
-                            }
-
-                            RequestObject<OTPPacket, AuthorityResponseObject> reqObj = Authority.Authority.Request(this, otpPacket);
-
-                            File.AppendAllText("C:\\logloglog.log", "WAITING FOR RESPONSE;\n");
-                            // Wait for answer from RequestQueue (Observer, see Update())
-                            this._Waiting.WaitOne();
-
-                            if (reqObj.Response.SimpleResponse)
-                            {
-                                OTPPacket successPacket;
-                                if (reqObj.Request.Message.Type == Message.TYPE.HELLO)
-                                    successPacket = CreateHelloPacket(reqObj.Response.ComplexResponse.ProcessIdentifier);
-                                else
-                                {
-                                    successPacket = CreateSuccessPacket(
-                                    reqObj.Response.ComplexResponse.ProcessIdentifier,
-                                    reqObj.Response.ComplexResponse.TextMessage,
-                                    reqObj.Response.ComplexResponse.StatusCode
-                                    );
-                                }
-                                WritePacketToStream(sslStream, successPacket);
-                            }
+                            OTPPacket successPacket;
+                            if (reqObj.Request.Message.Type == Message.TYPE.HELLO)
+                                successPacket = CreateHelloPacket(reqObj.Response.ComplexResponse.ProcessIdentifier);
                             else
                             {
-                                OTPPacket errorPacket = CreateErrorPacket(
-                                    reqObj.Response.ComplexResponse.ProcessIdentifier,
-                                    reqObj.Response.ComplexResponse.TextMessage,
-                                    reqObj.Response.ComplexResponse.StatusCode
-                                    );
-                                WritePacketToStream(sslStream, errorPacket);
+                                successPacket = CreateSuccessPacket(
+                                reqObj.Response.ComplexResponse.ProcessIdentifier,
+                                reqObj.Response.ComplexResponse.TextMessage,
+                                reqObj.Response.ComplexResponse.StatusCode
+                                );
                             }
+                            WritePacketToStream(sslStream, successPacket);
+                        }
+                        else
+                        {
+                            OTPPacket errorPacket = CreateErrorPacket(
+                                reqObj.Response.ComplexResponse.ProcessIdentifier,
+                                reqObj.Response.ComplexResponse.TextMessage,
+                                reqObj.Response.ComplexResponse.StatusCode
+                                );
+                            WritePacketToStream(sslStream, errorPacket);
                         }
                     }
-                    catch (Exception)
+                    catch (AuthenticationException)
                     {
-                        /*
+                        File.AppendAllText("C:\\logloglog.log", "Exception: AuthenticationException;\n");
+                    }
+                    catch (Exception e)
+                    {
+                        File.AppendAllText("C:\\logloglog.log", "Exception: Exception;\n");
+
+                        File.AppendAllText("C:\\logloglog.log", e.InnerException.ToString());
+                        File.AppendAllText("C:\\logloglog.log", e.Message.ToString());
+                        File.AppendAllText("C:\\logloglog.log", e.Source.ToString());
+                        File.AppendAllText("C:\\logloglog.log", e.Data.ToString());
+                        File.AppendAllText("C:\\logloglog.log", e.StackTrace.ToString() + ";\n");
+
                         lock (sslStream)
                             if (sslStream.CanWrite)
                             {
@@ -177,11 +155,8 @@ namespace OTPServer.Server
                                             Message.STATUS.E_UNKNOWN);
                                 WritePacketToStream(sslStream, errorPacket);
                             }
-                        */
                     }
                 }
-
-                //Stop(false); // We don't need to interrupt the thread itself. We already reached the end.
             }
             finally
             {
@@ -255,7 +230,7 @@ namespace OTPServer.Server
 
         public void Dispose()
         {
-            //_Waiting.Dispose();
+            _Waiting.Dispose();
         }
     }
 }

@@ -98,8 +98,8 @@ namespace OTPServer.XML.OTPPacket
 
         public bool SetFromXMLReader(XmlReader xmlReader)
         {
-            Content = xmlReader.Value;
             bool success = ParseAttributes(xmlReader);
+            Content = xmlReader.ReadElementContentAsString();
 
             File.AppendAllText("C:\\logloglog.log", "Content: " + Content.ToString() + ";\n");
             File.AppendAllText("C:\\logloglog.log", "Success: " + success + ";\n");

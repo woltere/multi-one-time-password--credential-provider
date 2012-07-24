@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using System.IO;
 
 namespace OTPServer.XML.OTPPacket
 {
@@ -18,10 +19,10 @@ namespace OTPServer.XML.OTPPacket
             set { this._ID = value; }
         }
 
-        public bool SetFromXMLReader(XmlTextReader xmlReader)
+        public bool SetFromXMLReader(XmlReader xmlReader)
         {
             bool success = true;
-            this._ID = xmlReader.ReadContentAsInt();
+            this._ID = xmlReader.ReadElementContentAsInt();
             return success;
         }
 

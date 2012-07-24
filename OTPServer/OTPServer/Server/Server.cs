@@ -122,13 +122,14 @@ namespace OTPServer.Server
                     // TODO: Check Active state in frequent intervall (avoid blocking forever, when shutting down). BeginAcceptTcpClient() (asynchronous)?
                     TcpClient clientSocket = listener.AcceptTcpClient();
 
-                    using (HandleClient client = new HandleClient(clientSocket))
-                    {
+                    HandleClient client = new HandleClient(clientSocket);
+                    //using (HandleClient client = new HandleClient(clientSocket))
+                    //{
                         lock (__ClientHandles)
                             __ClientHandles.Add(Now(), client);
 
                         client.Start();
-                    }
+                    //}
                 }
             }
         }
@@ -168,14 +169,16 @@ namespace OTPServer.Server
                                 File.AppendAllText("C:\\maintainer.log", "client.Value.Active == false;\n");
                                 lock (__ClientHandles)
                                     __ClientHandles.Remove(client.Key);
+                                client.Value.Dispose();
                             }
 
                             if (Now() - client.Key > CLIENT_MAX_AGE * 60)
                             {
                                 File.AppendAllText("C:\\maintainer.log", "Now() - client.Key > CLIENT_MAX_AGE * 60;\n");
                                 client.Value.Stop(true);
-                                lock (__ClientHandles)
+                                lock (__ClientHandles)                                    
                                     __ClientHandles.Remove(client.Key);
+                                client.Value.Dispose();
                             }
                         }
                 }
