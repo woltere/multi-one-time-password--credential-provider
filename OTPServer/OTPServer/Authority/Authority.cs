@@ -9,6 +9,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Diagnostics;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace OTPServer.Authority
 {
@@ -17,7 +18,7 @@ namespace OTPServer.Authority
         private static Storage.ProcessDataStorage __ProcessDataStorage = null;
         private static volatile RequestQueue<OTPPacket, AuthorityResponseObject> __Requests = null;
 
-        private static X509Certificate __ServerCertificate = null;
+        private static X509Certificate2 __ServerCertificate = null;
         private static volatile AutoResetEvent __Waiting = new AutoResetEvent(false);
 
         private static Thread __ProcessRequestsThread = null;
@@ -112,10 +113,11 @@ namespace OTPServer.Authority
                 {
                     // These requests need to be authorized, except an ADD containing KeyData only.
                     bool reqAuthorized = false;
-                    if (__ProcessDataStorage.ProcessExists(reqObj.Request) > 0
-                     && __ProcessDataStorage.GetProcess(reqObj.Request).KeyData.Type != KeyData.TYPE.NONE)
-                        reqAuthorized = CheckMessageAuthenticationCode(reqObj.Request);
-                    else if (__ProcessDataStorage.ProcessExists(reqObj.Request) > 0
+                    Storage.ProcessDataStorage.ProcessData process = __ProcessDataStorage.GetProcess(reqObj.Request);
+                    if (process != null
+                     && process.KeyData.Type != KeyData.TYPE.NONE)
+                        reqAuthorized = CheckMessageAuthenticationCode(process.KeyData, reqObj.Request);
+                    else if (process != null
                           && reqObj.Request.Message.Type == Message.TYPE.ADD 
                           && reqObj.Request.KeyData.Type != KeyData.TYPE.NONE
                           && reqObj.Request.DataItems.Count == 0)
@@ -162,15 +164,42 @@ namespace OTPServer.Authority
             AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_ERROR, "Request not authorized or incomplete. No public key provided or MAC is wrong.");
         }
 
-        private bool CheckMessageAuthenticationCode(OTPPacket otpPacket)
+        private bool CheckMessageAuthenticationCode(KeyData keyData, OTPPacket otpPacket)
         {
-            // MAC = (PID + TIMESTAMP)sigC = ("1234" + "1000000000")sigC = ("12341000000000")sigC = af&.'548&25lPqGgr6%%...
-            // 1. decrypt MAC with client's pubkey
-            // 2. strip PID.ToString().Length characters from the beginning of MAC (real PID = "1234", PID from MAC = "1234") and do a PID==PID_FROM_MAC
-            // 3. use the rest of the MAC as timestamp
-            // 4. see last saved MAC-authorized timestamp and do a new-timestamp > saved-timestamp
-            // 5. save new timestamp to __ProcessDataStorage.ProcessData.LastAuthedTimestamp
-            return false;
+            try
+            {
+                Storage.ProcessDataStorage.ProcessData process = __ProcessDataStorage.GetProcess(otpPacket);
+
+                if (process == null)
+                    return false;
+
+                RSAParameters pubKeyParam = new RSAParameters();
+                pubKeyParam.Exponent = keyData.Exponent;
+                pubKeyParam.Modulus = keyData.Modulus;
+
+                RSACryptoServiceProvider pubKey = new RSACryptoServiceProvider();
+                pubKey.ImportParameters(pubKeyParam);
+
+                bool verifiedSignature =
+                    pubKey.VerifyData(
+                        Encoding.UTF8.GetBytes(otpPacket.ProcessIdentifier.ID.ToString() + otpPacket.Message.TimeStamp.ToString()),
+                        pubKey.SignatureAlgorithm,
+                        otpPacket.Message.MAC
+                    );
+
+                if (!verifiedSignature)
+                    return false;
+
+                if (otpPacket.Message.TimeStamp > process.LastAuthedTimestamp || otpPacket.Message.TimeStamp <= Storage.ProcessDataStorage.ProcessAge.Now())
+                    return false;
+
+                process.LastAuthedTimestamp = otpPacket.Message.TimeStamp;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private void AnswerSuccess(ref RequestObject<OTPPacket, AuthorityResponseObject> reqObj, int pid, Message.STATUS statusCode)

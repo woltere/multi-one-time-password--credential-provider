@@ -24,39 +24,39 @@ namespace OTPServer.XML.OTPPacket
             set { this._Type = value; }
         }
 
-        private int _Modulus;
-        public int Modulus
+        private string _Modulus;
+        public byte[] Modulus
         {
-            get { return this._Modulus; }
-            set { this._Modulus = value; }
+            get { return Convert.FromBase64String(this._Modulus); }
+            set { this._Modulus = Convert.ToBase64String(value); }
         }
 
-        private int _Exponent;
-        public int Exponent
+        private string _Exponent;
+        public byte[] Exponent
         {
-            get { return this._Exponent; }
-            set { this._Exponent = value; }
+            get { return Convert.FromBase64String(this._Exponent); }
+            set { this._Exponent = Convert.ToBase64String(value); }
         }
 
         public KeyData() 
         {
             Type = TYPE.NONE;
-            Modulus  = 0;
-            Exponent = 0;
+            this._Modulus  = String.Empty;
+            this._Exponent = String.Empty;
         }
 
         ~KeyData() 
         {
             Type = TYPE.NONE;
-            Modulus  = 0;
-            Exponent = 0;
+            this._Modulus = String.Empty;
+            this._Exponent = String.Empty;
         }
 
         private void CleanUp()
         {
             Type = TYPE.NONE;
-            Modulus  = 0;
-            Exponent = 0;
+            this._Modulus = String.Empty;
+            this._Exponent = String.Empty;
         }
 
         public bool SetFromXMLReader(XmlReader xmlReader)
@@ -89,12 +89,12 @@ namespace OTPServer.XML.OTPPacket
             }
             else if (xmlReader.Name.Equals("Exponent"))
             {
-                Exponent = XmlConvert.ToInt32(xmlReader.Value);
+                this._Exponent = xmlReader.Value;
                 goto Return;
             }
             else if (xmlReader.Name.Equals("Modulus"))
             {
-                Modulus = XmlConvert.ToInt32(xmlReader.Value);
+                this._Modulus = xmlReader.Value;
                 goto Return;
             }
             else
@@ -109,7 +109,7 @@ namespace OTPServer.XML.OTPPacket
 
         public void ToXmlString(ref XmlWriter xmlWriter)
         {
-            // Server should not send any KeyData
+            // Server should not send any KeyData, client should use this._Modulus and this._Exponent
         }
     }
 }

@@ -67,17 +67,25 @@ namespace OTPServer.XML.OTPPacket
         }
 
         public string _MAC;
-        public string MAC
+        public byte[] MAC
         {
-            get { return this._MAC; }
-            set { this._MAC = value; }
+            get { return Convert.FromBase64String(this._MAC); }
+            set { this._MAC = Convert.ToBase64String(value); }
+        }
+
+        public int _TimeStamp;
+        public int TimeStamp
+        {
+            get { return this._TimeStamp; }
+            set { this._TimeStamp = value; }
         }
 
         public Message() 
         {
             Type = TYPE.NONE;
             StatusCode = STATUS.NONE;
-            MAC = "";
+            TimeStamp = 0;
+            this._MAC = String.Empty;
         }
 
         ~Message() 
@@ -85,7 +93,8 @@ namespace OTPServer.XML.OTPPacket
             Content = null;
             Type = TYPE.NONE;
             StatusCode = STATUS.NONE;
-            MAC = "";
+            TimeStamp = 0;
+            this._MAC = String.Empty;
         }
 
         private void CleanUp()
@@ -93,7 +102,8 @@ namespace OTPServer.XML.OTPPacket
             Content = null;
             Type = TYPE.NONE;
             StatusCode = STATUS.NONE;
-            MAC = "";
+            TimeStamp = 0;
+            this._MAC = String.Empty;
         }
 
         public bool SetFromXMLReader(XmlReader xmlReader)
@@ -136,9 +146,14 @@ namespace OTPServer.XML.OTPPacket
                     StatusCode = (STATUS)XmlConvert.ToInt32(xmlReader.Value);
                     continue;
                 }
+                else if (xmlReader.Name.Equals("timestamp"))
+                {
+                    StatusCode = (STATUS)XmlConvert.ToInt32(xmlReader.Value);
+                    continue;
+                }
                 else if (xmlReader.Name.Equals("mac"))
                 {
-                    MAC = xmlReader.Value;
+                    this._MAC = xmlReader.Value;
                     continue;
                 }
             }
@@ -154,6 +169,9 @@ namespace OTPServer.XML.OTPPacket
 
             if (this._StatusCode != STATUS.NONE)
                 xmlWriter.WriteAttributeString("status", ((int)this._StatusCode).ToString());
+
+            if (this._TimeStamp != 0)
+                xmlWriter.WriteAttributeString("timestamp", this._TimeStamp.ToString());
 
             if (this._MAC != String.Empty)
                 xmlWriter.WriteAttributeString("mac", this._MAC);

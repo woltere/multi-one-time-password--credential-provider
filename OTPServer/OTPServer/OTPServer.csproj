@@ -81,8 +81,7 @@
     <CodeAnalysisIgnoreBuiltInRules>false</CodeAnalysisIgnoreBuiltInRules>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject>
-    </StartupObject>
+    <StartupObject>OTPServer.Program</StartupObject>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />

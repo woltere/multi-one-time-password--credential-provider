@@ -22,9 +22,10 @@
   <xsd:complexType name="ElemMessageType">
     <xsd:simpleContent>
       <xsd:extension base="xsd:string">
-        <xsd:attribute name="type"   type="AttrMessageType" use="required" />        
-        <xsd:attribute name="status" type="xsd:int"             use="optional" />
-        <xsd:attribute name="mac"    type="xsd:string"          use="optional" />
+        <xsd:attribute name="type"      type="AttrMessageType" use="required" />        
+        <xsd:attribute name="status"    type="xsd:int"         use="optional" />
+        <xsd:attribute name="timestamp" type="xsd:int"         use="optional" />
+        <xsd:attribute name="mac"       type="xsd:string"      use="optional" />        
       </xsd:extension>
     </xsd:simpleContent>
   </xsd:complexType>
