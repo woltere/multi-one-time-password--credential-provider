@@ -82,7 +82,10 @@ namespace OTPServer.Server
                     {
                         sslStream.AuthenticateAsServer(certificate);
 
-                        OTPPacket otpPacket = new OTPPacket();
+                        OTPPacket otpPacket;
+
+                    NextRequest:
+                        otpPacket = new OTPPacket();
                         bool success = otpPacket.SetFromXML(sslStream, true);
 
                         if (!success)
@@ -127,13 +130,18 @@ namespace OTPServer.Server
                                 );
                             WritePacketToStream(sslStream, errorPacket);
                         }
+
+                        goto NextRequest;
                     }
                     catch (AuthenticationException)
                     {
+                        // TODO: Log it
                     }
                     catch (Exception)
                     {
+                        // TODO: Log it
                         lock (sslStream)
+                        {
                             if (sslStream.CanWrite)
                             {
                                 OTPPacket errorPacket = CreateErrorPacket(
@@ -142,8 +150,13 @@ namespace OTPServer.Server
                                             Message.STATUS.E_UNKNOWN);
                                 WritePacketToStream(sslStream, errorPacket);
                             }
+                        }
                     }
                 }
+            }
+            catch (Exception)
+            {
+                // TODO: Log it
             }
             finally
             {

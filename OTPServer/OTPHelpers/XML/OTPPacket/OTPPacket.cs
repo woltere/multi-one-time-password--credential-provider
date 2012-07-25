@@ -98,7 +98,7 @@ namespace OTPHelpers.XML.OTPPacket
                     item.ToXmlString(ref xmlWriter);
 
                 // Server should never send any KeyData
-                //this.KeyData.ToXmlString(ref xmlWriter);
+                this.KeyData.ToXmlString(ref xmlWriter);
 
                 xmlWriter.WriteEndElement();
                 xmlWriter.WriteEndDocument();
@@ -122,13 +122,10 @@ namespace OTPHelpers.XML.OTPPacket
 
         public bool SetFromXML(string xmlString, bool validateXml)
         {
-            byte[] byteArray = Encoding.UTF8.GetBytes(xmlString);
-
-            using (MemoryStream stream = new MemoryStream(byteArray))
-            {
-                XmlTextReader xmlTextReader = new XmlTextReader(stream);
-                return SetFromXML(xmlTextReader, validateXml);
-            }
+            bool success = false;
+            using (XmlTextReader xmlTextReader = new XmlTextReader(new StringReader(xmlString)))
+                    success = SetFromXML(xmlTextReader, validateXml);
+            return success;
         }
 
         public bool SetFromXML(Stream xmlStream, bool validateXml)
@@ -197,7 +194,7 @@ namespace OTPHelpers.XML.OTPPacket
                 {
                     throw e;
                 }
-            } while (bytes != 0);
+            } while (bytes != 0);            
 
             return messageData.ToString();
         }
@@ -205,7 +202,6 @@ namespace OTPHelpers.XML.OTPPacket
         private bool ParseElementNode(XmlReader xmlReader)
         {
             bool success = true;
-
             if (xmlReader.Name.Equals("OTPPacket"))
             {
                 success = ParseAttributes(xmlReader);

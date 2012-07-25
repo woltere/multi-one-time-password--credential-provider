@@ -183,14 +183,14 @@ namespace OTPServer.Authority
                 bool verifiedSignature =
                     pubKey.VerifyData(
                         Encoding.UTF8.GetBytes(otpPacket.ProcessIdentifier.ID.ToString() + otpPacket.Message.TimeStamp.ToString()),
-                        pubKey.SignatureAlgorithm,
+                        new MD5CryptoServiceProvider(),
                         otpPacket.Message.MAC
                     );
 
                 if (!verifiedSignature)
                     return false;
 
-                if (otpPacket.Message.TimeStamp > process.LastAuthedTimestamp || otpPacket.Message.TimeStamp <= Storage.ProcessDataStorage.ProcessAge.Now())
+                if (otpPacket.Message.TimeStamp <= process.LastAuthedTimestamp || otpPacket.Message.TimeStamp > Storage.ProcessDataStorage.ProcessAge.NowMilli())
                     return false;
 
                 process.LastAuthedTimestamp = otpPacket.Message.TimeStamp;

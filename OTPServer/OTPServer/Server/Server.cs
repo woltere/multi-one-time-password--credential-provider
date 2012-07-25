@@ -102,7 +102,7 @@ namespace OTPServer.Server
             TcpListener listener;
 
             if (!isThread && _ListeningThread == null)
-            {                
+            {
                 _ListeningThread = new Thread(Listen);
                 _ListeningThread.Start();
                 return;
@@ -115,19 +115,30 @@ namespace OTPServer.Server
 
             while (Active && isThread)
             {
-                if (ConnectionCount <= MAX_CONNECTIONS)
+                try
                 {
-                    // TODO: Check Active state in frequent intervall (avoid blocking forever, when shutting down). BeginAcceptTcpClient() (asynchronous)?
-                    TcpClient clientSocket = listener.AcceptTcpClient();
+                    if (ConnectionCount <= MAX_CONNECTIONS)
+                    {
+                        // TODO: Check Active state in frequent intervall (avoid blocking forever, when shutting down). BeginAcceptTcpClient() (asynchronous)?
+                        TcpClient clientSocket = listener.AcceptTcpClient();
 
-                    HandleClient client = new HandleClient(clientSocket);
-                    //using (HandleClient client = new HandleClient(clientSocket))
-                    //{
+                        HandleClient client = new HandleClient(clientSocket);
+                        //using (HandleClient client = new HandleClient(clientSocket))
+                        //{
                         lock (__ClientHandles)
                             __ClientHandles.Add(Now(), client);
 
                         client.Start();
-                    //}
+                        //}
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    break;
+                }
+                catch (Exception)
+                {
+                    // TODO: Log it
                 }
             }
         }
@@ -187,6 +198,7 @@ namespace OTPServer.Server
             }
         }
 
+        // SECONDS
         private static int Now()
         {
             DateTime epochStart = new DateTime(1970, 1, 1);
