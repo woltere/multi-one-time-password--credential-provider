@@ -15,6 +15,18 @@
     {
         "Entry"
         {
+        "MsmKey" = "8:_08713438656E94ECEB4D79753503409D"
+        "OwnerKey" = "8:_402C07231FF441C081260B297D8DD7CE"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_402C07231FF441C081260B297D8DD7CE"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_80F5F6B8AE7A4DA19B4BD9DBEC6D3A64"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -22,7 +34,13 @@
         "Entry"
         {
         "MsmKey" = "8:_UNDEFINED"
-        "OwnerKey" = "8:_996B78EC029644E9BCADC5F2C62C73A2"
+        "OwnerKey" = "8:_08713438656E94ECEB4D79753503409D"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_402C07231FF441C081260B297D8DD7CE"
         "MsmSig" = "8:_UNDEFINED"
         }
     }
@@ -43,6 +61,14 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+            }
         }
         "Release"
         {
@@ -59,65 +85,73 @@
         "PrivateKeyFile" = "8:"
         "TimeStampServer" = "8:"
         "InstallerBootstrapper" = "3:2"
+            "BootstrapperCfg:{63ACBE69-63AA-4F98-B2B6-99F9E24495F2}"
+            {
+            "Enabled" = "11:TRUE"
+            "PromptEnabled" = "11:TRUE"
+            "PrerequisitesLocation" = "2:1"
+            "Url" = "8:"
+            "ComponentsUrl" = "8:"
+            }
         }
     }
     "Deployable"
     {
         "CustomAction"
         {
-            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_251979CBFA5A45139EB6F15ECD06816E"
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_36E0812E7CBC486D9180299FC475E304"
             {
             "Name" = "8:Primäre Ausgabe von OTPServer (Release x86)"
             "Condition" = "8:"
-            "Object" = "8:_996B78EC029644E9BCADC5F2C62C73A2"
-            "FileType" = "3:2"
-            "InstallAction" = "3:3"
-            "Arguments" = "8:"
-            "EntryPoint" = "8:"
-            "Sequence" = "3:1"
-            "Identifier" = "8:_EC0032BE_9D08_48EC_AE06_6607A9698511"
-            "InstallerClass" = "11:TRUE"
-            "CustomActionData" = "8:"
-            }
-            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_67D60D5D196546FC85DB82543F481A59"
-            {
-            "Name" = "8:Primäre Ausgabe von OTPServer (Release x86)"
-            "Condition" = "8:"
-            "Object" = "8:_996B78EC029644E9BCADC5F2C62C73A2"
-            "FileType" = "3:2"
-            "InstallAction" = "3:4"
-            "Arguments" = "8:"
-            "EntryPoint" = "8:"
-            "Sequence" = "3:1"
-            "Identifier" = "8:_DD1F3095_984D_4EEC_A492_7F26655263BB"
-            "InstallerClass" = "11:TRUE"
-            "CustomActionData" = "8:"
-            }
-            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_8EDAF6470EA74C8B8E8CCE5F9169BE55"
-            {
-            "Name" = "8:Primäre Ausgabe von OTPServer (Release x86)"
-            "Condition" = "8:"
-            "Object" = "8:_996B78EC029644E9BCADC5F2C62C73A2"
-            "FileType" = "3:2"
-            "InstallAction" = "3:1"
-            "Arguments" = "8:"
-            "EntryPoint" = "8:"
-            "Sequence" = "3:1"
-            "Identifier" = "8:_F1B2686F_8D6B_40E2_8377_1C6CD02BA590"
-            "InstallerClass" = "11:TRUE"
-            "CustomActionData" = "8:"
-            }
-            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_CF0C4390203944699C5B042C8DA5CD33"
-            {
-            "Name" = "8:Primäre Ausgabe von OTPServer (Release x86)"
-            "Condition" = "8:"
-            "Object" = "8:_996B78EC029644E9BCADC5F2C62C73A2"
+            "Object" = "8:_402C07231FF441C081260B297D8DD7CE"
             "FileType" = "3:2"
             "InstallAction" = "3:2"
             "Arguments" = "8:"
             "EntryPoint" = "8:"
             "Sequence" = "3:1"
-            "Identifier" = "8:_648AE4F4_6903_4858_9662_DBCBC5EE8568"
+            "Identifier" = "8:_3E48B5D5_B902_4A3C_A642_202F6FC0AC0B"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_7F19660D0A284A2B9C20FB3231F8C996"
+            {
+            "Name" = "8:Primäre Ausgabe von OTPServer (Release x86)"
+            "Condition" = "8:"
+            "Object" = "8:_402C07231FF441C081260B297D8DD7CE"
+            "FileType" = "3:2"
+            "InstallAction" = "3:3"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_04A5D977_F9BB_4308_B31B_A3D1986475BA"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_96A2B235FDD34D1CB7F46763B504DA12"
+            {
+            "Name" = "8:Primäre Ausgabe von OTPServer (Release x86)"
+            "Condition" = "8:"
+            "Object" = "8:_402C07231FF441C081260B297D8DD7CE"
+            "FileType" = "3:2"
+            "InstallAction" = "3:1"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_31A3FEFB_CF24_422E_9E7D_07A89A8A98BB"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_E7FE9A6D8B2B4B12A1C73F4104D9B63B"
+            {
+            "Name" = "8:Primäre Ausgabe von OTPServer (Release x86)"
+            "Condition" = "8:"
+            "Object" = "8:_402C07231FF441C081260B297D8DD7CE"
+            "FileType" = "3:2"
+            "InstallAction" = "3:4"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:1"
+            "Identifier" = "8:_EFEABB4D_B9CD_4F2B_8D24_C0E23EF4D533"
             "InstallerClass" = "11:TRUE"
             "CustomActionData" = "8:"
             }
@@ -144,6 +178,37 @@
         }
         "File"
         {
+            "{9F6F8455-1EF1-4B85-886A-4223BCC8E7F7}:_08713438656E94ECEB4D79753503409D"
+            {
+            "AssemblyRegister" = "3:1"
+            "AssemblyIsInGAC" = "11:FALSE"
+            "AssemblyAsmDisplayName" = "8:OTPHelpers, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL"
+                "ScatterAssemblies"
+                {
+                    "_08713438656E94ECEB4D79753503409D"
+                    {
+                    "Name" = "8:OTPHelpers.dll"
+                    "Attributes" = "3:512"
+                    }
+                }
+            "SourcePath" = "8:OTPHelpers.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_142C34BF82D1427CBD2C9DD0B39BF062"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:TRUE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_80F5F6B8AE7A4DA19B4BD9DBEC6D3A64"
             {
             "SourcePath" = "8:..\\Certs\\A1833.pfx"
@@ -740,9 +805,9 @@
         }
         "ProjectOutput"
         {
-            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_996B78EC029644E9BCADC5F2C62C73A2"
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_402C07231FF441C081260B297D8DD7CE"
             {
-            "SourcePath" = "8:..\\OTPServer\\obj\\x86\\Release\\OTPServer.exe"
+            "SourcePath" = "8:"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_142C34BF82D1427CBD2C9DD0B39BF062"

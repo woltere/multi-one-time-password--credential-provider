@@ -108,8 +108,9 @@ namespace OTPHelpers.XML.OTPPacket
 
         public bool SetFromXMLReader(XmlReader xmlReader)
         {
-            bool success = ParseAttributes(xmlReader);
-            Content = xmlReader.ReadElementContentAsString();
+            if (!xmlReader.IsEmptyElement)
+                Content = xmlReader.ReadElementContentAsString();
+            bool success = ParseAttributes(xmlReader);            
 
             if (!success)
                 CleanUp();
