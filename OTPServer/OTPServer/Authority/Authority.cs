@@ -15,6 +15,7 @@ namespace OTPServer.Authority
 {
     class Authority : Observer
     {
+        // TODO: Maintainig __ProcessDataStorage and __Request. Thread.
         private static Storage.ProcessDataStorage __ProcessDataStorage = null;
         private static volatile RequestQueue<OTPPacket, AuthorityResponseObject> __Requests = null;
 
@@ -166,39 +167,38 @@ namespace OTPServer.Authority
 
         private bool CheckMessageAuthenticationCode(KeyData keyData, OTPPacket otpPacket)
         {
-            try
-            {
-                Storage.ProcessDataStorage.ProcessData process = __ProcessDataStorage.GetProcess(otpPacket);
+            Storage.ProcessDataStorage.ProcessData process = __ProcessDataStorage.GetProcess(otpPacket);
 
-                if (process == null)
-                    return false;
-
-                RSAParameters pubKeyParam = new RSAParameters();
-                pubKeyParam.Exponent = keyData.Exponent;
-                pubKeyParam.Modulus = keyData.Modulus;
-
-                RSACryptoServiceProvider pubKey = new RSACryptoServiceProvider();
-                pubKey.ImportParameters(pubKeyParam);
-
-                bool verifiedSignature =
-                    pubKey.VerifyData(
-                        Encoding.UTF8.GetBytes(otpPacket.ProcessIdentifier.ID.ToString() + otpPacket.Message.TimeStamp.ToString()),
-                        pubKey.SignatureAlgorithm,
-                        otpPacket.Message.MAC
-                    );
-
-                if (!verifiedSignature)
-                    return false;
-
-                if (otpPacket.Message.TimeStamp > process.LastAuthedTimestamp || otpPacket.Message.TimeStamp <= Storage.ProcessDataStorage.ProcessAge.Now())
-                    return false;
-
-                process.LastAuthedTimestamp = otpPacket.Message.TimeStamp;
-                return true;
-            }
-            catch (Exception)
-            {
+            if (process == null)
                 return false;
+
+            using (RSACryptoServiceProvider pubKey = new RSACryptoServiceProvider())
+            {
+                try
+                {
+                    pubKey.FromXmlString(keyData.GetXmlForRSACryptoServiveProvider());
+
+                    bool verifiedSignature =
+                        pubKey.VerifyData(
+                            Encoding.UTF8.GetBytes(otpPacket.ProcessIdentifier.ID.ToString() + otpPacket.Message.TimeStamp.ToString()),
+                            new MD5CryptoServiceProvider(),
+                            otpPacket.Message.MAC
+                        );
+
+                    if (!verifiedSignature)
+                        return false;
+
+                    if (otpPacket.Message.TimeStamp <= process.LastAuthedTimestamp || otpPacket.Message.TimeStamp > Storage.ProcessDataStorage.ProcessAge.NowMilli())
+                        return false;
+
+                    process.LastAuthedTimestamp = otpPacket.Message.TimeStamp;
+                    return true;
+                }
+                catch (Exception)
+                {
+                    // TODO: Log it
+                    return false;
+                }
             }
         }
 

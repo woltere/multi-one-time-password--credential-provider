@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Xml;
+using System.IO;
 
 namespace OTPHelpers.XML.OTPPacket
 {
@@ -89,12 +90,12 @@ namespace OTPHelpers.XML.OTPPacket
             }
             else if (xmlReader.Name.Equals("Exponent"))
             {
-                this._Exponent = xmlReader.Value;
+                this._Exponent = xmlReader.ReadString();
                 goto Return;
             }
             else if (xmlReader.Name.Equals("Modulus"))
             {
-                this._Modulus = xmlReader.Value;
+                this._Modulus = xmlReader.ReadString();
                 goto Return;
             }
             else
@@ -109,7 +110,52 @@ namespace OTPHelpers.XML.OTPPacket
 
         public void ToXmlString(ref XmlWriter xmlWriter)
         {
-            // Server should not send any KeyData, client should use this._Modulus and this._Exponent
+            if (this.Type == TYPE.NONE)
+                return;
+
+            xmlWriter.WriteStartElement("KeyData");
+
+            if (this.Type == TYPE.RSA)
+            {
+                xmlWriter.WriteStartElement("RSAKeyValue");
+
+                xmlWriter.WriteStartElement("Modulus");
+                xmlWriter.WriteString(this._Modulus);
+                xmlWriter.WriteEndElement();
+
+                xmlWriter.WriteStartElement("Exponent");
+                xmlWriter.WriteString(this._Exponent);
+                xmlWriter.WriteEndElement();
+
+                xmlWriter.WriteEndElement();
+            }
+
+            xmlWriter.WriteEndElement();
+        }
+
+        public string GetXmlForRSACryptoServiveProvider()
+        {
+            if (this.Type != TYPE.RSA)
+                return String.Empty;
+
+            StringBuilder stringBuilder = new StringBuilder();
+            using (XmlWriter xmlWriter = XmlWriter.Create(new StringWriter(stringBuilder)))
+            {
+                xmlWriter.WriteStartElement("RSAKeyValue");
+
+                xmlWriter.WriteStartElement("Modulus");
+                xmlWriter.WriteString(this._Modulus);
+                xmlWriter.WriteEndElement();
+
+                xmlWriter.WriteStartElement("Exponent");
+                xmlWriter.WriteString(this._Exponent);
+                xmlWriter.WriteEndElement();
+
+                xmlWriter.WriteEndElement();
+
+                xmlWriter.Close();
+            }
+            return stringBuilder.ToString();
         }
     }
 }

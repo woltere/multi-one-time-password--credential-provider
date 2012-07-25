@@ -22,10 +22,10 @@
   <xsd:complexType name="ElemMessageType">
     <xsd:simpleContent>
       <xsd:extension base="xsd:string">
-        <xsd:attribute name="type"      type="AttrMessageType" use="required" />        
-        <xsd:attribute name="status"    type="xsd:int"         use="optional" />
-        <xsd:attribute name="timestamp" type="xsd:int"         use="optional" />
-        <xsd:attribute name="mac"       type="xsd:string"      use="optional" />        
+        <xsd:attribute name="type"      type="AttrMessageType"  use="required" />        
+        <xsd:attribute name="status"    type="xsd:int"          use="optional" />
+        <xsd:attribute name="timestamp" type="xsd:long"         use="optional" />
+        <xsd:attribute name="mac"       type="xsd:base64Binary" use="optional" />        
       </xsd:extension>
     </xsd:simpleContent>
   </xsd:complexType>
@@ -44,8 +44,8 @@
       <xsd:element name="RSAKeyValue">
         <xsd:complexType>
           <xsd:sequence>
-            <xsd:element name="Modulus"  type="xsd:int" />
-            <xsd:element name="Exponent" type="xsd:int" />
+            <xsd:element name="Modulus"  type="xsd:base64Binary" />
+            <xsd:element name="Exponent" type="xsd:base64Binary" />
           </xsd:sequence>
         </xsd:complexType>
       </xsd:element>

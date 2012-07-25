@@ -22,10 +22,15 @@ namespace OTPHelpers.XML.OTPPacket
         public bool SetFromXMLReader(XmlReader xmlReader)
         {
             bool success = true;
+
             if (!xmlReader.IsEmptyElement)
-                this._ID = xmlReader.ReadElementContentAsInt();
+            {
+                xmlReader.MoveToContent();
+                this._ID = XmlConvert.ToInt32(xmlReader.ReadString());
+            }
             else
                 success = false;
+
             return success;
         }
 

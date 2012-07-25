@@ -59,22 +59,22 @@ namespace OTPHelpers.XML.OTPPacket
             set { Content = value; }
         }
 
-        public STATUS _StatusCode;
+        private STATUS _StatusCode;
         public STATUS StatusCode
         {
             get { return this._StatusCode; }
             set { this._StatusCode = value; }
         }
 
-        public string _MAC;
+        private string _MAC;
         public byte[] MAC
         {
             get { return Convert.FromBase64String(this._MAC); }
             set { this._MAC = Convert.ToBase64String(value); }
         }
 
-        public int _TimeStamp;
-        public int TimeStamp
+        private long _TimeStamp;
+        public long TimeStamp
         {
             get { return this._TimeStamp; }
             set { this._TimeStamp = value; }
@@ -108,9 +108,14 @@ namespace OTPHelpers.XML.OTPPacket
 
         public bool SetFromXMLReader(XmlReader xmlReader)
         {
-            if (!xmlReader.IsEmptyElement)
-                Content = xmlReader.ReadElementContentAsString();
-            bool success = ParseAttributes(xmlReader);            
+            bool success = ParseAttributes(xmlReader);
+
+            xmlReader.MoveToElement();
+            if (success && !xmlReader.IsEmptyElement)
+            {
+                xmlReader.MoveToContent();
+                Content = xmlReader.ReadString();
+            }
 
             if (!success)
                 CleanUp();
@@ -122,8 +127,7 @@ namespace OTPHelpers.XML.OTPPacket
         {
             bool success = true;
 
-            int attributeCount = xmlReader.AttributeCount;
-            for (int i = 0; i < attributeCount; i++)
+            for (int i = 0; i < xmlReader.AttributeCount; i++)
             {
                 xmlReader.MoveToAttribute(i);
                 if (xmlReader.Name.Equals("type"))
@@ -149,7 +153,7 @@ namespace OTPHelpers.XML.OTPPacket
                 }
                 else if (xmlReader.Name.Equals("timestamp"))
                 {
-                    StatusCode = (STATUS)XmlConvert.ToInt32(xmlReader.Value);
+                    TimeStamp = XmlConvert.ToInt64(xmlReader.Value);
                     continue;
                 }
                 else if (xmlReader.Name.Equals("mac"))

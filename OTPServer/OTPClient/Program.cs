@@ -6,6 +6,9 @@ using System.Net.Sockets;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.IO;
+using OTPHelpers.XML.OTPPacket;
+using System.Security.Cryptography;
+using System.Threading;
 
 namespace OTPClient
 {
@@ -14,6 +17,8 @@ namespace OTPClient
         static void Main(string[] args)
         {
             Console.WriteLine("Welcome...");
+
+            RSACryptoServiceProvider key = new RSACryptoServiceProvider();
 
             string server = "192.168.1.3";
             TcpClient client = new TcpClient(server, 16588);
@@ -24,46 +29,99 @@ namespace OTPClient
                 Console.WriteLine("Authenticating as Client...");
                 sslStream.AuthenticateAsClient(server);
 
-                bool active = true;
+                OTPPacket response = new OTPPacket();
+                bool success;
+                Data data;
 
-                //while (active)
-                //{
-                    Console.WriteLine("What do you want to send? XML, end with a line '.end.', quit with '.stop.' :");
-                    string sendToServer = String.Empty;
-                    string buffer = String.Empty;
-                    do
-                    {
-                        buffer = String.Empty;
-                        buffer = Console.ReadLine();
+                /////////
+                Console.WriteLine("Sending HELLO packet");
 
-                        if (!buffer.Contains(".end.") && !buffer.Contains(".stop."))
-                            sendToServer += buffer;
+                OTPPacket request = CreateHelloPacket(0);
 
-                        if (buffer.Contains(".stop."))
-                            active = false;
-                    } while (!buffer.Contains(".end."));
+                Console.WriteLine("REQ:  " + request.ToXMLString());
+                WritePacketToStream(sslStream, request);
 
-                    if (!active)
-                        goto Abort;
+                success = response.SetFromXML(sslStream, true);
+                //Console.WriteLine("\nSUCC: " + success.ToString());
+                Console.WriteLine("RESP: " + response.ToXMLString());
+                //Console.WriteLine("PID:  " + response.ProcessIdentifier.ID.ToString());
+                //Console.WriteLine("TYPE: " + response.Message.Type.ToString());
 
-                    if (!sendToServer.Equals(String.Empty))
-                    {
-                        Console.WriteLine("Sending to server.....");
-                        WritePacketToStream(sslStream, sendToServer);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Waiting...");
-                    }
+                //Thread.Sleep(1000);
 
-                    Console.WriteLine("Reading from server...");
-                    Console.WriteLine(ReadPacketFromStream(sslStream));
-                //}
+                //////////
+                Console.WriteLine("\nSending ADD packet containing public RSA KeyData");
+
+                request = CreatePacket(response.ProcessIdentifier.ID);
+                request.Message.Type = Message.TYPE.ADD;
+                request.SetFromXML("<KeyData>" + key.ToXmlString(false) + "</KeyData>", false);
+
+                Console.WriteLine("REQ:  " + request.ToXMLString());
+                WritePacketToStream(sslStream, request);
+
+                response = new OTPPacket();
+                success = response.SetFromXML(sslStream, true);
+                //Console.WriteLine("\nSUCC: " + success.ToString());
+                Console.WriteLine("RESP: " + response.ToXMLString());
+                //Console.WriteLine("PID:  " + response.ProcessIdentifier.ID.ToString());
+                //Console.WriteLine("TYPE: " + response.Message.Type.ToString());
+
+                //Thread.Sleep(1000);
+
+                //////////
+                Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME");
+
+                request = CreatePacket(response.ProcessIdentifier.ID);
+                request.Message.Type = Message.TYPE.ADD;
+                request.Message.TimeStamp = NowMilli();
+                request.Message.MAC = key.SignData(
+                    Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + request.Message.TimeStamp.ToString()),
+                    new MD5CryptoServiceProvider());
+
+                data = new Data();
+                data.Username = "testUserName";
+                request.DataItems.Add(data);
+
+                Console.WriteLine("REQ:  " + request.ToXMLString());
+                WritePacketToStream(sslStream, request);
+
+                response = new OTPPacket();
+                success = response.SetFromXML(sslStream, true);
+                //Console.WriteLine("\nSUCC: " + success.ToString());
+                Console.WriteLine("RESP: " + response.ToXMLString());
+                //Console.WriteLine("PID:  " + response.ProcessIdentifier.ID.ToString());
+                //Console.WriteLine("TYPE: " + response.Message.Type.ToString());
+
+                //Thread.Sleep(1000);
+
+                //////////
+                Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME, but wrong MAC");
+
+                request = CreatePacket(response.ProcessIdentifier.ID);
+                request.Message.Type = Message.TYPE.ADD;
+                request.Message.TimeStamp = NowMilli();
+                request.Message.MAC = key.SignData(
+                    Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + (request.Message.TimeStamp + 1).ToString()),
+                    new MD5CryptoServiceProvider());
+
+                data = new Data();
+                data.Username = "testUserName";
+                request.DataItems.Add(data);
+
+                Console.WriteLine("REQ:  " + request.ToXMLString());
+                WritePacketToStream(sslStream, request);
+
+                response = new OTPPacket();
+                success = response.SetFromXML(sslStream, true);
+                //Console.WriteLine("\nSUCC: " + success.ToString());
+                Console.WriteLine("RESP: " + response.ToXMLString());
+                //Console.WriteLine("PID:  " + response.ProcessIdentifier.ID.ToString());
+                //Console.WriteLine("TYPE: " + response.Message.Type.ToString());
+
+                //Thread.Sleep(1000);
             }
-
-        Abort:
-            // Disconnect and close the client
             client.Close();
+            key.Dispose();
         }
         // The following method is invoked by the RemoteCertificateValidationDelegate.
         // This allows you to check the certificate and accept or reject it
@@ -85,40 +143,60 @@ namespace OTPClient
             return false;
         }
 
-        public static void WritePacketToStream(SslStream stream, string str)
+        private static void SetMessageAttributes(ref OTPPacket otpPacket, Message.TYPE type, string textMessage, Message.STATUS statusCode)
         {
-            byte[] stringAsByteArray = Encoding.UTF8.GetBytes(str);
+            otpPacket.Message.Type = type;
+            otpPacket.Message.TextMessage = textMessage;
+            otpPacket.Message.StatusCode = statusCode;
+        }
 
-            stream.Write(stringAsByteArray);
+        private static OTPPacket CreatePacket(int pid)
+        {
+            OTPPacket otpPacket = new OTPPacket();
+            otpPacket.ProcessIdentifier.ID = pid;
+            return otpPacket;
+        }
+
+        private static OTPPacket CreateErrorPacket(int pid, string message, Message.STATUS statusCode)
+        {
+            OTPPacket otpPacket = CreatePacket(pid);
+            SetMessageAttributes(ref otpPacket, Message.TYPE.ERROR, message, statusCode);
+
+            return otpPacket;
+        }
+
+        private static OTPPacket CreateSuccessPacket(int pid, string message, Message.STATUS statusCode)
+        {
+            OTPPacket otpPacket = CreatePacket(pid);
+            SetMessageAttributes(ref otpPacket, Message.TYPE.SUCCESS, message, statusCode);
+
+            return otpPacket;
+        }
+
+        private static OTPPacket CreateHelloPacket(int pid)
+        {
+            OTPPacket otpPacket = CreatePacket(pid);
+            SetMessageAttributes(ref otpPacket, Message.TYPE.HELLO, String.Empty, Message.STATUS.NONE);
+
+            return otpPacket;
+        }
+
+        private static void WritePacketToStream(SslStream stream, OTPPacket otpPacket)
+        {
+            string otpPacketAsString = otpPacket.ToXMLString();
+            byte[] otpPacketAsByteArray = Encoding.UTF8.GetBytes(otpPacketAsString);
+
+            stream.Write(otpPacketAsByteArray);
             stream.Flush();
         }
 
-        public static string ReadPacketFromStream(SslStream stream)
+        // MILLISECONDS
+        private static long NowMilli()
         {
-            // Read the  message sent by the server.
-            // The end of the message is signaled using the
-            // "</OTPPacket>" marker.
-            byte[] buffer = new byte[2048];
-            StringBuilder messageData = new StringBuilder();
-            int bytes = -1;
-            do
-            {
-                bytes = stream.Read(buffer, 0, buffer.Length);
-
-                // Use Decoder class to convert from bytes to UTF8
-                // in case a character spans two buffers.
-                Decoder decoder = Encoding.UTF8.GetDecoder();
-                char[] chars = new char[decoder.GetCharCount(buffer, 0, bytes)];
-                decoder.GetChars(buffer, 0, bytes, chars, 0);
-                messageData.Append(chars);
-                // Check for EOF.
-                if (messageData.ToString().IndexOf("</OTPPacket>") != -1)
-                {
-                    break;
-                }
-            } while (bytes != 0);
-
-            return messageData.ToString();
+            DateTime epochStart = new DateTime(1970, 1, 1);
+            DateTime now = DateTime.Now;
+            TimeSpan ts = new TimeSpan(now.Ticks - epochStart.Ticks);
+            return (Convert.ToInt64(ts.TotalMilliseconds));
         }
     }
 }

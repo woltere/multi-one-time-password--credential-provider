@@ -111,8 +111,8 @@ namespace OTPServer.Authority.Storage
 
         public class ProcessData
         {
-            private int _LastAuthedTimestamp = 0;
-            public int LastAuthedTimestamp
+            private long _LastAuthedTimestamp = 0; // milliseconds !!!
+            public long LastAuthedTimestamp
             {
                 get { return this._LastAuthedTimestamp; }
                 set { this._LastAuthedTimestamp = value; }
@@ -368,6 +368,14 @@ namespace OTPServer.Authority.Storage
                 DateTime now = DateTime.Now;
                 TimeSpan ts = new TimeSpan(now.Ticks - epochStart.Ticks);
                 return (Convert.ToInt32(ts.TotalSeconds));
+            }
+
+            public static long NowMilli()
+            {
+                DateTime epochStart = new DateTime(1970, 1, 1);
+                DateTime now = DateTime.Now;
+                TimeSpan ts = new TimeSpan(now.Ticks - epochStart.Ticks);
+                return (Convert.ToInt64(ts.TotalMilliseconds));
             }
 
             public int GetAge()
