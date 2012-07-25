@@ -31,11 +31,6 @@ namespace OTPServer.Authority.Storage
 
         public int CreateProcess(OTPPacket otpPacket)
         {
-            /*
-            if (otpPacket.Message.Type != Message.TYPE.HELLO)
-                return 0;
-            */
-
             int processIdentifier = ProcessIdentifier.NONE;
             if (otpPacket.ProcessIdentifier.ID != ProcessIdentifier.NONE && ProcessExists(otpPacket) <= ProcessIdentifier.NONE)
                 processIdentifier = otpPacket.ProcessIdentifier.ID;     
@@ -132,15 +127,6 @@ namespace OTPServer.Authority.Storage
                 set { this._ProcessIdentifier = value; }
             }
 
-            /*
-            private Message _Message;
-            public Message Message
-            {
-                get { return this._Message; }
-                set { this._Message = value; }
-            }
-            */
-
             private KeyData _KeyData;
             public KeyData KeyData
             {
@@ -205,7 +191,6 @@ namespace OTPServer.Authority.Storage
                 this._ProcessAgeRef = processAge;
                 this._ProcessIdentifier = 0;
                 this._KeyData = new KeyData();
-                //this._Message = new Message();
                 this._Certificate = String.Empty; 
                 this._Username = String.Empty;
 
@@ -221,7 +206,6 @@ namespace OTPServer.Authority.Storage
                 this._ProcessAgeRef = null;
                 this._ProcessIdentifier = 0;
                 this._KeyData = null;
-                //this._Message = null;
                 this._Certificate = String.Empty; 
                 this._Username = String.Empty;
 
@@ -234,7 +218,6 @@ namespace OTPServer.Authority.Storage
 
             public bool AddData(OTPPacket otpPacket)
             {
-                //OTPPacket dataPacket = Clone<OTPPacket>(otpPacket);
                 return MergeData(otpPacket);
             }
 

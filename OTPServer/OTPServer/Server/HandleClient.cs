@@ -101,6 +101,9 @@ namespace OTPServer.Server
                             return;
                         }
 
+                        if (otpPacket.Message.Type == Message.TYPE.SUCCESS || otpPacket.Message.Type == Message.TYPE.ERROR)
+                            goto NextRequest; // Clients should not send ERROR or SUCCESS messages. We dont want the RequestQueue to get spammed.
+
                         RequestObject<OTPPacket, AuthorityResponseObject> reqObj = Authority.Authority.Request(this, otpPacket);
 
                         // Wait for answer from RequestQueue (Observer, see Update())

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -107,8 +107,8 @@ namespace OTPServer.Authority
                 }
                 else if (reqObj.Request.Message.Type == Message.TYPE.ERROR || reqObj.Request.Message.Type == Message.TYPE.SUCCESS)
                 {
-                    // TODO: Server should filter out ERROR and SUCCESS messages from client to avoid filling up the RequestQueue.
-                    // DO NOTHING
+                    // Server should filter out ERROR and SUCCESS messages from client to avoid filling up the RequestQueue.
+                    // But just in case anyone reaches so far: DO NOTHING
                 }
                 else
                 {

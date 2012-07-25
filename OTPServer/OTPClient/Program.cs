@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -95,13 +95,13 @@ namespace OTPClient
                 //Thread.Sleep(1000);
 
                 //////////
-                Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME, but wrong MAC");
+                Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME (Duplicate test)");
 
                 request = CreatePacket(response.ProcessIdentifier.ID);
                 request.Message.Type = Message.TYPE.ADD;
                 request.Message.TimeStamp = NowMilli();
                 request.Message.MAC = key.SignData(
-                    Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + (request.Message.TimeStamp + 1).ToString()),
+                    Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + (request.Message.TimeStamp).ToString()),
                     new MD5CryptoServiceProvider());
 
                 data = new Data();
