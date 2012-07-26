@@ -13,7 +13,7 @@ namespace OTPHelpers.XML.OTPPacket
     {
         public const int __PROTOCOL_VERSION = 1;
 
-        private bool _ProtocolVersionMismatch = false;
+        private bool _ProtocolVersionMismatch;
         public bool ProtocolVersionMismatch
         {
             get { return this._ProtocolVersionMismatch; }
@@ -55,6 +55,7 @@ namespace OTPHelpers.XML.OTPPacket
 
         public OTPPacket()
         {
+            this._ProtocolVersionMismatch = false;
             this._ProtocolVersion = __PROTOCOL_VERSION;
             this._ProcessIdentifier = new ProcessIdentifier();
             this._Message   = new Message();
@@ -64,6 +65,7 @@ namespace OTPHelpers.XML.OTPPacket
 
         ~OTPPacket()
         {
+            this._ProtocolVersionMismatch = false;
             this._ProtocolVersion = __PROTOCOL_VERSION;
             this._DataItems = null;
             this._Message   = null;

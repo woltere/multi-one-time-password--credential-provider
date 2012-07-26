@@ -91,17 +91,7 @@ namespace OTPServer.Server
                         otpPacket = new OTPPacket();
                         bool success = otpPacket.SetFromXML(sslStream, true);
 
-                        if (!success && !otpPacket.ProtocolVersionMismatch)
-                        {
-                            OTPPacket errorPacket = PacketHelper.CreateErrorPacket(
-                                ProcessIdentifier.NONE,
-                                "Malformed packet.",
-                                Message.STATUS.E_MALFORMED);
-                            WritePacketToStream(sslStream, errorPacket);
-
-                            return;
-                        } 
-                        else if (!success && otpPacket.ProtocolVersionMismatch)
+                        if (!success && otpPacket.ProtocolVersionMismatch)
                         {
                             // TODO: Client and server should manage to set-up a matching protocol version.
 
@@ -113,11 +103,22 @@ namespace OTPServer.Server
 
                             goto NextRequest;
                         }
+                        else if (!success)
+                        {
+                            OTPPacket errorPacket = PacketHelper.CreateErrorPacket(
+                                ProcessIdentifier.NONE,
+                                "Malformed packet.",
+                                Message.STATUS.E_MALFORMED);
+                            WritePacketToStream(sslStream, errorPacket);
+
+                            return;
+                        } 
 
                         if (otpPacket.Message.Type == Message.TYPE.SUCCESS || otpPacket.Message.Type == Message.TYPE.ERROR)
                             goto NextRequest; // Clients should not send ERROR or SUCCESS messages. We dont want the RequestQueue to get spammed.
 
                         // Setting protocol version used by client
+                        // TODO: Implement protocol changing. But now there is only version 1 ;)
                         this._ProtocolVersion = otpPacket.ProtocolVersion;
 
                         // Handing this request to the Authority's RequestQueue

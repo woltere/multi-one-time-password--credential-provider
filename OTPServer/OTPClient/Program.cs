@@ -30,18 +30,37 @@ namespace OTPClient
                 Console.WriteLine("Authenticating as Client...");
                 sslStream.AuthenticateAsClient(server);
 
-                OTPPacket response = new OTPPacket();
+                OTPPacket response;
                 bool success;
                 Data data;
 
                 /////////
-                Console.WriteLine("Sending HELLO packet");
+                Console.WriteLine("Sending HELLO packet (wrong protocol version test)");
 
                 OTPPacket request = PacketHelper.CreateHelloPacket(0);
+                request.ProtocolVersion = 2;
 
                 Console.WriteLine("REQ:  " + request.ToXMLString());
                 WritePacketToStream(sslStream, request);
 
+                response = new OTPPacket();
+                success = response.SetFromXML(sslStream, true);
+                //Console.WriteLine("\nSUCC: " + success.ToString());
+                Console.WriteLine("RESP: " + response.ToXMLString());
+                //Console.WriteLine("PID:  " + response.ProcessIdentifier.ID.ToString());
+                //Console.WriteLine("TYPE: " + response.Message.Type.ToString());
+
+                //Thread.Sleep(1000);
+
+                /////////
+                Console.WriteLine("\nSending HELLO packet");
+
+                request = PacketHelper.CreateHelloPacket(0);
+
+                Console.WriteLine("REQ:  " + request.ToXMLString());
+                WritePacketToStream(sslStream, request);
+
+                response = new OTPPacket();
                 success = response.SetFromXML(sslStream, true);
                 //Console.WriteLine("\nSUCC: " + success.ToString());
                 Console.WriteLine("RESP: " + response.ToXMLString());
@@ -96,13 +115,13 @@ namespace OTPClient
                 //Thread.Sleep(1000);
 
                 //////////
-                Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME (Duplicate test)");
+                Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME (Wrong MAC test)");
 
                 request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
                 request.Message.Type = Message.TYPE.ADD;
                 request.Message.TimeStamp = NowMilli();
                 request.Message.MAC = key.SignData(
-                    Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + (request.Message.TimeStamp).ToString()),
+                    Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + (request.Message.TimeStamp + 1).ToString()),
                     new MD5CryptoServiceProvider());
 
                 data = new Data();

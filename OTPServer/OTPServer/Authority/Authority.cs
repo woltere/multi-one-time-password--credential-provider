@@ -15,7 +15,7 @@ namespace OTPServer.Authority
 {
     class Authority : Observer
     {
-        // TODO: Maintainig __ProcessDataStorage and __Request. Thread.
+        // TODO: Maintainig __ProcessDataStorage. Thread.
         private static Storage.ProcessDataStorage __ProcessDataStorage = null;
         private static volatile RequestQueue<OTPPacket, AuthorityResponseObject> __Requests = null;
 
@@ -115,6 +115,7 @@ namespace OTPServer.Authority
                     // These requests need to be authorized, except an ADD containing KeyData only.
                     bool reqAuthorized = false;
                     Storage.ProcessDataStorage.ProcessData process = __ProcessDataStorage.GetProcess(reqObj.Request);
+
                     if (process != null
                      && process.KeyData.Type != KeyData.TYPE.NONE)
                         reqAuthorized = CheckMessageAuthenticationCode(process.KeyData, reqObj.Request);
