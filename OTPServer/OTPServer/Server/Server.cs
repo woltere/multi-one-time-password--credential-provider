@@ -16,8 +16,8 @@ namespace OTPServer.Server
     {
         // TODO: Move to config
         public const int PORT = 16588;
-        public const int       CLIENT_MAX_AGE  = 1; // Minutes
-        public const int       MAX_CONNECTIONS = 250;
+        public const int CLIENT_MAX_AGE  = 1; // Minutes
+        public const int MAX_CONNECTIONS = 250;
 
         private static Dictionary<int, HandleClient> __ClientHandles;
         private Thread _MaintainingThread = null;
@@ -84,10 +84,16 @@ namespace OTPServer.Server
             __Active = false;
 
             if (_MaintainingThread != null)
-                _MaintainingThread.Interrupt();
+            {
+                _MaintainingThread.Abort();
+                _MaintainingThread.Join();
+            }
 
             if (_ListeningThread != null)
-                _ListeningThread.Interrupt();
+            {
+                _ListeningThread.Abort();
+                _ListeningThread.Join();
+            }
 
             return true;
         }
@@ -119,17 +125,13 @@ namespace OTPServer.Server
                 {
                     if (ConnectionCount <= MAX_CONNECTIONS)
                     {
-                        // TODO: Check Active state in frequent intervall (avoid blocking forever, when shutting down). BeginAcceptTcpClient() (asynchronous)?
                         TcpClient clientSocket = listener.AcceptTcpClient();
 
                         HandleClient client = new HandleClient(clientSocket);
-                        //using (HandleClient client = new HandleClient(clientSocket))
-                        //{
                         lock (__ClientHandles)
                             __ClientHandles.Add(Now(), client);
 
                         client.Start();
-                        //}
                     }
                 }
                 catch (ThreadAbortException)

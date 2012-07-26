@@ -22,10 +22,10 @@ namespace OTPServer.Server
 
         private int _ProtocolVersion = 0;
 
-        private Thread _ClientThread = null;
+        private Thread _CommunicationThread = null;
         public Thread ClientThread
         {
-            get { return this._ClientThread; }
+            get { return this._CommunicationThread; }
         }
 
         // TODO: Implement a (static) signaling mechanism to communicate the active state with the ClientThread
@@ -44,18 +44,18 @@ namespace OTPServer.Server
         ~HandleClient()
         {
             this._ClientSocket = null;
-            this._ClientThread = null;
+            this._CommunicationThread = null;
             this._Active = false;
         }
 
         public bool Start()
         {
             bool started = false;
-            if (!Active && _ClientThread == null)
+            if (!Active && _CommunicationThread == null)
             {
                 this._Active = started = true;
-                _ClientThread = new Thread(CommunicationThread);
-                _ClientThread.Start();
+                _CommunicationThread = new Thread(Communication);
+                _CommunicationThread.Start();
             }
             return started;
         }
@@ -64,17 +64,17 @@ namespace OTPServer.Server
         {
             this._Active = false;
 
-            if (stopThread && _ClientThread != null)
+            if (stopThread && _CommunicationThread != null)
             {
-                _ClientThread.Abort();
-                _ClientThread.Join();
+                _CommunicationThread.Abort();
+                _CommunicationThread.Join();
             }
 
             if (_ClientSocket != null)
                 this._ClientSocket.Close();
         }
 
-        private void CommunicationThread()
+        private void Communication()
         {
             try
             {

@@ -24,8 +24,14 @@ namespace OTPServer.Authority.Storage
 
         public int ProcessExists(int pid)
         {
-            if (__ProcessIdentifierToProcessDataMap.ContainsKey(pid))
+            bool processExists;
+
+            lock (__ProcessIdentifierToProcessDataMap)
+                processExists = __ProcessIdentifierToProcessDataMap.ContainsKey(pid);
+
+            if (processExists)
                 return pid;
+
             return 0;
         }
 
@@ -40,8 +46,11 @@ namespace OTPServer.Authority.Storage
             ProcessAge processAge = new ProcessAge(processIdentifier);
             ProcessData processData = new ProcessData(processAge);
 
-            __ProcessIdentifierToProcessDataMap.Add(processIdentifier, processData);
-            __TimeToProcessIdentifierMap.AddLast(processAge);
+            lock (__ProcessIdentifierToProcessDataMap)
+                __ProcessIdentifierToProcessDataMap.Add(processIdentifier, processData);
+
+            lock (__TimeToProcessIdentifierMap)
+                __TimeToProcessIdentifierMap.AddLast(processAge);
 
             return processIdentifier;
         }
@@ -62,10 +71,14 @@ namespace OTPServer.Authority.Storage
         public ProcessData GetProcess(int pid)
         {
             ProcessData processData;
-            bool success = __ProcessIdentifierToProcessDataMap.TryGetValue(pid, out processData);
+            bool success;
+
+            lock (__ProcessIdentifierToProcessDataMap)
+                success = __ProcessIdentifierToProcessDataMap.TryGetValue(pid, out processData);
 
             if (!success)
                 return null;
+
             return processData;
         }
 
@@ -81,7 +94,14 @@ namespace OTPServer.Authority.Storage
 
         public ProcessAge GetOldestProcess()
         {
-            LinkedListNode<ProcessAge> oldestProcess = __TimeToProcessIdentifierMap.First;
+            if (__TimeToProcessIdentifierMap.Count == 0)
+                return null;
+
+            LinkedListNode<ProcessAge> oldestProcess;
+
+            lock (__TimeToProcessIdentifierMap)
+                oldestProcess = __TimeToProcessIdentifierMap.First;
+
             return oldestProcess.Value;
         }        
 
@@ -100,8 +120,11 @@ namespace OTPServer.Authority.Storage
             if (processData == null)
                 return;
 
-            __TimeToProcessIdentifierMap.Remove(processData.ProcessAgeRef);
-            __ProcessIdentifierToProcessDataMap.Remove(processData.ProcessIdentifier);
+            lock (__TimeToProcessIdentifierMap)
+                __TimeToProcessIdentifierMap.Remove(processData.ProcessAgeRef);
+
+            lock (__ProcessIdentifierToProcessDataMap)
+                __ProcessIdentifierToProcessDataMap.Remove(processData.ProcessIdentifier);
         }
 
         public class ProcessData

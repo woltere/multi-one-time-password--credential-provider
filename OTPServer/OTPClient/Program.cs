@@ -10,6 +10,7 @@ using OTPHelpers.XML.OTPPacket;
 using System.Security.Cryptography;
 using System.Threading;
 using OTPHelpers;
+using System.Security.Authentication;
 
 namespace OTPClient
 {
@@ -17,132 +18,131 @@ namespace OTPClient
     {
         static void Main(string[] args)
         {
+            if (args.Length < 1)
+            {
+                Console.WriteLine("Usage: OTPClient.exe server-ip");
+                return;
+            }
+
             Console.WriteLine("Welcome...");
 
             RSACryptoServiceProvider key = new RSACryptoServiceProvider();
 
-            string server = "192.168.1.3";
+            string server = args[0];
             TcpClient client = new TcpClient(server, 16588);
 
             Console.WriteLine("Establishing Connection...");
             using (SslStream sslStream = new SslStream(client.GetStream(), false, new RemoteCertificateValidationCallback(ValidateServerCertificate), null))
             {
-                Console.WriteLine("Authenticating as Client...");
-                sslStream.AuthenticateAsClient(server);
+                try
+                {
+                    try
+                    {
+                        Console.WriteLine("Authenticating as Client...");
+                        sslStream.AuthenticateAsClient(server);
+                    }
+                    catch (AuthenticationException)
+                    {
+                        Console.WriteLine("An error occured while authenticating the server's certificate. Aborting...");
+                        return;
+                    }
 
-                OTPPacket response;
-                bool success;
-                Data data;
+                    OTPPacket request = new OTPPacket();
+                    OTPPacket response = new OTPPacket();
+                    bool success;
+                    Data data;
+                    int protocolVersion = 2;
 
-                /////////
-                Console.WriteLine("Sending HELLO packet (wrong protocol version test)");
+                    /////////
+                    bool protocolMatched = false;
+                    while (!protocolMatched)
+                    {
+                        Console.WriteLine("\nSending HELLO packet (starting with wrong protocol version)");
 
-                OTPPacket request = PacketHelper.CreateHelloPacket(0);
-                request.ProtocolVersion = 2;
+                        request = PacketHelper.CreateHelloPacket(0);
+                        request.ProtocolVersion = protocolVersion;
 
-                Console.WriteLine("REQ:  " + request.ToXMLString());
-                WritePacketToStream(sslStream, request);
+                        Console.WriteLine("REQ:  " + request.ToXMLString());
+                        WritePacketToStream(sslStream, request);
 
-                response = new OTPPacket();
-                success = response.SetFromXML(sslStream, true);
-                //Console.WriteLine("\nSUCC: " + success.ToString());
-                Console.WriteLine("RESP: " + response.ToXMLString());
-                //Console.WriteLine("PID:  " + response.ProcessIdentifier.ID.ToString());
-                //Console.WriteLine("TYPE: " + response.Message.Type.ToString());
+                        response = new OTPPacket();
+                        success = response.SetFromXML(sslStream, true);
+                        Console.WriteLine("RESP: " + response.ToXMLString());
 
-                //Thread.Sleep(1000);
+                        if (response.Message.StatusCode == Message.STATUS.PR_SWITCH_REQ)
+                            protocolVersion = response.ProtocolVersion;
+                        else
+                            protocolMatched = true;
+                    }
 
-                /////////
-                Console.WriteLine("\nSending HELLO packet");
+                    //////////
+                    Console.WriteLine("\nSending ADD packet containing public RSA KeyData");
 
-                request = PacketHelper.CreateHelloPacket(0);
+                    request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
+                    request.Message.Type = Message.TYPE.ADD;
+                    request.SetFromXML("<KeyData>" + key.ToXmlString(false) + "</KeyData>", false);
 
-                Console.WriteLine("REQ:  " + request.ToXMLString());
-                WritePacketToStream(sslStream, request);
+                    Console.WriteLine("REQ:  " + request.ToXMLString());
+                    WritePacketToStream(sslStream, request);
 
-                response = new OTPPacket();
-                success = response.SetFromXML(sslStream, true);
-                //Console.WriteLine("\nSUCC: " + success.ToString());
-                Console.WriteLine("RESP: " + response.ToXMLString());
-                //Console.WriteLine("PID:  " + response.ProcessIdentifier.ID.ToString());
-                //Console.WriteLine("TYPE: " + response.Message.Type.ToString());
+                    response = new OTPPacket();
+                    success = response.SetFromXML(sslStream, true);
+                    Console.WriteLine("RESP: " + response.ToXMLString());
 
-                //Thread.Sleep(1000);
+                    //////////
+                    Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME");
 
-                //////////
-                Console.WriteLine("\nSending ADD packet containing public RSA KeyData");
+                    request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
+                    request.Message.Type = Message.TYPE.ADD;
+                    request.Message.TimeStamp = NowMilli();
+                    request.Message.MAC = key.SignData(
+                        Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + request.Message.TimeStamp.ToString()),
+                        new MD5CryptoServiceProvider());
 
-                request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
-                request.Message.Type = Message.TYPE.ADD;
-                request.SetFromXML("<KeyData>" + key.ToXmlString(false) + "</KeyData>", false);
+                    data = new Data();
+                    data.Username = "testUserName";
+                    request.DataItems.Add(data);
 
-                Console.WriteLine("REQ:  " + request.ToXMLString());
-                WritePacketToStream(sslStream, request);
+                    Console.WriteLine("REQ:  " + request.ToXMLString());
+                    WritePacketToStream(sslStream, request);
 
-                response = new OTPPacket();
-                success = response.SetFromXML(sslStream, true);
-                //Console.WriteLine("\nSUCC: " + success.ToString());
-                Console.WriteLine("RESP: " + response.ToXMLString());
-                //Console.WriteLine("PID:  " + response.ProcessIdentifier.ID.ToString());
-                //Console.WriteLine("TYPE: " + response.Message.Type.ToString());
+                    response = new OTPPacket();
+                    success = response.SetFromXML(sslStream, true);
+                    Console.WriteLine("RESP: " + response.ToXMLString());
 
-                //Thread.Sleep(1000);
+                    //////////
+                    Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME (Wrong MAC test)");
 
-                //////////
-                Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME");
+                    request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
+                    request.Message.Type = Message.TYPE.ADD;
+                    request.Message.TimeStamp = NowMilli();
+                    request.Message.MAC = key.SignData(
+                        Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + (request.Message.TimeStamp + 1).ToString()),
+                        new MD5CryptoServiceProvider());
 
-                request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
-                request.Message.Type = Message.TYPE.ADD;
-                request.Message.TimeStamp = NowMilli();
-                request.Message.MAC = key.SignData(
-                    Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + request.Message.TimeStamp.ToString()),
-                    new MD5CryptoServiceProvider());
+                    data = new Data();
+                    data.Username = "testUserName";
+                    request.DataItems.Add(data);
 
-                data = new Data();
-                data.Username = "testUserName";
-                request.DataItems.Add(data);
+                    Console.WriteLine("REQ:  " + request.ToXMLString());
+                    WritePacketToStream(sslStream, request);
 
-                Console.WriteLine("REQ:  " + request.ToXMLString());
-                WritePacketToStream(sslStream, request);
-
-                response = new OTPPacket();
-                success = response.SetFromXML(sslStream, true);
-                //Console.WriteLine("\nSUCC: " + success.ToString());
-                Console.WriteLine("RESP: " + response.ToXMLString());
-                //Console.WriteLine("PID:  " + response.ProcessIdentifier.ID.ToString());
-                //Console.WriteLine("TYPE: " + response.Message.Type.ToString());
-
-                //Thread.Sleep(1000);
-
-                //////////
-                Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME (Wrong MAC test)");
-
-                request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
-                request.Message.Type = Message.TYPE.ADD;
-                request.Message.TimeStamp = NowMilli();
-                request.Message.MAC = key.SignData(
-                    Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + (request.Message.TimeStamp + 1).ToString()),
-                    new MD5CryptoServiceProvider());
-
-                data = new Data();
-                data.Username = "testUserName";
-                request.DataItems.Add(data);
-
-                Console.WriteLine("REQ:  " + request.ToXMLString());
-                WritePacketToStream(sslStream, request);
-
-                response = new OTPPacket();
-                success = response.SetFromXML(sslStream, true);
-                //Console.WriteLine("\nSUCC: " + success.ToString());
-                Console.WriteLine("RESP: " + response.ToXMLString());
-                //Console.WriteLine("PID:  " + response.ProcessIdentifier.ID.ToString());
-                //Console.WriteLine("TYPE: " + response.Message.Type.ToString());
-
-                //Thread.Sleep(1000);
+                    response = new OTPPacket();
+                    success = response.SetFromXML(sslStream, true);
+                    Console.WriteLine("RESP: " + response.ToXMLString());
+                }
+                catch (SocketException)
+                {
+                    Console.WriteLine("A connection problem occured...");
+                }
+                finally
+                {
+                    client.Close();
+                    key.Dispose();
+                }
             }
-            client.Close();
-            key.Dispose();
         }
+
         // The following method is invoked by the RemoteCertificateValidationDelegate.
         // This allows you to check the certificate and accept or reject it
         // return true will accept the certificate

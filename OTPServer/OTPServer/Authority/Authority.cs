@@ -15,7 +15,8 @@ namespace OTPServer.Authority
 {
     class Authority : Observer
     {
-        // TODO: Maintainig __ProcessDataStorage. Thread.
+        private const int MAX_PROCESS_AGE = 60; // seconds
+
         private static Storage.ProcessDataStorage __ProcessDataStorage = null;
         private static volatile RequestQueue<OTPPacket, AuthorityResponseObject> __Requests = null;
 
@@ -23,6 +24,7 @@ namespace OTPServer.Authority
         private static volatile AutoResetEvent __Waiting = new AutoResetEvent(false);
 
         private static Thread __ProcessRequestsThread = null;
+        private static Thread __MaintainProcessDataStorageThread = null;
 
         private static Authority __Instance = null;
         public static Authority Instance
@@ -53,6 +55,7 @@ namespace OTPServer.Authority
             __Requests.Detach(this);
             __Requests = null;
 
+            __MaintainProcessDataStorageThread = null;
             __ProcessRequestsThread = null;
             __ProcessDataStorage = null;
             __ServerCertificate = null;
@@ -74,6 +77,12 @@ namespace OTPServer.Authority
                 __ProcessRequestsThread.Start();
             }
 
+            if (__MaintainProcessDataStorageThread == null)
+            {
+                __MaintainProcessDataStorageThread = new Thread(MaintainProcessDataStorage);
+                __MaintainProcessDataStorageThread.Start();
+            }
+
             return true;
         }
 
@@ -82,93 +91,141 @@ namespace OTPServer.Authority
             __Active = false;
 
             if (__ProcessRequestsThread != null)
-                __ProcessRequestsThread.Interrupt();
+            {
+                __ProcessRequestsThread.Abort();
+                __ProcessRequestsThread.Join();
+            }
+
+            if (__MaintainProcessDataStorageThread != null)
+            {
+                __MaintainProcessDataStorageThread.Abort();
+                __MaintainProcessDataStorageThread.Join();
+            }
 
             return true;
+        }
+
+        private void MaintainProcessDataStorage()
+        {
+            while (Active)
+            {
+                try
+                {
+                    Thread.Sleep(5000);
+
+                    Storage.ProcessDataStorage.ProcessAge oldestProcess = __ProcessDataStorage.GetOldestProcess();
+                    while (oldestProcess != null && (Storage.ProcessDataStorage.ProcessAge.Now() - oldestProcess.ProcessStartedAt) > MAX_PROCESS_AGE)
+                    {
+                        Storage.ProcessDataStorage.ProcessData process = __ProcessDataStorage.GetProcess(oldestProcess.ProcessIdentifier);
+                        __ProcessDataStorage.RemoveProcess(process);
+
+                        oldestProcess = __ProcessDataStorage.GetOldestProcess();
+                    }
+                }
+                catch (ThreadAbortException)
+                {
+                    break;
+                }
+                catch (Exception)
+                {
+                    // TODO: Log it
+                }
+            }
         }
 
         private void ProcessRequests()
         {
             while (Active)
             {
-                if (__Requests.Empty())
+                try
                 {
-                    __Waiting.WaitOne();
-                }
-
-                RequestObject<OTPPacket, AuthorityResponseObject> reqObj = __Requests.Dequeue();
-
-                // TODO: Check ProcessAge when existing (for life time check). Implement maintainer thread to check ProcessDataStorage.GetOldestProcess().
-                if (reqObj.Request.Message.Type == Message.TYPE.HELLO)
-                {
-                    reqObj.Request.ProcessIdentifier.ID = ProcessIdentifier.NONE; // Clients can not choose a PID
-                    int pid = __ProcessDataStorage.CreateProcess(reqObj.Request);
-                    AnswerSuccess(ref reqObj, pid, Message.STATUS.S_OK);
-                }
-                else if (reqObj.Request.Message.Type == Message.TYPE.ERROR || reqObj.Request.Message.Type == Message.TYPE.SUCCESS)
-                {
-                    // Server should filter out ERROR and SUCCESS messages from client to avoid filling up the RequestQueue.
-                    // But just in case anyone reaches so far: DO NOTHING
-                }
-                else
-                {
-                    // These requests need to be authorized, except an ADD containing KeyData only.
-                    bool reqAuthorized = false;
-                    Storage.ProcessDataStorage.ProcessData process = __ProcessDataStorage.GetProcess(reqObj.Request);
-
-                    if (process != null
-                     && process.KeyData.Type != KeyData.TYPE.NONE)
-                        reqAuthorized = CheckMessageAuthenticationCode(process.KeyData, reqObj.Request);
-                    else if (process != null
-                          && reqObj.Request.Message.Type == Message.TYPE.ADD 
-                          && reqObj.Request.KeyData.Type != KeyData.TYPE.NONE
-                          && reqObj.Request.DataItems.Count == 0)
-                        reqAuthorized = true;                    
-
-                    if (!reqAuthorized)
+                    if (__Requests.Empty())
                     {
-                        if (process == null)
-                        {
-                            AnswerNotFound(ref reqObj);
-                            goto NotifyAndContinue;
-                        }
-
-                        if (process.KeyData.Type == KeyData.TYPE.NONE)
-                            AnswerIncomplete(ref reqObj);
-                        else
-                            AnswerNotAuthorized(ref reqObj);
-
-                        goto NotifyAndContinue;
+                        __Waiting.WaitOne();
                     }
 
-                    if (reqObj.Request.Message.Type == Message.TYPE.ADD)
+                    RequestObject<OTPPacket, AuthorityResponseObject> reqObj = __Requests.Dequeue();
+
+                    // TODO: Check ProcessAge when existing (for life time check).
+                    if (reqObj.Request.Message.Type == Message.TYPE.HELLO)
                     {
-                        if (__ProcessDataStorage.AddDataFromPacketToProcess(reqObj.Request))
-                        {
-                            AnswerSuccess(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.S_OK);
-                        }
-                        else
-                        {
-                            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_LOCKED, "Could not add data. Maybe duplicate data was sent.");
-                        }
+                        reqObj.Request.ProcessIdentifier.ID = ProcessIdentifier.NONE; // Clients can not choose a PID
+                        int pid = __ProcessDataStorage.CreateProcess(reqObj.Request);
+                        AnswerSuccess(ref reqObj, pid, Message.STATUS.S_OK);
                     }
-                    else if (reqObj.Request.Message.Type == Message.TYPE.VERIFY)
+                    else if (reqObj.Request.Message.Type == Message.TYPE.ERROR || reqObj.Request.Message.Type == Message.TYPE.SUCCESS)
                     {
-                        // TODO: add (optional) data to process and verify (through Agent). send verify result.
-                    }
-                    else if (reqObj.Request.Message.Type == Message.TYPE.RESYNC)
-                    {
-                        // TODO: add (optional) data to process and resync (through Agent). send resync result.
+                        // Server should filter out ERROR and SUCCESS messages from client to avoid filling up the RequestQueue.
+                        // But just in case anyone reaches so far: DO NOTHING
                     }
                     else
                     {
-                        // This shouldn't happen.
-                        AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_MALFORMED, "Malformed message. Dont know what to do.");
-                    }
-                }
+                        // These requests need to be authorized, except an ADD containing KeyData only.
+                        bool reqAuthorized = false;
+                        Storage.ProcessDataStorage.ProcessData process = __ProcessDataStorage.GetProcess(reqObj.Request);
 
-            NotifyAndContinue:
-                reqObj.Notify();
+                        if (process != null
+                         && process.KeyData.Type != KeyData.TYPE.NONE)
+                            reqAuthorized = CheckMessageAuthenticationCode(process.KeyData, reqObj.Request);
+                        else if (process != null
+                              && reqObj.Request.Message.Type == Message.TYPE.ADD
+                              && reqObj.Request.KeyData.Type != KeyData.TYPE.NONE
+                              && reqObj.Request.DataItems.Count == 0)
+                            reqAuthorized = true;
+
+                        if (!reqAuthorized)
+                        {
+                            if (process == null)
+                            {
+                                AnswerNotFound(ref reqObj);
+                                goto NotifyAndContinue;
+                            }
+
+                            if (process.KeyData.Type == KeyData.TYPE.NONE)
+                                AnswerIncomplete(ref reqObj);
+                            else
+                                AnswerNotAuthorized(ref reqObj);
+
+                            goto NotifyAndContinue;
+                        }
+
+                        if (reqObj.Request.Message.Type == Message.TYPE.ADD)
+                        {
+                            if (__ProcessDataStorage.AddDataFromPacketToProcess(reqObj.Request))
+                            {
+                                AnswerSuccess(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.S_OK);
+                            }
+                            else
+                            {
+                                AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_LOCKED, "Could not add data. Maybe duplicate data was sent.");
+                            }
+                        }
+                        else if (reqObj.Request.Message.Type == Message.TYPE.VERIFY)
+                        {
+                            // TODO: add (optional) data to process and verify (through Agent). send verify result.
+                        }
+                        else if (reqObj.Request.Message.Type == Message.TYPE.RESYNC)
+                        {
+                            // TODO: add (optional) data to process and resync (through Agent). send resync result.
+                        }
+                        else
+                        {
+                            // This shouldn't happen.
+                            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_MALFORMED, "Malformed message. Dont know what to do.");
+                        }
+                    }
+
+                NotifyAndContinue:
+                    reqObj.Notify();
+                }
+                catch (ThreadAbortException)
+                {
+                    break;
+                }
+                catch (Exception)
+                {
+                    // TODO: Log it
+                }
             }
         }
 
