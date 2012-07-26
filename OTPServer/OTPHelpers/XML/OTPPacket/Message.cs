@@ -29,14 +29,18 @@ namespace OTPHelpers.XML.OTPPacket
         {
             NONE = 0,
 
-            S_OK        = 200, // General success
-            S_RESYNC_OK = 201, // Resynchronization successfull
+            S_OK           = 200, // General success
+            S_RESYNC_OK    = 201, // Resynchronization successfull
 
-            E_ERROR        = 400, // General error
+            PR_SWITCH_REQ  = 303, // Requesting an other protocol version
+
+            E_MALFORMED    = 400, // Malformed data
             E_NOT_VERIFIED = 401, // OTP could not be verified / is wrong
+            E_NOT_AUTHED   = 403, // Not authorized, e.g. wrong mac
             E_NOT_FOUND    = 404, // Data (e.g. user or pid) not found
-            E_INCOMPLETE   = 480, // Incomplete data. E.g. verification: one or all of Username, OTP or Public Key are not set. comm: client didn't send a MAC
-            E_UNKNOWN      = 500  // Unspecified error 
+            E_LOCKED       = 423, // E.g. tried to overwrite an existing username-field
+            E_INCOMPLETE   = 424, // E.g. tried to use an authorized request without providing a public key first
+            E_UNKNOWN      = 500  // Unspecified/Unknown internal error 
         }
 
         private TYPE _Type;

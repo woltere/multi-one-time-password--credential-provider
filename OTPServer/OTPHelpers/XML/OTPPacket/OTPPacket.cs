@@ -13,6 +13,19 @@ namespace OTPHelpers.XML.OTPPacket
     {
         public const int __PROTOCOL_VERSION = 1;
 
+        private bool _ProtocolVersionMismatch = false;
+        public bool ProtocolVersionMismatch
+        {
+            get { return this._ProtocolVersionMismatch; }
+        }
+
+        private int _ProtocolVersion;
+        public int ProtocolVersion
+        {
+            get { return this._ProtocolVersion; }
+            set { this._ProtocolVersion = value; }
+        }
+
         private Message _Message;
         public Message Message
         {
@@ -42,6 +55,7 @@ namespace OTPHelpers.XML.OTPPacket
 
         public OTPPacket()
         {
+            this._ProtocolVersion = __PROTOCOL_VERSION;
             this._ProcessIdentifier = new ProcessIdentifier();
             this._Message   = new Message();
             this._DataItems = new List<Data>();
@@ -50,6 +64,7 @@ namespace OTPHelpers.XML.OTPPacket
 
         ~OTPPacket()
         {
+            this._ProtocolVersion = __PROTOCOL_VERSION;
             this._DataItems = null;
             this._Message   = null;
             this._KeyData   = null;
@@ -58,6 +73,7 @@ namespace OTPHelpers.XML.OTPPacket
 
         private void CleanUp()
         {
+            this._ProtocolVersion = __PROTOCOL_VERSION;
             this._DataItems = new List<Data>();
             this._Message   = new Message();
             this._KeyData   = new KeyData();
@@ -89,7 +105,7 @@ namespace OTPHelpers.XML.OTPPacket
 
                 xmlWriter.WriteStartDocument();
                 xmlWriter.WriteStartElement("OTPPacket");
-                xmlWriter.WriteAttributeString("version", __PROTOCOL_VERSION.ToString());
+                xmlWriter.WriteAttributeString("version", ProtocolVersion.ToString());
 
                 this.ProcessIdentifier.ToXmlString(ref xmlWriter);
                 this.Message.ToXmlString(ref xmlWriter);
@@ -166,7 +182,7 @@ namespace OTPHelpers.XML.OTPPacket
 
         public static string ReadOTPPacketFromStream(Stream stream)
         {
-            // Read the  message sent by the server.
+            // Read the  message sent by the client.
             // The end of the message is signaled using the
             // "</OTPPacket>" marker.
             byte[] buffer = new byte[2048];
@@ -248,20 +264,22 @@ namespace OTPHelpers.XML.OTPPacket
             {
                 do
                 {
-                    if (xmlReader.Name.Equals("version") && XmlConvert.ToInt32(xmlReader.Value) > __PROTOCOL_VERSION)
+                    if (xmlReader.Name.Equals("version"))
                     {
-                        success = false;
-                        goto Return;
+                        ProtocolVersion = XmlConvert.ToInt32(xmlReader.Value);
+                        if (ProtocolVersion > __PROTOCOL_VERSION)
+                        {
+                            this._ProtocolVersionMismatch = true;
+                            success = false;
+                        }
                     }
-                } while (xmlReader.MoveToNextAttribute());
+                } while (success && xmlReader.MoveToNextAttribute());
             }
             else
             {
                 success = false;
-                goto Return;
             }
 
-        Return:
             return success;
         }
     }

@@ -126,7 +126,17 @@ namespace OTPServer.Authority
 
                     if (!reqAuthorized)
                     {
-                        AnswerNotAuthorized(ref reqObj);
+                        if (process == null)
+                        {
+                            AnswerNotFound(ref reqObj);
+                            goto NotifyAndContinue;
+                        }
+
+                        if (process.KeyData.Type == KeyData.TYPE.NONE)
+                            AnswerIncomplete(ref reqObj);
+                        else
+                            AnswerNotAuthorized(ref reqObj);
+
                         goto NotifyAndContinue;
                     }
 
@@ -138,7 +148,7 @@ namespace OTPServer.Authority
                         }
                         else
                         {
-                            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_ERROR, "Could not add data. Maybe duplicate data was sent.");
+                            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_LOCKED, "Could not add data. Maybe duplicate data was sent.");
                         }
                     }
                     else if (reqObj.Request.Message.Type == Message.TYPE.VERIFY)
@@ -151,7 +161,8 @@ namespace OTPServer.Authority
                     }
                     else
                     {
-                        AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_ERROR, "Malformed message. Dont know what to do.");
+                        // This shouldn't happen.
+                        AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_MALFORMED, "Malformed message. Dont know what to do.");
                     }
                 }
 
@@ -160,9 +171,19 @@ namespace OTPServer.Authority
             }
         }
 
+        private void AnswerNotFound(ref RequestObject<OTPPacket, AuthorityResponseObject> reqObj)
+        {
+            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_NOT_FOUND, "PID or user not found.");
+        }
+
+        private void AnswerIncomplete(ref RequestObject<OTPPacket, AuthorityResponseObject> reqObj)
+        {
+            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_INCOMPLETE, "Request incomplete. Maybe no public key was provided prior to this request.");
+        }
+
         private void AnswerNotAuthorized(ref RequestObject<OTPPacket, AuthorityResponseObject> reqObj)
         {
-            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_ERROR, "Request not authorized or incomplete. No public key provided or MAC is wrong.");
+            AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_NOT_AUTHED, "Request not authorized. MAC is wrong.");
         }
 
         private bool CheckMessageAuthenticationCode(KeyData keyData, OTPPacket otpPacket)

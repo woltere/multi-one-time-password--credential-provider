@@ -11,6 +11,7 @@ using OTPHelpers.XML.OTPPacket;
 using System.IO;
 using OTPServer.Communication.Local.Observer;
 using OTPServer.Communication.Local;
+using OTPHelpers;
 
 namespace OTPServer.Server
 {
@@ -18,6 +19,8 @@ namespace OTPServer.Server
     {
         private TcpClient _ClientSocket;
         private volatile AutoResetEvent _Waiting = new AutoResetEvent(false);
+
+        private int _ProtocolVersion = 0;
 
         private Thread _ClientThread = null;
         public Thread ClientThread
@@ -88,22 +91,36 @@ namespace OTPServer.Server
                         otpPacket = new OTPPacket();
                         bool success = otpPacket.SetFromXML(sslStream, true);
 
-                        if (!success)
+                        if (!success && !otpPacket.ProtocolVersionMismatch)
                         {
-                            // TODO: Client and server should manage to set-up a matching protocol version. (Now server rejects any request thats above himself)
-
-                            OTPPacket errorPacket = CreateErrorPacket(
+                            OTPPacket errorPacket = PacketHelper.CreateErrorPacket(
                                 ProcessIdentifier.NONE,
-                                "Malformed packet or wrong protocol version",
-                                Message.STATUS.E_ERROR);
+                                "Malformed packet.",
+                                Message.STATUS.E_MALFORMED);
                             WritePacketToStream(sslStream, errorPacket);
 
                             return;
+                        } 
+                        else if (!success && otpPacket.ProtocolVersionMismatch)
+                        {
+                            // TODO: Client and server should manage to set-up a matching protocol version.
+
+                            OTPPacket errorPacket = PacketHelper.CreateErrorPacket(
+                                ProcessIdentifier.NONE,
+                                "Protocol version mismatch. Try this one.", // Suggestion is made through OTPPacket's version field
+                                Message.STATUS.PR_SWITCH_REQ);
+                            WritePacketToStream(sslStream, errorPacket);
+
+                            goto NextRequest;
                         }
 
                         if (otpPacket.Message.Type == Message.TYPE.SUCCESS || otpPacket.Message.Type == Message.TYPE.ERROR)
                             goto NextRequest; // Clients should not send ERROR or SUCCESS messages. We dont want the RequestQueue to get spammed.
 
+                        // Setting protocol version used by client
+                        this._ProtocolVersion = otpPacket.ProtocolVersion;
+
+                        // Handing this request to the Authority's RequestQueue
                         RequestObject<OTPPacket, AuthorityResponseObject> reqObj = Authority.Authority.Request(this, otpPacket);
 
                         // Wait for answer from RequestQueue (Observer, see Update())
@@ -113,10 +130,10 @@ namespace OTPServer.Server
                         {
                             OTPPacket successPacket;
                             if (reqObj.Request.Message.Type == Message.TYPE.HELLO)
-                                successPacket = CreateHelloPacket(reqObj.Response.ComplexResponse.ProcessIdentifier);
+                                successPacket = PacketHelper.CreateHelloPacket(reqObj.Response.ComplexResponse.ProcessIdentifier);
                             else
                             {
-                                successPacket = CreateSuccessPacket(
+                                successPacket = PacketHelper.CreateSuccessPacket(
                                 reqObj.Response.ComplexResponse.ProcessIdentifier,
                                 reqObj.Response.ComplexResponse.TextMessage,
                                 reqObj.Response.ComplexResponse.StatusCode
@@ -126,7 +143,7 @@ namespace OTPServer.Server
                         }
                         else
                         {
-                            OTPPacket errorPacket = CreateErrorPacket(
+                            OTPPacket errorPacket = PacketHelper.CreateErrorPacket(
                                 reqObj.Response.ComplexResponse.ProcessIdentifier,
                                 reqObj.Response.ComplexResponse.TextMessage,
                                 reqObj.Response.ComplexResponse.StatusCode
@@ -147,7 +164,7 @@ namespace OTPServer.Server
                         {
                             if (sslStream.CanWrite)
                             {
-                                OTPPacket errorPacket = CreateErrorPacket(
+                                OTPPacket errorPacket = PacketHelper.CreateErrorPacket(
                                             ProcessIdentifier.NONE,
                                             "Unknown Error.",
                                             Message.STATUS.E_UNKNOWN);
@@ -165,44 +182,6 @@ namespace OTPServer.Server
             {
                 Stop(false); // We don't need to interrupt the thread itself. We already reached the end.
             }
-        }
-
-        private void SetMessageAttributes(ref OTPPacket otpPacket, Message.TYPE type, string textMessage, Message.STATUS statusCode)
-        {
-            otpPacket.Message.Type = type;
-            otpPacket.Message.TextMessage = textMessage;
-            otpPacket.Message.StatusCode = statusCode;
-        }
-
-        private OTPPacket CreatePacket(int pid)
-        {
-            OTPPacket otpPacket = new OTPPacket();
-            otpPacket.ProcessIdentifier.ID = pid;
-            return otpPacket;
-        }
-
-        private OTPPacket CreateErrorPacket(int pid, string message, Message.STATUS statusCode)
-        {
-            OTPPacket otpPacket = CreatePacket(pid);
-            SetMessageAttributes(ref otpPacket, Message.TYPE.ERROR, message, statusCode);
-
-            return otpPacket;
-        }
-
-        private OTPPacket CreateSuccessPacket(int pid, string message, Message.STATUS statusCode)
-        {
-            OTPPacket otpPacket = CreatePacket(pid);
-            SetMessageAttributes(ref otpPacket, Message.TYPE.SUCCESS, message, statusCode);
-
-            return otpPacket;
-        }
-
-        private OTPPacket CreateHelloPacket(int pid)
-        {
-            OTPPacket otpPacket = CreatePacket(pid);
-            SetMessageAttributes(ref otpPacket, Message.TYPE.HELLO, String.Empty, Message.STATUS.NONE);
-
-            return otpPacket;
         }
 
         private void WritePacketToStream(SslStream stream, OTPPacket otpPacket)

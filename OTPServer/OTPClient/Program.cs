@@ -9,6 +9,7 @@ using System.IO;
 using OTPHelpers.XML.OTPPacket;
 using System.Security.Cryptography;
 using System.Threading;
+using OTPHelpers;
 
 namespace OTPClient
 {
@@ -36,7 +37,7 @@ namespace OTPClient
                 /////////
                 Console.WriteLine("Sending HELLO packet");
 
-                OTPPacket request = CreateHelloPacket(0);
+                OTPPacket request = PacketHelper.CreateHelloPacket(0);
 
                 Console.WriteLine("REQ:  " + request.ToXMLString());
                 WritePacketToStream(sslStream, request);
@@ -52,7 +53,7 @@ namespace OTPClient
                 //////////
                 Console.WriteLine("\nSending ADD packet containing public RSA KeyData");
 
-                request = CreatePacket(response.ProcessIdentifier.ID);
+                request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
                 request.Message.Type = Message.TYPE.ADD;
                 request.SetFromXML("<KeyData>" + key.ToXmlString(false) + "</KeyData>", false);
 
@@ -71,7 +72,7 @@ namespace OTPClient
                 //////////
                 Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME");
 
-                request = CreatePacket(response.ProcessIdentifier.ID);
+                request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
                 request.Message.Type = Message.TYPE.ADD;
                 request.Message.TimeStamp = NowMilli();
                 request.Message.MAC = key.SignData(
@@ -97,7 +98,7 @@ namespace OTPClient
                 //////////
                 Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME (Duplicate test)");
 
-                request = CreatePacket(response.ProcessIdentifier.ID);
+                request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
                 request.Message.Type = Message.TYPE.ADD;
                 request.Message.TimeStamp = NowMilli();
                 request.Message.MAC = key.SignData(
@@ -141,44 +142,6 @@ namespace OTPClient
 
             // Do not allow this client to communicate with unauthenticated servers.
             return false;
-        }
-
-        private static void SetMessageAttributes(ref OTPPacket otpPacket, Message.TYPE type, string textMessage, Message.STATUS statusCode)
-        {
-            otpPacket.Message.Type = type;
-            otpPacket.Message.TextMessage = textMessage;
-            otpPacket.Message.StatusCode = statusCode;
-        }
-
-        private static OTPPacket CreatePacket(int pid)
-        {
-            OTPPacket otpPacket = new OTPPacket();
-            otpPacket.ProcessIdentifier.ID = pid;
-            return otpPacket;
-        }
-
-        private static OTPPacket CreateErrorPacket(int pid, string message, Message.STATUS statusCode)
-        {
-            OTPPacket otpPacket = CreatePacket(pid);
-            SetMessageAttributes(ref otpPacket, Message.TYPE.ERROR, message, statusCode);
-
-            return otpPacket;
-        }
-
-        private static OTPPacket CreateSuccessPacket(int pid, string message, Message.STATUS statusCode)
-        {
-            OTPPacket otpPacket = CreatePacket(pid);
-            SetMessageAttributes(ref otpPacket, Message.TYPE.SUCCESS, message, statusCode);
-
-            return otpPacket;
-        }
-
-        private static OTPPacket CreateHelloPacket(int pid)
-        {
-            OTPPacket otpPacket = CreatePacket(pid);
-            SetMessageAttributes(ref otpPacket, Message.TYPE.HELLO, String.Empty, Message.STATUS.NONE);
-
-            return otpPacket;
         }
 
         private static void WritePacketToStream(SslStream stream, OTPPacket otpPacket)
