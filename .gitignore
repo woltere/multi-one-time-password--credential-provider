@@ -11,3 +11,5 @@
 /OTPServer/OTPClient/bin
 /OTPServer/OTPHelpers/obj
 /OTPServer/OTPHelpers/bin
+/OTPServer/InstallerActions/bin
+/OTPServer/InstallerActions/obj

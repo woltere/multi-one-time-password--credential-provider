@@ -3,7 +3,7 @@
 "VSVersion" = "3:800"
 "ProjectType" = "8:{978C614F-708E-4E1A-B201-565925725DBA}"
 "IsWebType" = "8:FALSE"
-"ProjectName" = "8:OTPServerSetup-x64"
+"ProjectName" = "8:OTPServerSetup"
 "LanguageId" = "3:1031"
 "CodePage" = "3:1252"
 "UILanguageId" = "3:1031"
@@ -21,6 +21,12 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_25394FD30C4F4833B7EEEC7BB080E5FE"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_402C07231FF441C081260B297D8DD7CE"
         "OwnerKey" = "8:_UNDEFINED"
         "MsmSig" = "8:_UNDEFINED"
@@ -33,8 +39,20 @@
         }
         "Entry"
         {
+        "MsmKey" = "8:_83EB880B8CCE4E3DAD2386013FF0F2C8"
+        "OwnerKey" = "8:_UNDEFINED"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
         "MsmKey" = "8:_UNDEFINED"
         "OwnerKey" = "8:_08713438656E94ECEB4D79753503409D"
+        "MsmSig" = "8:_UNDEFINED"
+        }
+        "Entry"
+        {
+        "MsmKey" = "8:_UNDEFINED"
+        "OwnerKey" = "8:_83EB880B8CCE4E3DAD2386013FF0F2C8"
         "MsmSig" = "8:_UNDEFINED"
         }
         "Entry"
@@ -92,6 +110,19 @@
             "PrerequisitesLocation" = "2:1"
             "Url" = "8:"
             "ComponentsUrl" = "8:"
+                "Items"
+                {
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:.NETFramework,Version=v4.0,Profile=Client"
+                    {
+                    "Name" = "8:Microsoft .NET Framework 4 Client Profile (x86 and x64)"
+                    "ProductCode" = "8:.NETFramework,Version=v4.0,Profile=Client"
+                    }
+                    "{EDC2488A-8267-493A-A98E-7D9C3B36CDF3}:Microsoft.Windows.Installer.3.1"
+                    {
+                    "Name" = "8:Windows Installer 3.1"
+                    "ProductCode" = "8:Microsoft.Windows.Installer.3.1"
+                    }
+                }
             }
         }
     }
@@ -99,6 +130,20 @@
     {
         "CustomAction"
         {
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_14BAC27DC3DB48C6BA4D0ADF7ACE9DDA"
+            {
+            "Name" = "8:Primäre Ausgabe von InstallerActions (Release Any CPU)"
+            "Condition" = "8:"
+            "Object" = "8:_83EB880B8CCE4E3DAD2386013FF0F2C8"
+            "FileType" = "3:1"
+            "InstallAction" = "3:3"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:2"
+            "Identifier" = "8:_10D1192A_D24E_4301_9DF5_32DA99631F10"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            }
             "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_36E0812E7CBC486D9180299FC475E304"
             {
             "Name" = "8:Primäre Ausgabe von OTPServer (Release x86)"
@@ -110,6 +155,20 @@
             "EntryPoint" = "8:"
             "Sequence" = "3:1"
             "Identifier" = "8:_3E48B5D5_B902_4A3C_A642_202F6FC0AC0B"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_6670F35766ED497C864E7C31E43D0EB7"
+            {
+            "Name" = "8:Primäre Ausgabe von InstallerActions (Release Any CPU)"
+            "Condition" = "8:"
+            "Object" = "8:_83EB880B8CCE4E3DAD2386013FF0F2C8"
+            "FileType" = "3:1"
+            "InstallAction" = "3:4"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:2"
+            "Identifier" = "8:_596F7A9A_F331_4E59_9B22_8799201B632C"
             "InstallerClass" = "11:TRUE"
             "CustomActionData" = "8:"
             }
@@ -127,6 +186,20 @@
             "InstallerClass" = "11:TRUE"
             "CustomActionData" = "8:"
             }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_90A802F071FA4D93979B44AEA991316F"
+            {
+            "Name" = "8:Primäre Ausgabe von InstallerActions (Release Any CPU)"
+            "Condition" = "8:"
+            "Object" = "8:_83EB880B8CCE4E3DAD2386013FF0F2C8"
+            "FileType" = "3:1"
+            "InstallAction" = "3:2"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:2"
+            "Identifier" = "8:_145AFB47_1A66_4195_80D4_5C9B2B0079A5"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:"
+            }
             "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_96A2B235FDD34D1CB7F46763B504DA12"
             {
             "Name" = "8:Primäre Ausgabe von OTPServer (Release x86)"
@@ -140,6 +213,20 @@
             "Identifier" = "8:_31A3FEFB_CF24_422E_9E7D_07A89A8A98BB"
             "InstallerClass" = "11:TRUE"
             "CustomActionData" = "8:"
+            }
+            "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_B0446A721FB24A4E9AAB94DB933C36F8"
+            {
+            "Name" = "8:Primäre Ausgabe von InstallerActions (Release Any CPU)"
+            "Condition" = "8:"
+            "Object" = "8:_83EB880B8CCE4E3DAD2386013FF0F2C8"
+            "FileType" = "3:1"
+            "InstallAction" = "3:1"
+            "Arguments" = "8:"
+            "EntryPoint" = "8:"
+            "Sequence" = "3:2"
+            "Identifier" = "8:_6754FA4B_C1F5_4AA8_8BD1_51E6F222839E"
+            "InstallerClass" = "11:TRUE"
+            "CustomActionData" = "8:/targetdir=\"[TARGETDIR]\\\""
             }
             "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_E7FE9A6D8B2B4B12A1C73F4104D9B63B"
             {
@@ -209,12 +296,32 @@
             "IsDependency" = "11:TRUE"
             "IsolateTo" = "8:"
             }
+            "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_25394FD30C4F4833B7EEEC7BB080E5FE"
+            {
+            "SourcePath" = "8:..\\OTPHelpers\\XML\\OTPPacket\\Schema\\OTPPacketSchema.xsd"
+            "TargetName" = "8:OTPPacketSchema.xsd"
+            "Tag" = "8:"
+            "Folder" = "8:_A876C1F6529244F68B8DAB82D896AAFA"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_80F5F6B8AE7A4DA19B4BD9DBEC6D3A64"
             {
             "SourcePath" = "8:..\\Certs\\A1833.pfx"
             "TargetName" = "8:A1833.pfx"
             "Tag" = "8:"
-            "Folder" = "8:_142C34BF82D1427CBD2C9DD0B39BF062"
+            "Folder" = "8:_AA1AE8E0AEF94D6B8704ECF21ED0F9E1"
             "Condition" = "8:"
             "Transitive" = "11:FALSE"
             "Vital" = "11:TRUE"
@@ -256,6 +363,28 @@
             "Property" = "8:TARGETDIR"
                 "Folders"
                 {
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_A876C1F6529244F68B8DAB82D896AAFA"
+                    {
+                    "Name" = "8:XML"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_C0E7C5BC8D114D6291DA90A03507604C"
+                        "Folders"
+                        {
+                        }
+                    }
+                    "{9EF0B969-E518-4E46-987F-47570745A589}:_AA1AE8E0AEF94D6B8704ECF21ED0F9E1"
+                    {
+                    "Name" = "8:Certificates"
+                    "AlwaysCreate" = "11:FALSE"
+                    "Condition" = "8:"
+                    "Transitive" = "11:FALSE"
+                    "Property" = "8:_82BB766A133D4F65882DC26D2EDF1BDA"
+                        "Folders"
+                        {
+                        }
+                    }
                 }
             }
             "{1525181F-901A-416C-8A58-119130FE478E}:_78F46C8FD9AD4533BCE9F2A6C007BEEB"
@@ -284,9 +413,9 @@
         "Product"
         {
         "Name" = "8:Microsoft Visual Studio"
-        "ProductName" = "8:OTPServerSetup-x64"
+        "ProductName" = "8:OTPServer"
         "ProductCode" = "8:{C76EFC9D-7CCE-4BFD-9685-83CEEEFB208E}"
-        "PackageCode" = "8:{C5A8CAAB-99F1-46F6-A9C7-A69465741F56}"
+        "PackageCode" = "8:{5FBE3E29-D9EF-41FB-A1DD-4E6905794FA3}"
         "UpgradeCode" = "8:{13178C60-A86A-4A21-AF83-2C04A4C4AE30}"
         "AspNetVersion" = "8:4.0.30319.0"
         "RestartWWWService" = "11:FALSE"
@@ -294,12 +423,12 @@
         "DetectNewerInstalledVersion" = "11:TRUE"
         "InstallAllUsers" = "11:FALSE"
         "ProductVersion" = "8:1.0.0"
-        "Manufacturer" = "8:Standardfirmenname"
+        "Manufacturer" = "8:blacksheep Software"
         "ARPHELPTELEPHONE" = "8:"
         "ARPHELPLINK" = "8:"
-        "Title" = "8:OTPServerSetup-x64"
+        "Title" = "8:OTPServer"
         "Subject" = "8:"
-        "ARPCONTACT" = "8:Standardfirmenname"
+        "ARPCONTACT" = "8:blacksheep Software"
         "Keywords" = "8:"
         "ARPCOMMENTS" = "8:"
         "ARPURLINFOABOUT" = "8:"
@@ -807,7 +936,7 @@
         {
             "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_402C07231FF441C081260B297D8DD7CE"
             {
-            "SourcePath" = "8:"
+            "SourcePath" = "8:..\\OTPServer\\obj\\x86\\Release\\OTPServer.exe"
             "TargetName" = "8:"
             "Tag" = "8:"
             "Folder" = "8:_142C34BF82D1427CBD2C9DD0B39BF062"
@@ -828,6 +957,34 @@
             "OutputConfiguration" = "8:Release|x86"
             "OutputGroupCanonicalName" = "8:Built"
             "OutputProjectGuid" = "8:{2E925779-5189-4E22-83D9-D1E0CFD7E76B}"
+            "ShowKeyOutput" = "11:TRUE"
+                "ExcludeFilters"
+                {
+                }
+            }
+            "{5259A561-127C-4D43-A0A1-72F10C7B3BF8}:_83EB880B8CCE4E3DAD2386013FF0F2C8"
+            {
+            "SourcePath" = "8:..\\InstallerActions\\obj\\Release\\InstallerActions.dll"
+            "TargetName" = "8:"
+            "Tag" = "8:"
+            "Folder" = "8:_142C34BF82D1427CBD2C9DD0B39BF062"
+            "Condition" = "8:"
+            "Transitive" = "11:FALSE"
+            "Vital" = "11:TRUE"
+            "ReadOnly" = "11:FALSE"
+            "Hidden" = "11:FALSE"
+            "System" = "11:FALSE"
+            "Permanent" = "11:FALSE"
+            "SharedLegacy" = "11:FALSE"
+            "PackageAs" = "3:1"
+            "Register" = "3:1"
+            "Exclude" = "11:FALSE"
+            "IsDependency" = "11:FALSE"
+            "IsolateTo" = "8:"
+            "ProjectOutputGroupRegister" = "3:1"
+            "OutputConfiguration" = "8:Release|Any CPU"
+            "OutputGroupCanonicalName" = "8:Built"
+            "OutputProjectGuid" = "8:{97F51CCF-7189-4125-AD5E-B011C631CCD8}"
             "ShowKeyOutput" = "11:TRUE"
                 "ExcludeFilters"
                 {

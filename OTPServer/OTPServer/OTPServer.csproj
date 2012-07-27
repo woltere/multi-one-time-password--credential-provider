@@ -105,6 +105,7 @@
     <Compile Include="Communication\Local\RequestObject.cs" />
     <Compile Include="Communication\Local\RequestQueue.cs" />
     <Compile Include="Communication\Local\ResponseObject.cs" />
+    <Compile Include="Configuration.cs" />
     <Compile Include="OneTimePasswordServer.cs">
       <SubType>Component</SubType>
     </Compile>

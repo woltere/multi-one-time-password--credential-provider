@@ -12,6 +12,7 @@ namespace OTPHelpers.XML.OTPPacket
     public class OTPPacket
     {
         public const int __PROTOCOL_VERSION = 1;
+        private string _SchemaPath = "C:\\OTPPacketSchema.xsd";
 
         private bool _ProtocolVersionMismatch;
         public bool ProtocolVersionMismatch
@@ -61,6 +62,11 @@ namespace OTPHelpers.XML.OTPPacket
             this._Message   = new Message();
             this._DataItems = new List<Data>();
             this._KeyData   = new KeyData();
+        }
+
+        public OTPPacket(string schemaPath) : this()
+        {
+            this._SchemaPath = schemaPath;
         }
 
         ~OTPPacket()
@@ -131,7 +137,7 @@ namespace OTPHelpers.XML.OTPPacket
         {
             XmlReaderSettings xmlSettings = new XmlReaderSettings();
 
-            xmlSettings.Schemas.Add("", "C:\\OTPPacketSchema.xsd");
+            xmlSettings.Schemas.Add("", this._SchemaPath);
             xmlSettings.ValidationType = (validateXml) ? ValidationType.Schema : ValidationType.None;
             xmlSettings.XmlResolver = null;
 

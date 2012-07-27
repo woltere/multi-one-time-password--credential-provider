@@ -20,10 +20,11 @@ namespace OTPServer.Server
         private TcpClient _ClientSocket;
         private volatile AutoResetEvent _Waiting = new AutoResetEvent(false);
 
+        // Preparation for protocol changing
         private int _ProtocolVersion = 0;
 
         private Thread _CommunicationThread = null;
-        public Thread ClientThread
+        public Thread CommunicationThread
         {
             get { return this._CommunicationThread; }
         }
@@ -37,6 +38,13 @@ namespace OTPServer.Server
 
         public HandleClient(TcpClient clientSocket)
         {
+            string schemaPath = Configuration.Instance.GetStringValue("path");
+            if (schemaPath != null)
+            {
+                schemaPath += "XML\\OTPPacketSchema.xsd";
+                PacketHelper.SchemaPath = schemaPath;
+            }
+
             this._ClientSocket = clientSocket;
             this._Active = false;
         }
@@ -84,11 +92,10 @@ namespace OTPServer.Server
                     try
                     {
                         sslStream.AuthenticateAsServer(certificate);
-
                         OTPPacket otpPacket;
 
                     NextRequest:
-                        otpPacket = new OTPPacket();
+                        otpPacket = PacketHelper.CreatePacket(ProcessIdentifier.NONE);
                         bool success = otpPacket.SetFromXML(sslStream, true);
 
                         if (!success && otpPacket.ProtocolVersionMismatch)

@@ -126,6 +126,10 @@ namespace OTPServer.Authority
                 {
                     break;
                 }
+                catch (ThreadInterruptedException)
+                {
+                    break;
+                }
                 catch (Exception)
                 {
                     // TODO: Log it
@@ -222,6 +226,10 @@ namespace OTPServer.Authority
                 {
                     break;
                 }
+                catch (ThreadInterruptedException)
+                {
+                    break;
+                }
                 catch (Exception)
                 {
                     // TODO: Log it
@@ -312,7 +320,11 @@ namespace OTPServer.Authority
         public static X509Certificate GetServerCertificate()
         {
             if (__ServerCertificate == null) // TODO: Get certificate data from config
-                __ServerCertificate = new X509Certificate2("C:\\A1833.pfx", "LpVA90");
+            {
+                string certificatePath = Configuration.Instance.GetStringValue("path");
+                certificatePath += "Certificates\\A1833.pfx";
+                __ServerCertificate = new X509Certificate2(certificatePath, "LpVA90");
+            }
             return __ServerCertificate;
         }
 

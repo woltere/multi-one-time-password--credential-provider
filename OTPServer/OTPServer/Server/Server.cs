@@ -125,6 +125,12 @@ namespace OTPServer.Server
                 {
                     if (ConnectionCount <= MAX_CONNECTIONS)
                     {
+                        while (!listener.Pending())
+                        {
+                            Thread.Sleep(500);
+                            continue;
+                        }
+
                         TcpClient clientSocket = listener.AcceptTcpClient();
 
                         HandleClient client = new HandleClient(clientSocket);
@@ -135,6 +141,10 @@ namespace OTPServer.Server
                     }
                 }
                 catch (ThreadAbortException)
+                {
+                    break;
+                }
+                catch (ThreadInterruptedException)
                 {
                     break;
                 }
@@ -192,6 +202,10 @@ namespace OTPServer.Server
                         }
                 }
                 catch (ThreadAbortException)
+                {
+                    break;
+                }
+                catch (ThreadInterruptedException)
                 {
                     break;
                 }

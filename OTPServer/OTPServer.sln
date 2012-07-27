@@ -5,7 +5,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTPServer", "OTPServer\OTPS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTPClient", "OTPClient\OTPClient.csproj", "{6E3A1DAA-7EBF-4EA6-A73D-36C68989B699}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "OTPServerSetup-x64", "OTPServerSetup-x64\OTPServerSetup-x64.vdproj", "{B4D8553A-F9B6-45B4-B53F-19128F17065C}"
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "OTPServerSetup", "OTPServerSetup-x64\OTPServerSetup-x64.vdproj", "{B4D8553A-F9B6-45B4-B53F-19128F17065C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Certs", "Certs", "{075AF4E7-AD74-4500-BE81-CA70E3BE78BD}"
 	ProjectSection(SolutionItems) = preProject
@@ -14,6 +14,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Certs", "Certs", "{075AF4E7
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTPHelpers", "OTPHelpers\OTPHelpers.csproj", "{CF5D9B82-3B27-4E6E-8E19-440A023B65C2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstallerActions", "InstallerActions\InstallerActions.csproj", "{97F51CCF-7189-4125-AD5E-B011C631CCD8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -79,6 +81,18 @@ Global
 		{CF5D9B82-3B27-4E6E-8E19-440A023B65C2}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{CF5D9B82-3B27-4E6E-8E19-440A023B65C2}.Release|x64.ActiveCfg = Release|Any CPU
 		{CF5D9B82-3B27-4E6E-8E19-440A023B65C2}.Release|x86.ActiveCfg = Release|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Release|x64.ActiveCfg = Release|Any CPU
+		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

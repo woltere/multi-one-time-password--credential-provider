@@ -5,13 +5,14 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{CF5D9B82-3B27-4E6E-8E19-440A023B65C2}</ProjectGuid>
+    <ProjectGuid>{97F51CCF-7189-4125-AD5E-B011C631CCD8}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>OTPHelpers</RootNamespace>
-    <AssemblyName>OTPHelpers</AssemblyName>
+    <RootNamespace>InstallerActions</RootNamespace>
+    <AssemblyName>InstallerActions</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,7 +33,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
+    <Reference Include="System.Management" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -40,46 +43,13 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PacketHelper.cs" />
+    <Compile Include="CustomActions.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="CustomActions.Designer.cs">
+      <DependentUpon>CustomActions.cs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="XML\OTPPacket\Data.cs" />
-    <Compile Include="XML\OTPPacket\KeyData.cs" />
-    <Compile Include="XML\OTPPacket\Message.cs" />
-    <Compile Include="XML\OTPPacket\OTPPacket.cs" />
-    <Compile Include="XML\OTPPacket\ProcessIdentifier.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="XML\OTPPacket\Samples\SampleOTPPacketClientHello.xml">
-      <SubType>Designer</SubType>
-    </None>
-    <None Include="XML\OTPPacket\Schema\OTPPacketSchema.xsd">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="XML\OTPPacket\Samples\SampleOTPPacketClientResyncWithData.xml">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="XML\OTPPacket\Samples\SampleOTPPacketClientVerifyWithData.xml">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="XML\OTPPacket\Samples\SampleOTPPacketServerError.xml">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="XML\OTPPacket\Samples\SampleOTPPacketServerHello.xml">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="XML\OTPPacket\Samples\SampleOTPPacketServerSuccessWithCert.xml">
-      <SubType>Designer</SubType>
-    </None>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
