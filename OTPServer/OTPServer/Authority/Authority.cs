@@ -206,11 +206,45 @@ namespace OTPServer.Authority
                         }
                         else if (reqObj.Request.Message.Type == Message.TYPE.VERIFY)
                         {
-                            // TODO: add (optional) data to process and verify (through Agent). send verify result.
+                            if (__ProcessDataStorage.AddDataFromPacketToProcess(reqObj.Request))
+                            {
+                                if (process.Username != String.Empty && process.OneTimePasswords[0] != String.Empty)
+                                {
+                                    bool success = Agent.Agent.VerifyOneTimePassword(process.Username, process.OneTimePasswords);
+                                    if (success)
+                                        AnswerSuccess(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.S_OK);
+                                    // TODO: Generate client authentication certificate
+                                    else
+                                        AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_NOT_VERIFIED, "The one-time-password could not be verified.");
+                                }
+                                else
+                                    AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_INCOMPLETE, "The request could not be processed, because it is incomplete.");
+                            }
+                            else
+                            {
+                                AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_LOCKED, "Could not add data. Maybe duplicate data was sent.");
+                            }
                         }
                         else if (reqObj.Request.Message.Type == Message.TYPE.RESYNC)
                         {
-                            // TODO: add (optional) data to process and resync (through Agent). send resync result.
+                            if (__ProcessDataStorage.AddDataFromPacketToProcess(reqObj.Request))
+                            {
+                                if (process.Username != String.Empty && process.OneTimePasswords[0] != String.Empty && process.OneTimePasswords[1] != String.Empty)
+                                {
+                                    bool success = Agent.Agent.ResyncOneTimePassword(process.Username, process.OneTimePasswords);
+                                    if (success)
+                                        AnswerSuccess(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.S_RESYNC_OK);
+                                    // TODO: Generate client authentication certificate
+                                    else
+                                        AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_NOT_VERIFIED, "The one-time-password could not be resynchronized.");
+                                }
+                                else
+                                    AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_INCOMPLETE, "The request could not be processed, because it is incomplete.");
+                            }
+                            else
+                            {
+                                AnswerFailure(ref reqObj, reqObj.Request.ProcessIdentifier.ID, Message.STATUS.E_LOCKED, "Could not add data. Maybe duplicate data was sent.");
+                            }
                         }
                         else
                         {

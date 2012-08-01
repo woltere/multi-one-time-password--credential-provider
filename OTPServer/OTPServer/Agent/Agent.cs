@@ -3,44 +3,58 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
+using OTPServer.Communication.Local;
+using OTPServer.Communication.Local.Observer;
+using OTPHelpers.XML.OTPPacket;
+using System.Threading;
 
 namespace OTPServer.Agent
 {
-    class Agent
+    static class Agent
     {
-        private static Agent __Instance = null;
-        public static Agent Instance
+        private static string _MultiOtpPath = String.Empty;
+
+        static Agent()
         {
-            get
-            {
-                if (__Instance == null)
-                    __Instance = new Agent();
-                return __Instance;
-            }
+            _MultiOtpPath = Configuration.Instance.GetStringValue("multiOtpPath");
         }
 
-        private Agent()
-        {
-        }
-
-        ~Agent()
-        {
-        }
-
+        /*
         private static bool __Active;
         public static bool Active
         {
             get { return __Active; }
         }
+        */
 
-        public bool Start()
+        public static bool VerifyOneTimePassword(string username, string[] otp)
         {
-            return true;
+            if (_MultiOtpPath != String.Empty)
+            {
+                string args = "-log " + username + " " + otp[0];
+                using (Process exeProcess = Process.Start(_MultiOtpPath, args))
+                {
+                    exeProcess.WaitForExit();
+                    if (exeProcess.ExitCode == 0)
+                        return true;
+                }                
+            }
+            return false;
         }
 
-        public bool Stop()
+        public static bool ResyncOneTimePassword(string username, string[] otp)
         {
-            return true;
+            if (_MultiOtpPath != String.Empty)
+            {
+                string args = "-log -resync " + username + " " + otp[0] + " " + otp[1];
+                using (Process exeProcess = Process.Start(_MultiOtpPath, args))
+                {
+                    exeProcess.WaitForExit();
+                    if (exeProcess.ExitCode == 14)
+                        return true;
+                }
+            }
+            return false;
         }
     }
 }

@@ -18,13 +18,19 @@ namespace OTPClient
     {
         static void Main(string[] args)
         {
-            if (args.Length < 1)
+            if (args.Length < 3)
             {
                 Console.WriteLine("Usage: OTPClient.exe server-ip");
                 return;
             }
 
             string server = args[0];
+            string userName = args[1];
+            string otp1 = args[2];
+
+            string otp2 = String.Empty;
+            if (args.Length > 3)
+                otp2 = args[3];
 
             Console.WriteLine("Welcome...");
 
@@ -94,7 +100,7 @@ namespace OTPClient
                 Console.WriteLine("RESP: " + response.ToXMLString());
 
                 //////////
-                Console.WriteLine("\nSending ADD packet containing DATA attribute USERNAME");
+                Console.WriteLine("\nSending ADD packet containing DATA-attributes USERNAME, OTP");
 
                 request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
                 request.Message.Type = Message.TYPE.ADD;
@@ -104,7 +110,11 @@ namespace OTPClient
                     new MD5CryptoServiceProvider());
 
                 data = new Data();
-                data.Username = "testUserName";
+                data.Username = userName;
+                request.DataItems.Add(data);
+
+                data = new Data();
+                data.OneTimePassword = otp1;
                 request.DataItems.Add(data);
 
                 Console.WriteLine("REQ:  " + request.ToXMLString());
@@ -144,6 +154,23 @@ namespace OTPClient
                 success = response.SetFromXML(sslStream, true);
                 Console.WriteLine("RESP: " + response.ToXMLString());
                 */
+
+                //////////
+                Console.WriteLine("\nVerify OTP");
+
+                request = PacketHelper.CreatePacket(response.ProcessIdentifier.ID);
+                request.Message.Type = Message.TYPE.VERIFY;
+                request.Message.TimeStamp = NowMilli();
+                request.Message.MAC = key.SignData(
+                    Encoding.UTF8.GetBytes(response.ProcessIdentifier.ID.ToString() + request.Message.TimeStamp.ToString()),
+                    new MD5CryptoServiceProvider());
+
+                Console.WriteLine("REQ:  " + request.ToXMLString());
+                WritePacketToStream(sslStream, request);
+
+                response = new OTPPacket();
+                success = response.SetFromXML(sslStream, true);
+                Console.WriteLine("RESP: " + response.ToXMLString());
             }
             catch (SocketException)
             {

@@ -61,7 +61,9 @@ namespace OTPServer.Authority.Certificates
             gen.AddExtension(
                 X509Extensions.ExtendedKeyUsage.Id,
                 false,
-                new ExtendedKeyUsage(new ArrayList() { new DerObjectIdentifier("1.3.6.1.5.5.7.3.1") })); // client authentication
+                new ExtendedKeyUsage(
+                    Asn1Sequence.GetInstance(
+                        new DerObjectIdentifier("1.3.6.1.5.5.7.3.1").GetDerEncoded()))); // client authentication
 
             // Generate and sign certificate
             var newCert = gen.Generate(authorityKp.Private);

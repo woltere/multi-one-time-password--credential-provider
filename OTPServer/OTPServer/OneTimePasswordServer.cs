@@ -15,7 +15,7 @@ namespace OTPServer
         public static EventLog LOG;
 
         private static Authority.Authority __Authority = null;
-        private static Agent.Agent         __Agent     = null;
+        //private static Agent.Agent         __Agent     = null;
         private static Server.Server       __Server    = null;
 
         private static int __Status = 0;
@@ -72,9 +72,12 @@ namespace OTPServer
             }
             if (!AgentOnline)
             {
+                /*
                 __Agent = (__Agent == null) ? Agent.Agent.Instance : __Agent;
                 if (__Agent.Start())
                     __Status |= AGENT_ONLINE;
+                */
+                __Status |= AGENT_ONLINE;
             }
             if (!ServerOnline && AuthorityOnline && AgentOnline)
             {
@@ -97,10 +100,13 @@ namespace OTPServer
                 __Server = null;
                 __Status &= SERVER_OFFLINE;
             }
-            if (AgentOnline && __Agent != null)
+            if (AgentOnline /*&& __Agent != null*/)
             {
+                /*
                 __Agent.Stop();
                 __Agent = null;
+                __Status &= AGENT_OFFLINE;
+                */
                 __Status &= AGENT_OFFLINE;
             }
             if (AuthorityOnline && __Authority != null)
