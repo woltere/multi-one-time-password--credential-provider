@@ -1,0 +1,80 @@
+﻿<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <xsd:annotation>
+    <xsd:documentation xml:lang="en">
+      OTPPacket XML Schema. Protocol version 1.
+      Author: Dominik Pretzsch, 2012
+    </xsd:documentation>
+  </xsd:annotation>
+  
+  <xsd:element name="OTPPacket" type="ElemOTPPacketType"/>
+
+  <xsd:complexType name="ElemOTPPacketType">
+    <xsd:sequence>
+      <xsd:element name="PID"     type="xsd:int"         minOccurs="0" maxOccurs="1"         default="0" />
+      <xsd:element name="Message" type="ElemMessageType"                                                 />
+      <xsd:element name="Data"    type="ElemDataType"    minOccurs="0" maxOccurs="unbounded"             />
+      <xsd:element name="KeyData" type="ElemKeyDataType" minOccurs="0" maxOccurs="1"                     />
+    </xsd:sequence>
+    <xsd:attribute name="version" type="xsd:int" use="required"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="ElemMessageType">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:string">
+        <xsd:attribute name="type"      type="AttrMessageType"  use="required" />        
+        <xsd:attribute name="status"    type="xsd:int"          use="optional" />
+        <xsd:attribute name="timestamp" type="xsd:long"         use="optional" />
+        <xsd:attribute name="mac"       type="xsd:base64Binary" use="optional" />        
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="ElemDataType">
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:string">
+        <xsd:attribute name="type" type="AttrDataType"/>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="ElemKeyDataType">
+    <xsd:choice>
+      <!-- RSA Public Key -->
+      <xsd:element name="RSAKeyValue">
+        <xsd:complexType>
+          <xsd:sequence>
+            <xsd:element name="Modulus"  type="xsd:base64Binary" />
+            <xsd:element name="Exponent" type="xsd:base64Binary" />
+          </xsd:sequence>
+        </xsd:complexType>
+      </xsd:element>
+      <!-- Other key formats -->
+    </xsd:choice>
+  </xsd:complexType>
+
+  <xsd:simpleType name="AttrBaseType">
+    <xsd:restriction base="xsd:string">
+      <xsd:pattern value="[A-Z_]+"/>
+    </xsd:restriction> 
+  </xsd:simpleType>
+
+  <xsd:simpleType name="AttrMessageType">
+    <xsd:restriction base="AttrBaseType">
+      <xsd:enumeration value="HELLO"   />
+      <xsd:enumeration value="ADD"     />
+      <xsd:enumeration value="VERIFY"  />
+      <xsd:enumeration value="RESYNC"  />
+      <xsd:enumeration value="SUCCESS" />
+      <xsd:enumeration value="ERROR"   />
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="AttrDataType">
+    <xsd:restriction base="AttrBaseType">
+      <xsd:enumeration value="USERNAME"    />
+      <xsd:enumeration value="OTP"         />
+      <xsd:enumeration value="CERTIFICATE" />
+    </xsd:restriction>
+  </xsd:simpleType>
+</xsd:schema>

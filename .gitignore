@@ -34,3 +34,13 @@
 /MultiOneTimePasswordCredentialProviderSetup-x86/Release
 /MutiOneTimePasswordCredentialProviderSetup-x64/Debug
 /MutiOneTimePasswordCredentialProviderSetup-x64/Release
+/MultiOneTimePasswordExternalMultiOTPServerDLL/Win32
+/MultiOneTimePasswordExternalMultiOTPServerDLL/x64
+/OTPClient/bin
+/OTPClient/obj
+/OTPHelpers/bin
+/OTPHelpers/obj
+/helpers/Debug
+/MultiOneTimePasswordCredentialProvider/Debug
+/MultiOneTimePasswordCredentialProviderFilter/Debug
+/MultiOneTimePasswordResyncCredentialProvider/Debug

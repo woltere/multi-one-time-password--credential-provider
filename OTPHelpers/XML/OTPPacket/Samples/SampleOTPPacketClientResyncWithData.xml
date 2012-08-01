@@ -1,0 +1,15 @@
+﻿<?xml version="1.0"?>
+<!-- This packet could be sent by a client to issue OTP resynchronization -->
+<OTPPacket version="1">
+  <PID>1234</PID>
+  <Message type="RESYNC" mac="{PID timestamp}(sig:c)"/>
+  <Data type="OTP">
+    224488
+  </Data>
+  <Data type="OTP">
+    112244
+  </Data>
+  <Data type="USERNAME">
+    user@example.com
+  </Data>
+</OTPPacket>
