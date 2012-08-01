@@ -7,6 +7,7 @@ using OTPServer.Communication.Local;
 using OTPServer.Communication.Local.Observer;
 using OTPHelpers.XML.OTPPacket;
 using System.Threading;
+using System.IO;
 
 namespace OTPServer.Agent
 {

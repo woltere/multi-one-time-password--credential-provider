@@ -261,7 +261,7 @@ namespace OTPServer.Authority.Storage
                 string[] oneTimePasswords = new string[this._OneTimePasswords.Length];
                 for (int i = 0; i < this._OneTimePasswords.Length; i++)
                 {
-                    oneTimePasswords[i] = String.Empty;
+                    oneTimePasswords[i] = this._OneTimePasswords[i];
                 }
 
                 if (success && otpPacket.KeyData.Type != KeyData.TYPE.NONE && this._KeyData.Type == KeyData.TYPE.NONE)
@@ -295,10 +295,11 @@ namespace OTPServer.Authority.Storage
                         oneTimePasswordsChanged = true;
                         for (int i = 0; i < this._OneTimePasswords.Length; i++)
                         {
-                            if (GetOneTimePasswordAt(i) != String.Empty)
-                                oneTimePasswords[i] = GetOneTimePasswordAt(i);
-                            else
+                            if (oneTimePasswords[i] == String.Empty)
+                            {
                                 oneTimePasswords[i] = Clone<string>(item.OneTimePassword);
+                                break;
+                            }
                         }
                     }
                     else if (item.Type == Data.TYPE.OTP)
