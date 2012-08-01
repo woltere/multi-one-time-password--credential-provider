@@ -31,8 +31,8 @@
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.edit_serialNumber = new System.Windows.Forms.TextBox();
-            this.btChoose = new System.Windows.Forms.Button();
+            this.edit_certThumbprint = new System.Windows.Forms.TextBox();
+            this.btChooseSSLCertificate = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             this.btInstallCert = new System.Windows.Forms.Button();
             this.panel1 = new System.Windows.Forms.Panel();
@@ -55,6 +55,14 @@
             this.label9 = new System.Windows.Forms.Label();
             this.label10 = new System.Windows.Forms.Label();
             this.label11 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.edit_authorityThumbprint = new System.Windows.Forms.TextBox();
+            this.btChooseAuthorityCertificate = new System.Windows.Forms.Button();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
+            this.label15 = new System.Windows.Forms.Label();
+            this.label_authorityCertNameValue = new System.Windows.Forms.Label();
+            this.label_authorityCertAuthValue = new System.Windows.Forms.Label();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -82,31 +90,31 @@
             this.label3.AutoSize = true;
             this.label3.Location = new System.Drawing.Point(12, 79);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(291, 13);
+            this.label3.Size = new System.Drawing.Size(278, 13);
             this.label3.TabIndex = 2;
-            this.label3.Text = "Certificate\'s serial number: (Choose from your local key store)";
+            this.label3.Text = "Certificate\'s thumbprint: (Choose from your local key store)";
             // 
-            // edit_serialNumber
+            // edit_certThumbprint
             // 
-            this.edit_serialNumber.Location = new System.Drawing.Point(15, 95);
-            this.edit_serialNumber.Name = "edit_serialNumber";
-            this.edit_serialNumber.Size = new System.Drawing.Size(313, 20);
-            this.edit_serialNumber.TabIndex = 3;
+            this.edit_certThumbprint.Location = new System.Drawing.Point(15, 95);
+            this.edit_certThumbprint.Name = "edit_certThumbprint";
+            this.edit_certThumbprint.Size = new System.Drawing.Size(313, 20);
+            this.edit_certThumbprint.TabIndex = 3;
             // 
-            // btChoose
+            // btChooseSSLCertificate
             // 
-            this.btChoose.Location = new System.Drawing.Point(334, 93);
-            this.btChoose.Name = "btChoose";
-            this.btChoose.Size = new System.Drawing.Size(75, 23);
-            this.btChoose.TabIndex = 4;
-            this.btChoose.Text = "Choose ...";
-            this.btChoose.UseVisualStyleBackColor = true;
-            this.btChoose.Click += new System.EventHandler(this.btChoose_Click);
+            this.btChooseSSLCertificate.Location = new System.Drawing.Point(334, 93);
+            this.btChooseSSLCertificate.Name = "btChooseSSLCertificate";
+            this.btChooseSSLCertificate.Size = new System.Drawing.Size(75, 23);
+            this.btChooseSSLCertificate.TabIndex = 4;
+            this.btChooseSSLCertificate.Text = "Choose ...";
+            this.btChooseSSLCertificate.UseVisualStyleBackColor = true;
+            this.btChooseSSLCertificate.Click += new System.EventHandler(this.btChooseSSLCertificate_Click);
             // 
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(12, 240);
+            this.label4.Location = new System.Drawing.Point(12, 386);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(386, 13);
             this.label4.TabIndex = 5;
@@ -115,7 +123,7 @@
             // 
             // btInstallCert
             // 
-            this.btInstallCert.Location = new System.Drawing.Point(15, 265);
+            this.btInstallCert.Location = new System.Drawing.Point(15, 411);
             this.btInstallCert.Name = "btInstallCert";
             this.btInstallCert.Size = new System.Drawing.Size(139, 23);
             this.btInstallCert.TabIndex = 6;
@@ -131,7 +139,7 @@
             this.panel1.Controls.Add(this.btStop);
             this.panel1.Controls.Add(this.btStart);
             this.panel1.Controls.Add(this.label6);
-            this.panel1.Location = new System.Drawing.Point(15, 334);
+            this.panel1.Location = new System.Drawing.Point(15, 480);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(394, 77);
             this.panel1.TabIndex = 7;
@@ -199,7 +207,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(12, 318);
+            this.label5.Location = new System.Drawing.Point(12, 464);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(101, 13);
             this.label5.TabIndex = 8;
@@ -207,7 +215,7 @@
             // 
             // btInstallCA
             // 
-            this.btInstallCA.Location = new System.Drawing.Point(160, 265);
+            this.btInstallCA.Location = new System.Drawing.Point(160, 411);
             this.btInstallCA.Name = "btInstallCA";
             this.btInstallCA.Size = new System.Drawing.Size(187, 23);
             this.btInstallCA.TabIndex = 9;
@@ -216,7 +224,7 @@
             // 
             // btSave
             // 
-            this.btSave.Location = new System.Drawing.Point(291, 298);
+            this.btSave.Location = new System.Drawing.Point(291, 444);
             this.btSave.Name = "btSave";
             this.btSave.Size = new System.Drawing.Size(118, 23);
             this.btSave.TabIndex = 10;
@@ -226,7 +234,7 @@
             // 
             // btRestore
             // 
-            this.btRestore.Location = new System.Drawing.Point(160, 298);
+            this.btRestore.Location = new System.Drawing.Point(160, 444);
             this.btRestore.Name = "btRestore";
             this.btRestore.Size = new System.Drawing.Size(125, 23);
             this.btRestore.TabIndex = 11;
@@ -293,7 +301,7 @@
             // 
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(12, 193);
+            this.label9.Location = new System.Drawing.Point(12, 339);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(367, 13);
             this.label9.TabIndex = 18;
@@ -303,7 +311,7 @@
             // 
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.Location = new System.Drawing.Point(12, 206);
+            this.label10.Location = new System.Drawing.Point(12, 352);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(348, 13);
             this.label10.TabIndex = 19;
@@ -313,17 +321,96 @@
             // 
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label11.Location = new System.Drawing.Point(12, 219);
+            this.label11.Location = new System.Drawing.Point(12, 365);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(196, 13);
             this.label11.TabIndex = 20;
             this.label11.Text = "NOT the current user\'s key store!";
             // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(12, 234);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(322, 13);
+            this.label12.TabIndex = 21;
+            this.label12.Text = "Certificate Authority\'s thumborint: (Choose from your local key store)";
+            // 
+            // edit_authorityThumbprint
+            // 
+            this.edit_authorityThumbprint.Location = new System.Drawing.Point(15, 250);
+            this.edit_authorityThumbprint.Name = "edit_authorityThumbprint";
+            this.edit_authorityThumbprint.Size = new System.Drawing.Size(313, 20);
+            this.edit_authorityThumbprint.TabIndex = 22;
+            // 
+            // btChooseAuthorityCertificate
+            // 
+            this.btChooseAuthorityCertificate.Location = new System.Drawing.Point(334, 248);
+            this.btChooseAuthorityCertificate.Name = "btChooseAuthorityCertificate";
+            this.btChooseAuthorityCertificate.Size = new System.Drawing.Size(75, 23);
+            this.btChooseAuthorityCertificate.TabIndex = 23;
+            this.btChooseAuthorityCertificate.Text = "Choose ...";
+            this.btChooseAuthorityCertificate.UseVisualStyleBackColor = true;
+            this.btChooseAuthorityCertificate.Click += new System.EventHandler(this.btChooseAuthorityCertificate_Click);
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(12, 305);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(124, 13);
+            this.label13.TabIndex = 25;
+            this.label13.Text = "Certificate Authority (CA):";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(12, 283);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(86, 13);
+            this.label14.TabIndex = 24;
+            this.label14.Text = "Certificate name:";
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(12, 211);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(350, 13);
+            this.label15.TabIndex = 26;
+            this.label15.Text = "The authority\'s certificate is used to sign client authentication certificates.";
+            // 
+            // label_authorityCertNameValue
+            // 
+            this.label_authorityCertNameValue.AutoSize = true;
+            this.label_authorityCertNameValue.Location = new System.Drawing.Point(144, 283);
+            this.label_authorityCertNameValue.Name = "label_authorityCertNameValue";
+            this.label_authorityCertNameValue.Size = new System.Drawing.Size(42, 13);
+            this.label_authorityCertNameValue.TabIndex = 27;
+            this.label_authorityCertNameValue.Text = "XXXXX";
+            // 
+            // label_authorityCertAuthValue
+            // 
+            this.label_authorityCertAuthValue.AutoSize = true;
+            this.label_authorityCertAuthValue.Location = new System.Drawing.Point(144, 305);
+            this.label_authorityCertAuthValue.Name = "label_authorityCertAuthValue";
+            this.label_authorityCertAuthValue.Size = new System.Drawing.Size(42, 13);
+            this.label_authorityCertAuthValue.TabIndex = 28;
+            this.label_authorityCertAuthValue.Text = "XXXXX";
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(421, 450);
+            this.ClientSize = new System.Drawing.Size(421, 567);
+            this.Controls.Add(this.label_authorityCertAuthValue);
+            this.Controls.Add(this.label_authorityCertNameValue);
+            this.Controls.Add(this.label15);
+            this.Controls.Add(this.label13);
+            this.Controls.Add(this.label14);
+            this.Controls.Add(this.btChooseAuthorityCertificate);
+            this.Controls.Add(this.edit_authorityThumbprint);
+            this.Controls.Add(this.label12);
             this.Controls.Add(this.label11);
             this.Controls.Add(this.label10);
             this.Controls.Add(this.label9);
@@ -340,8 +427,8 @@
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.btInstallCert);
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.btChoose);
-            this.Controls.Add(this.edit_serialNumber);
+            this.Controls.Add(this.btChooseSSLCertificate);
+            this.Controls.Add(this.edit_certThumbprint);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
@@ -362,8 +449,8 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TextBox edit_serialNumber;
-        private System.Windows.Forms.Button btChoose;
+        private System.Windows.Forms.TextBox edit_certThumbprint;
+        private System.Windows.Forms.Button btChooseSSLCertificate;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.Button btInstallCert;
         private System.Windows.Forms.Panel panel1;
@@ -386,6 +473,14 @@
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.TextBox edit_authorityThumbprint;
+        private System.Windows.Forms.Button btChooseAuthorityCertificate;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.Label label_authorityCertNameValue;
+        private System.Windows.Forms.Label label_authorityCertAuthValue;
     }
 }
 

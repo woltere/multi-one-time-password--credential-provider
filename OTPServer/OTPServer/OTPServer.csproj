@@ -155,6 +155,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BouncyCastle\crypto\crypto.csproj">
+      <Project>{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}</Project>
+      <Name>crypto</Name>
+    </ProjectReference>
     <ProjectReference Include="..\OTPHelpers\OTPHelpers.csproj">
       <Project>{CF5D9B82-3B27-4E6E-8E19-440A023B65C2}</Project>
       <Name>OTPHelpers</Name>
