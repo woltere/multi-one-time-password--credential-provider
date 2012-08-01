@@ -13,3 +13,9 @@
 /OTPServer/OTPHelpers/bin
 /OTPServer/InstallerActions/bin
 /OTPServer/InstallerActions/obj
+/OTPServer/BouncyCastle/crypto/bin
+/OTPServer/BouncyCastle/crypto/obj
+/OTPServer/Certs/root
+/OTPServer/Certs/ssl
+/OTPServer/OTPServerConfigurationUtility/bin
+/OTPServer/OTPServerConfigurationUtility/obj

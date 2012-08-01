@@ -98,6 +98,7 @@
   <ItemGroup>
     <Compile Include="Agent\Agent.cs" />
     <Compile Include="Authority\Authority.cs" />
+    <Compile Include="Authority\Certificates\CA.cs" />
     <Compile Include="Authority\Storage\ProcessDataStorage.cs" />
     <Compile Include="Communication\Local\AuthorityResponseObject.cs" />
     <Compile Include="Communication\Local\Observer\Observable.cs" />

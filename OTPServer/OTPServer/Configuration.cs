@@ -32,12 +32,11 @@ namespace OTPServer
         {
             try
             {
-                _BaseKey = Registry.LocalMachine.OpenSubKey("SOFTWARE").OpenSubKey("blacksheep").OpenSubKey("OTPServer");
+                _BaseKey = Registry.LocalMachine.OpenSubKey("SOFTWARE").OpenSubKey("blacksheep").OpenSubKey("OTPServer", true);
                 this._RegistryAvailable = true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                File.AppendAllText("C:\\log.log", e.Message);
                 _BaseKey = null;
                 this._RegistryAvailable = false;
             }
@@ -54,9 +53,8 @@ namespace OTPServer
             {
                 return (string)_BaseKey.GetValue(valueName);
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                File.AppendAllText("C:\\log.log", e.Message);
                 return String.Empty;
             }
         }
@@ -68,9 +66,8 @@ namespace OTPServer
                 _BaseKey.SetValue(valueName, value);
                 return true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                File.AppendAllText("C:\\log.log", e.Message);
                 return false;
             }
         }

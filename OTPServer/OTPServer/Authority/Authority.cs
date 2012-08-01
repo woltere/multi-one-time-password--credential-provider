@@ -17,7 +17,7 @@ namespace OTPServer.Authority
     {
         private const int MAX_PROCESS_AGE = 60; // seconds
 
-        private static Storage.ProcessDataStorage __ProcessDataStorage = null;
+        private static volatile Storage.ProcessDataStorage __ProcessDataStorage = null;
         private static volatile RequestQueue<OTPPacket, AuthorityResponseObject> __Requests = null;
 
         private static X509Certificate2 __ServerCertificate = null;
@@ -321,9 +321,25 @@ namespace OTPServer.Authority
         {
             if (__ServerCertificate == null) // TODO: Get certificate data from config
             {
-                string certificatePath = Configuration.Instance.GetStringValue("path");
-                certificatePath += "Certificates\\A1833.pfx";
-                __ServerCertificate = new X509Certificate2(certificatePath, "LpVA90");
+                string serialNumber = Configuration.Instance.GetStringValue("serverCertificate");
+                if (serialNumber != String.Empty)
+                {
+                    try
+                    {
+                        X509Store store = new X509Store(StoreName.My, StoreLocation.LocalMachine);
+                        store.Open(OpenFlags.ReadOnly | OpenFlags.OpenExistingOnly);
+                        X509Certificate2Collection collection = store.Certificates.Find(X509FindType.FindByTimeValid, DateTime.Now, false);
+                        collection = collection.Find(X509FindType.FindBySerialNumber, serialNumber, false);
+                        if (collection.Count == 1)
+                        {
+                            __ServerCertificate = collection[0];
+                        }
+                        collection.Clear();
+                        store.Close();
+                    }
+                    catch (Exception)
+                    { }
+                }
             }
             return __ServerCertificate;
         }

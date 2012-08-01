@@ -76,11 +76,16 @@ namespace OTPServer
                 if (__Agent.Start())
                     __Status |= AGENT_ONLINE;
             }
-            if (!ServerOnline && AuthorityOnline && AgentOnline) // TODO: Abort start and <<<shutdown service>>> when Authority or Agent are not online!
+            if (!ServerOnline && AuthorityOnline && AgentOnline)
             {
                 __Server = (__Server == null) ? Server.Server.Instance : __Server;
                 if (__Server.Start())
                     __Status |= SERVER_ONLINE;
+            }
+            else
+            {
+                OnStop();
+                throw new Exception("The service could not be started");
             }
         }
 

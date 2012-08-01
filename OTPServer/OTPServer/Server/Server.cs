@@ -133,19 +133,23 @@ namespace OTPServer.Server
 
                         TcpClient clientSocket = listener.AcceptTcpClient();
 
-                        HandleClient client = new HandleClient(clientSocket);
+                        HandleClient client = new HandleClient();
                         lock (__ClientHandles)
                             __ClientHandles.Add(Now(), client);
 
-                        client.Start();
+                        client.Start(clientSocket);
                     }
                 }
                 catch (ThreadAbortException)
                 {
+                    if (listener != null)
+                        listener.Stop();
                     break;
                 }
                 catch (ThreadInterruptedException)
                 {
+                    if (listener != null)
+                        listener.Stop();
                     break;
                 }
                 catch (Exception)
@@ -194,7 +198,7 @@ namespace OTPServer.Server
 
                             if (Now() - client.Key > CLIENT_MAX_AGE * 60)
                             {
-                                client.Value.Stop(true);
+                                client.Value.Stop();
                                 lock (__ClientHandles)                                    
                                     __ClientHandles.Remove(client.Key);
                                 client.Value.Dispose();

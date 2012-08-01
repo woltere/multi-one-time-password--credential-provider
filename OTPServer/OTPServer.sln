@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTPHelpers", "OTPHelpers\OT
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InstallerActions", "InstallerActions\InstallerActions.csproj", "{97F51CCF-7189-4125-AD5E-B011C631CCD8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OTPServerConfigurationUtility", "OTPServerConfigurationUtility\OTPServerConfigurationUtility.csproj", "{11631F03-B13E-4E11-B3FD-9D2881DBF516}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "crypto", "BouncyCastle\crypto\crypto.csproj", "{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -93,6 +97,30 @@ Global
 		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Release|x64.ActiveCfg = Release|Any CPU
 		{97F51CCF-7189-4125-AD5E-B011C631CCD8}.Release|x86.ActiveCfg = Release|Any CPU
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Debug|x64.ActiveCfg = Debug|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Debug|x86.ActiveCfg = Debug|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Debug|x86.Build.0 = Debug|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Release|Any CPU.ActiveCfg = Release|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Release|Mixed Platforms.Build.0 = Release|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Release|x64.ActiveCfg = Release|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Release|x86.ActiveCfg = Release|x86
+		{11631F03-B13E-4E11-B3FD-9D2881DBF516}.Release|x86.Build.0 = Release|x86
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|x64.ActiveCfg = Release|Any CPU
+		{38872A5F-E87E-4FAD-B109-8EB7B2E6A4A0}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

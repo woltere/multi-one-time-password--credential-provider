@@ -176,7 +176,7 @@ namespace OTPHelpers.XML.OTPPacket
                     }
                 }
             }
-            catch (Exception)
+            catch (XmlException)
             {
                 // Validation failed
                 success = false;
@@ -193,30 +193,25 @@ namespace OTPHelpers.XML.OTPPacket
             // Read the  message sent by the client.
             // The end of the message is signaled using the
             // "</OTPPacket>" marker.
+            // The Read() will timeout after 5 seconds.
+            stream.ReadTimeout = 10 * 1000;
             byte[] buffer = new byte[2048];
             StringBuilder messageData = new StringBuilder();
             int bytes = -1;
             do
             {
-                try
-                {
-                    bytes = stream.Read(buffer, 0, buffer.Length);
+                bytes = stream.Read(buffer, 0, buffer.Length);
 
-                    // Use Decoder class to convert from bytes to UTF8
-                    // in case a character spans two buffers.
-                    Decoder decoder = Encoding.UTF8.GetDecoder();
-                    char[] chars = new char[decoder.GetCharCount(buffer, 0, bytes)];
-                    decoder.GetChars(buffer, 0, bytes, chars, 0);
-                    messageData.Append(chars);
-                    // Check for EOF.
-                    if (messageData.ToString().IndexOf("</OTPPacket>") != -1)
-                    {
-                        break;
-                    }
-                }
-                catch (Exception e)
+                // Use Decoder class to convert from bytes to UTF8
+                // in case a character spans two buffers.
+                Decoder decoder = Encoding.UTF8.GetDecoder();
+                char[] chars = new char[decoder.GetCharCount(buffer, 0, bytes)];
+                decoder.GetChars(buffer, 0, bytes, chars, 0);
+                messageData.Append(chars);
+                // Check for EOF.
+                if (messageData.ToString().IndexOf("</OTPPacket>") != -1)
                 {
-                    throw e;
+                    break;
                 }
             } while (bytes != 0);            
 
