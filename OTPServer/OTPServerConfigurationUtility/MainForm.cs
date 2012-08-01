@@ -48,6 +48,7 @@ namespace OTPServerConfigurationUtility
             {
                 label_status.Text = "Running";
                 label_status.ForeColor = Color.OliveDrab;
+
                 btStart.Enabled = false;
                 btStop.Enabled = true;
             }
@@ -55,6 +56,7 @@ namespace OTPServerConfigurationUtility
             {
                 label_status.Text = "Stopped";
                 label_status.ForeColor = Color.Crimson;
+
                 btStart.Enabled = true;
                 btStop.Enabled = false;
             }
@@ -62,12 +64,24 @@ namespace OTPServerConfigurationUtility
             {
                 label_status.Text = "Not installed!";
                 label_status.ForeColor = Color.Crimson;
+
                 btStart.Enabled = false;
                 btStop.Enabled = false;
+
                 btChooseSSLCertificate.Enabled = false;
                 edit_certThumbprint.Enabled = false;
                 edit_certThumbprint.Text = "Service is not installed";
+
+                btChooseAuthorityCertificate.Enabled = false;
+                edit_authorityThumbprint.Enabled = false;
+                edit_authorityThumbprint.Text = "Service is not installed";
+
+                btChooseMultiOTP.Enabled = false;
+                edit_multiOtpPath.Enabled = false;
+                edit_multiOtpPath.Text = "Service is not installed";
+
                 btRestore.Enabled = false;
+
                 btSave.Enabled = false;
             }
             ActiveControl = label1;
@@ -95,7 +109,8 @@ namespace OTPServerConfigurationUtility
         private void btSave_Click(object sender, EventArgs e)
         {
             if (Configuration.Instance.SetValue("serverCertificate", edit_certThumbprint.Text)
-                && Configuration.Instance.SetValue("authorityCertificate", edit_authorityThumbprint.Text))
+                && Configuration.Instance.SetValue("authorityCertificate", edit_authorityThumbprint.Text)
+                && Configuration.Instance.SetValue("multiOtpPath", edit_multiOtpPath.Text))
                 MessageBox.Show("Configuration saved successfully", "Saving configuration...", MessageBoxButtons.OK, MessageBoxIcon.Information);
             else
                 MessageBox.Show("Configuration could not be saved", "Saving configuration...", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -201,6 +216,16 @@ namespace OTPServerConfigurationUtility
                 edit_authorityThumbprint.Text = collection[0].Thumbprint;
                 SetCertificateInfoGUI(ref label_authorityCertNameValue, ref label_authorityCertAuthValue, collection[0].Thumbprint);
             }
+        }
+
+        private void openFileDialogMultiOTP_FileOk(object sender, CancelEventArgs e)
+        {
+            edit_multiOtpPath.Text = openFileDialogMultiOTP.FileName;
+        }
+
+        private void btChooseMultiOTP_Click(object sender, EventArgs e)
+        {
+            openFileDialogMultiOTP.ShowDialog();
         }
     }
 }

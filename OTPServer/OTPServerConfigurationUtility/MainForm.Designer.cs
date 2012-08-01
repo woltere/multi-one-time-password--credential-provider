@@ -63,6 +63,11 @@
             this.label15 = new System.Windows.Forms.Label();
             this.label_authorityCertNameValue = new System.Windows.Forms.Label();
             this.label_authorityCertAuthValue = new System.Windows.Forms.Label();
+            this.label16 = new System.Windows.Forms.Label();
+            this.label17 = new System.Windows.Forms.Label();
+            this.btChooseMultiOTP = new System.Windows.Forms.Button();
+            this.edit_multiOtpPath = new System.Windows.Forms.TextBox();
+            this.openFileDialogMultiOTP = new System.Windows.Forms.OpenFileDialog();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -114,7 +119,7 @@
             // label4
             // 
             this.label4.AutoSize = true;
-            this.label4.Location = new System.Drawing.Point(12, 386);
+            this.label4.Location = new System.Drawing.Point(12, 406);
             this.label4.Name = "label4";
             this.label4.Size = new System.Drawing.Size(386, 13);
             this.label4.TabIndex = 5;
@@ -123,7 +128,8 @@
             // 
             // btInstallCert
             // 
-            this.btInstallCert.Location = new System.Drawing.Point(15, 411);
+            this.btInstallCert.Enabled = false;
+            this.btInstallCert.Location = new System.Drawing.Point(15, 422);
             this.btInstallCert.Name = "btInstallCert";
             this.btInstallCert.Size = new System.Drawing.Size(139, 23);
             this.btInstallCert.TabIndex = 6;
@@ -139,7 +145,7 @@
             this.panel1.Controls.Add(this.btStop);
             this.panel1.Controls.Add(this.btStart);
             this.panel1.Controls.Add(this.label6);
-            this.panel1.Location = new System.Drawing.Point(15, 480);
+            this.panel1.Location = new System.Drawing.Point(15, 551);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(394, 77);
             this.panel1.TabIndex = 7;
@@ -158,7 +164,7 @@
             // btEventLog
             // 
             this.btEventLog.Enabled = false;
-            this.btEventLog.Location = new System.Drawing.Point(294, 40);
+            this.btEventLog.Location = new System.Drawing.Point(292, 40);
             this.btEventLog.Name = "btEventLog";
             this.btEventLog.Size = new System.Drawing.Size(97, 23);
             this.btEventLog.TabIndex = 4;
@@ -207,7 +213,7 @@
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(12, 464);
+            this.label5.Location = new System.Drawing.Point(12, 535);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(101, 13);
             this.label5.TabIndex = 8;
@@ -215,7 +221,8 @@
             // 
             // btInstallCA
             // 
-            this.btInstallCA.Location = new System.Drawing.Point(160, 411);
+            this.btInstallCA.Enabled = false;
+            this.btInstallCA.Location = new System.Drawing.Point(160, 422);
             this.btInstallCA.Name = "btInstallCA";
             this.btInstallCA.Size = new System.Drawing.Size(187, 23);
             this.btInstallCA.TabIndex = 9;
@@ -224,7 +231,7 @@
             // 
             // btSave
             // 
-            this.btSave.Location = new System.Drawing.Point(291, 444);
+            this.btSave.Location = new System.Drawing.Point(291, 522);
             this.btSave.Name = "btSave";
             this.btSave.Size = new System.Drawing.Size(118, 23);
             this.btSave.TabIndex = 10;
@@ -234,7 +241,7 @@
             // 
             // btRestore
             // 
-            this.btRestore.Location = new System.Drawing.Point(160, 444);
+            this.btRestore.Location = new System.Drawing.Point(160, 522);
             this.btRestore.Name = "btRestore";
             this.btRestore.Size = new System.Drawing.Size(125, 23);
             this.btRestore.TabIndex = 11;
@@ -301,17 +308,17 @@
             // 
             this.label9.AutoSize = true;
             this.label9.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label9.Location = new System.Drawing.Point(12, 339);
+            this.label9.Location = new System.Drawing.Point(12, 348);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(367, 13);
+            this.label9.Size = new System.Drawing.Size(379, 13);
             this.label9.TabIndex = 18;
-            this.label9.Text = "When deploying the CA to your clients, please mind that the CA";
+            this.label9.Text = "When deploying the CAs to your clients, please mind that the CAs";
             // 
             // label10
             // 
             this.label10.AutoSize = true;
             this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.Location = new System.Drawing.Point(12, 352);
+            this.label10.Location = new System.Drawing.Point(12, 361);
             this.label10.Name = "label10";
             this.label10.Size = new System.Drawing.Size(348, 13);
             this.label10.TabIndex = 19;
@@ -321,7 +328,7 @@
             // 
             this.label11.AutoSize = true;
             this.label11.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label11.Location = new System.Drawing.Point(12, 365);
+            this.label11.Location = new System.Drawing.Point(12, 374);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(196, 13);
             this.label11.TabIndex = 20;
@@ -398,11 +405,57 @@
             this.label_authorityCertAuthValue.TabIndex = 28;
             this.label_authorityCertAuthValue.Text = "XXXXX";
             // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(12, 326);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(386, 13);
+            this.label16.TabIndex = 29;
+            this.label16.Text = "The CA named above has to be installed on/known by each client of this server.";
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Location = new System.Drawing.Point(12, 460);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(90, 13);
+            this.label17.TabIndex = 30;
+            this.label17.Text = "Path to multiOTP:";
+            // 
+            // btChooseMultiOTP
+            // 
+            this.btChooseMultiOTP.Location = new System.Drawing.Point(334, 474);
+            this.btChooseMultiOTP.Name = "btChooseMultiOTP";
+            this.btChooseMultiOTP.Size = new System.Drawing.Size(75, 23);
+            this.btChooseMultiOTP.TabIndex = 31;
+            this.btChooseMultiOTP.Text = "Choose ...";
+            this.btChooseMultiOTP.UseVisualStyleBackColor = true;
+            this.btChooseMultiOTP.Click += new System.EventHandler(this.btChooseMultiOTP_Click);
+            // 
+            // edit_multiOtpPath
+            // 
+            this.edit_multiOtpPath.Location = new System.Drawing.Point(15, 476);
+            this.edit_multiOtpPath.Name = "edit_multiOtpPath";
+            this.edit_multiOtpPath.Size = new System.Drawing.Size(313, 20);
+            this.edit_multiOtpPath.TabIndex = 32;
+            // 
+            // openFileDialogMultiOTP
+            // 
+            this.openFileDialogMultiOTP.FileName = "multiotp.exe";
+            this.openFileDialogMultiOTP.Filter = "MultiOTP|multiotp.exe";
+            this.openFileDialogMultiOTP.Title = "Choose multiOTP";
+            this.openFileDialogMultiOTP.FileOk += new System.ComponentModel.CancelEventHandler(this.openFileDialogMultiOTP_FileOk);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(421, 567);
+            this.ClientSize = new System.Drawing.Size(421, 634);
+            this.Controls.Add(this.edit_multiOtpPath);
+            this.Controls.Add(this.btChooseMultiOTP);
+            this.Controls.Add(this.label17);
+            this.Controls.Add(this.label16);
             this.Controls.Add(this.label_authorityCertAuthValue);
             this.Controls.Add(this.label_authorityCertNameValue);
             this.Controls.Add(this.label15);
@@ -481,6 +534,11 @@
         private System.Windows.Forms.Label label15;
         private System.Windows.Forms.Label label_authorityCertNameValue;
         private System.Windows.Forms.Label label_authorityCertAuthValue;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.Button btChooseMultiOTP;
+        private System.Windows.Forms.TextBox edit_multiOtpPath;
+        private System.Windows.Forms.OpenFileDialog openFileDialogMultiOTP;
     }
 }
 
