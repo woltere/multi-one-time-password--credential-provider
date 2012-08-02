@@ -46,3 +46,8 @@
 /MultiOneTimePasswordResyncCredentialProvider/Debug
 /Setup-x64/Debug
 /Setup-x64/Release
+/Setup-x86/Debug
+/Setup-x86/Release
+/InstallerActions/bin
+/InstallerActions/obj
+/Releases

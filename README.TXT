@@ -12,37 +12,29 @@
 **    limitations under the License.
 **
 
-VERSION 1.0.0
+VERSION 1.1.0 CLIENT BETA
 
-The MultiOneTimePassword Credential Provider (mOTP-CP) improves 
-the overall security of the Windows logon process by adding an 
-authorization step. The authorization includes the validation of 
-a One-Time-Password (OTP).
+The MultiOneTimePassword? Credential Provider (mOTP-CP) aims to improve the overall security 
+of the Windows logon process by adding an authenticator. The new authenticator is "Something That You Have" 
+and consists of the validation of an One-Time-Password (OTP).
 
-The CP wraps the standard Password Credential Provider, so that 
-the authentication (username and password) and authorization (OTP) 
-steps are fully indepent from each other.
+The CP wraps the standard Password Credential Provider, so that the standard authentication 
+("Something That You Know", username and password) and new authentication ("Something That You Have", OTP) 
+steps are fully indepent from each other, but both of them may be required.
 
-Currently, the mOTP-CP requires multiotp to be available on 
-the target machine. The multiotp.exe has to be placed in C:\multiotp\multiotp.exe. 
-You can download multiotp at http://www.multiotp.net .
-
-You have to add an account to multiotp first, before installing mOTP-CP.
-
-This behaviour can be changed by providing another MultiOneTimePassword.dll. 
-You can develop your own based on the specifications given in 
-the Visual Studio poject file in the repository.
+You have to add an OTPServer instance to your network, which is reachable by your clients.
+(Download OTPServer: http://code.google.com/p/multi-one-time-password--credential-provider)
 
 
 Requirements:
 
   * knowledge of what you are doing and how One-Time-Passwords (OATH/HOTP, OATH/TOTP, ...) work (!)
 
-  * Windows Vista (not tested, yet) or Windows 7 (tested)
+  * Windows Vista (not tested, yet), Windows 7 (tested) or Windows Server 2008 R2 (Semi-tested)
 
-  * multiotp (http://www.multiotp.net) in C:\multiotp\multiotp.exe
+  * an OTPServer instance running in your network or somewhere else, but reachable from your machine
 
-  * configured user account(s) in multiotp (use your Windows account name!)
+  * configured user account(s) in OTPServer
 
   * configured device to (e.g. Smartphone) generate One-Time-Passwords for you
 
@@ -52,18 +44,9 @@ Requirements:
 
 Howto:
 
-  1. Download multiotp (www.multiotp.net)
+  1. Run Setup.exe and install MultiOneTimePassword Credential Provider
 
-  2. Extract multiotp.exe and copy it to C:\multiotp\
-
-  3. For EACH user that you want to logon later you have to:
-
-      - create a user with multiopt (see multiotp README) using the Windows account name as username
-      - configure a device (e.g. a Smartphone) to generate OTPs for that user
-
-      - TEST ON COMMANDLINE AND MAKE SURE YOURE TOKENS ARE ACCEPTED !!!
-
-  4. Run Setup.exe and install MultiOneTimePassword Credential Provider
+      - Set up your OTPServer's IP or DNS-name
 
       - if you set Standard-Provider to true, WinLogon will hide the standard Password Credential Provider
 
@@ -72,9 +55,11 @@ Howto:
 
 Account locking / OTPs out of sync:
 
-mOTP-CP will add a virtual user account to your system called "Resync OTP". In case that you can not logon to your account using OTPs, they may be out of sync. You may resynchronize them before logging in again.
+mOTP-CP will add a virtual user account to your system called "Resync OTP". In case that you can not logon to your 
+account using OTPs, they may be out of sync. You may resynchronize them before logging in again.
 
-By default multiotp.exe from SysCo? locks accounts after six failed authorization requests. You may resychronize your OTPs and logon again.
+By default multiotp.exe from SysCo? locks accounts after six failed authorization requests. 
+You may resychronize your OTPs and logon again.
 
 mOTP-CP will add a new virtual user account to your system called "Resync OTP". 
 In case that your can not logon to your account using OTPs, you can resynchronize them before logging in again.
@@ -82,6 +67,11 @@ In case that your can not logon to your account using OTPs, you can resynchroniz
 
 
 CHANGELOG:
+
+1.1.0:
+  - support for server-client architecture
+  - domain name part is removed from username (thanks to Matt Hanley)
+  - provider filter improved (thanks to Matt Hanley)
 
 1.0.1:
   - support for users that do not have a Windows account password set. An OTP will still be asked for.

@@ -28,7 +28,7 @@
 #define OTPCLIENT_EXE L"OTPClient.exe"
 
 // TODO: Load from config
-#define OTPCLIENT_SERVER L"192.168.1.3"
+#define OTPCLIENT_SERVER L"0.0.0.0"
 
 #define OTPCLIENT_PARAM_VERIFY L"verify"
 #define OTPCLIENT_PARAM_RESYNC L"resync"
