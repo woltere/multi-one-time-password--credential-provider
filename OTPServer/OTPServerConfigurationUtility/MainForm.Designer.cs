@@ -345,6 +345,7 @@
             // 
             // edit_authorityThumbprint
             // 
+            this.edit_authorityThumbprint.Enabled = false;
             this.edit_authorityThumbprint.Location = new System.Drawing.Point(15, 250);
             this.edit_authorityThumbprint.Name = "edit_authorityThumbprint";
             this.edit_authorityThumbprint.Size = new System.Drawing.Size(313, 20);
@@ -352,6 +353,7 @@
             // 
             // btChooseAuthorityCertificate
             // 
+            this.btChooseAuthorityCertificate.Enabled = false;
             this.btChooseAuthorityCertificate.Location = new System.Drawing.Point(334, 248);
             this.btChooseAuthorityCertificate.Name = "btChooseAuthorityCertificate";
             this.btChooseAuthorityCertificate.Size = new System.Drawing.Size(75, 23);
