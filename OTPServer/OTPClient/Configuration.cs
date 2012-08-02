@@ -19,7 +19,7 @@
 using System;
 using Microsoft.Win32;
 
-namespace OTPServerConfigurationUtility
+namespace OTPClient
 {
     class Configuration : IDisposable
     {
@@ -46,7 +46,19 @@ namespace OTPServerConfigurationUtility
         {
             try
             {
-                _BaseKey = Registry.LocalMachine.OpenSubKey("SOFTWARE").OpenSubKey("blacksheep").OpenSubKey("OTPServer", true);
+                _BaseKey = Registry.LocalMachine;
+                _BaseKey = _BaseKey.OpenSubKey("SOFTWARE");
+                _BaseKey = _BaseKey.OpenSubKey("blacksheep");
+
+                if (_BaseKey == null)
+                {
+                    _BaseKey = Registry.LocalMachine;
+                    _BaseKey = _BaseKey.OpenSubKey("SOFTWARE");
+                    _BaseKey = _BaseKey.OpenSubKey("Wow6432Node");
+                    _BaseKey = _BaseKey.OpenSubKey("blacksheep");
+                }
+
+                _BaseKey = _BaseKey.OpenSubKey("OTPClient", true);
                 this._RegistryAvailable = true;
             }
             catch (Exception)

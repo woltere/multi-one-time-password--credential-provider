@@ -1,14 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿/* * * * * * * * * * * * * * * * * * * * *
+**
+** Copyright 2012 Dominik Pretzsch
+** 
+**    Licensed under the Apache License, Version 2.0 (the "License");
+**    you may not use this file except in compliance with the License.
+**    You may obtain a copy of the License at
+** 
+**        http://www.apache.org/licenses/LICENSE-2.0
+** 
+**    Unless required by applicable law or agreed to in writing, software
+**    distributed under the License is distributed on an "AS IS" BASIS,
+**    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+**    See the License for the specific language governing permissions and
+**    limitations under the License.
+**
+** * * * * * * * * * * * * * * * * * * */
+
+using System;
 using System.Text;
 using System.Net.Sockets;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using System.IO;
 using OTPHelpers.XML.OTPPacket;
 using System.Security.Cryptography;
-using System.Threading;
 using OTPHelpers;
 using System.Security.Authentication;
 
@@ -20,8 +34,7 @@ namespace OTPClient
         {
             if (args.Length < 4)
             {
-                Console.WriteLine("Usage: OTPClient.exe <request-type> <server-ip> <username> <otp> { <otp> }");
-                Console.WriteLine("       <request-type> := verify | resync");
+                ShowUsage("Wrong arguments");
                 return -1;
             }
 
@@ -32,8 +45,7 @@ namespace OTPClient
                 requestType = 1;
             else
             {
-                Console.WriteLine("Usage: OTPClient.exe <server-ip> <request-type> <username> <otp> { <otp> }");
-                Console.WriteLine("       <request-type> := verify | resync");
+                ShowUsage("Wrong <request-type> argument");
                 return -1;
             }
 
@@ -45,6 +57,29 @@ namespace OTPClient
             if (args.Length > 4)
                 otp2 = args[4];
 
+            if (server == "0.0.0.0")
+            {
+                server = Configuration.Instance.GetStringValue("OTPServerAddr");
+                if (server == String.Empty)
+                {
+                    ShowUsage("Could not load server's address from the registry");
+                    return -1;
+                }
+            }
+
+            string schemaPath = Configuration.Instance.GetStringValue("path");
+            if (schemaPath != String.Empty)
+                schemaPath += "XML\\OTPPacketSchema.xsd";
+            else
+            {
+                ShowUsage("No XML-Schema file found");
+                return -1;
+            }
+
+            PacketHelper.SchemaPath = schemaPath;
+
+            ////////
+
             Console.WriteLine("Welcome...");
 
             RSACryptoServiceProvider key = null;
@@ -53,8 +88,6 @@ namespace OTPClient
 
             try
             {
-                key = new RSACryptoServiceProvider();
-
                 Console.WriteLine("Establishing Connection...");
 
                 client = new TcpClient(server, 16588);            
@@ -70,8 +103,8 @@ namespace OTPClient
                     return -1;
                 }
 
-                OTPPacket request = new OTPPacket();
-                OTPPacket response = new OTPPacket();
+                OTPPacket request = PacketHelper.CreatePacket(0);
+                OTPPacket response = PacketHelper.CreatePacket(0);
                 bool success;
                 Data data;
 
@@ -83,12 +116,16 @@ namespace OTPClient
                 Console.WriteLine("REQ:  " + request.ToXMLString());
                 WritePacketToStream(sslStream, request);
 
-                response = new OTPPacket();
+                response = PacketHelper.CreatePacket(0);
                 success = response.SetFromXML(sslStream, true);
                 Console.WriteLine("RESP: " + response.ToXMLString());
 
                 if (response.Message.Type == Message.TYPE.ERROR)
                     return 1;
+
+                //////////
+                Console.WriteLine("\nGenerating RSA KeyData");
+                key = new RSACryptoServiceProvider();
 
                 //////////
                 Console.WriteLine("\nSending ADD packet containing public RSA KeyData");
@@ -100,7 +137,7 @@ namespace OTPClient
                 Console.WriteLine("REQ:  " + request.ToXMLString());
                 WritePacketToStream(sslStream, request);
 
-                response = new OTPPacket();
+                response = PacketHelper.CreatePacket(0);
                 success = response.SetFromXML(sslStream, true);
                 Console.WriteLine("RESP: " + response.ToXMLString());
 
@@ -139,7 +176,7 @@ namespace OTPClient
                 Console.WriteLine("REQ:  " + request.ToXMLString());
                 WritePacketToStream(sslStream, request);
 
-                response = new OTPPacket();
+                response = PacketHelper.CreatePacket(0);
                 success = response.SetFromXML(sslStream, true);
                 Console.WriteLine("RESP: " + response.ToXMLString());
 
@@ -192,6 +229,21 @@ namespace OTPClient
 
             // Do not allow this client to communicate with unauthenticated servers.
             return false;
+        }
+
+        private static void ShowUsage()
+        {
+            ShowUsage(String.Empty);
+        }
+
+        private static void ShowUsage(string error)
+        {
+            if (error != String.Empty)
+                Console.WriteLine("Error: " + error);
+
+            Console.WriteLine("Usage: OTPClient.exe <server-ip> <request-type> <username> <otp> { <otp> }");
+            Console.WriteLine("       <request-type> := verify | resync");
+            Console.WriteLine("       <server-ip> := <IP> | 0.0.0.0 (Load address from registry)");
         }
 
         private static void WritePacketToStream(SslStream stream, OTPPacket otpPacket)
