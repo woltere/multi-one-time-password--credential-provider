@@ -44,3 +44,5 @@
 /MultiOneTimePasswordCredentialProvider/Debug
 /MultiOneTimePasswordCredentialProviderFilter/Debug
 /MultiOneTimePasswordResyncCredentialProvider/Debug
+/Setup-x64/Debug
+/Setup-x64/Release

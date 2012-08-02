@@ -30,13 +30,18 @@ CMultiOneTimePassword::~CMultiOneTimePassword(void)
 
 HRESULT __stdcall CMultiOneTimePassword::OTPCheckPassword(PWSTR username, PWSTR otp)
 {
-	const int argc = 2;	
+	const int argc = 4;	
 	PWSTR *argv[argc];
 
-	argv[0] = &username;
-	argv[1] = &otp;
+	PWSTR server = OTPCLIENT_SERVER;
+	PWSTR cmd    = OTPCLIENT_PARAM_VERIFY;
 
-	HRESULT hr = _MultiOTPExitCodeToHRESULT( __CallMultiOTPExe(argc, argv) );
+	argv[0] = &server;
+	argv[1] = &cmd;
+	argv[2] = &username;
+	argv[3] = &otp;
+
+	HRESULT hr = _ExitCodeToHRESULT( __CallOTPClientExe(argc, argv) );
 
 	for (int i=0; i<argc; i++)
 	{
@@ -49,17 +54,19 @@ HRESULT __stdcall CMultiOneTimePassword::OTPCheckPassword(PWSTR username, PWSTR 
 
 HRESULT __stdcall CMultiOneTimePassword::OTPResync(PWSTR username, PWSTR otp1, PWSTR otp2)
 {
-	const int argc = 4;	
+	const int argc = 5;	
 	PWSTR *argv[argc];
 
-	PWSTR resync = CEMOTP_PARAM_RESYNC;
+	PWSTR server = OTPCLIENT_SERVER;
+	PWSTR cmd    = OTPCLIENT_PARAM_RESYNC;
 
-	argv[0] = &resync;
-	argv[1] = &username;
-	argv[2] = &otp1;
-	argv[3] = &otp2;
+	argv[0] = &server;
+	argv[1] = &cmd;
+	argv[2] = &username;
+	argv[3] = &otp1;
+	argv[4] = &otp2;
 	
-	HRESULT hr = _MultiOTPExitCodeToHRESULT( __CallMultiOTPExe(argc, argv) );
+	HRESULT hr = _ExitCodeToHRESULT( __CallOTPClientExe(argc, argv) );
 
 	for (int i=0; i<argc; i++)
 	{
@@ -71,17 +78,14 @@ HRESULT __stdcall CMultiOneTimePassword::OTPResync(PWSTR username, PWSTR otp1, P
 }
 
 
-HRESULT CMultiOneTimePassword::_MultiOTPExitCodeToHRESULT(DWORD exitCode)
+HRESULT CMultiOneTimePassword::_ExitCodeToHRESULT(DWORD exitCode)
 {
 	switch (exitCode) {
-		case CEMOTP_EXIT_SUCCESS:
-		case CEMOTP_EXIT_RESYNC_OK:
+		case OTPCLIENT_EXIT_SUCCESS:
 			return S_OK;
 			break;
-		case CEMOTP_EXIT_ERROR_LOCKED:
-			return E_LOCKED;
-			break;
-		case CEMOTP_EXIT_ERROR_AUTH:
+		case OTPCLIENT_EXIT_ERROR:
+		case OTPCLIENT_EXIT_UNKNOWN_ERROR:
 			return E_INVALID;
 			break;
 		default:

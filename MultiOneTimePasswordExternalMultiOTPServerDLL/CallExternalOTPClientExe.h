@@ -20,20 +20,21 @@
 
 #include <Windows.h>
 
-#define LOGGING true
+//#define LOGGING true
 
 #define DIR_SEP   L"\\"
 #define PARAM_SEP L" "
 
-#define CEMOTP_DIR L"C:\\multiotp"
-#define CEMOTP_EXE L"multiotp.exe"
+#define OTPCLIENT_EXE L"OTPClient.exe"
 
-#define CEMOTP_PARAM_LOG    L"-log"
-#define CEMOTP_PARAM_RESYNC L"-resync"
+// TODO: Load from config
+#define OTPCLIENT_SERVER L"192.168.1.3"
 
-#define CEMOTP_EXIT_SUCCESS      0
-#define CEMOTP_EXIT_RESYNC_OK    14
-#define CEMOTP_EXIT_ERROR_LOCKED 24
-#define CEMOTP_EXIT_ERROR_AUTH   99
+#define OTPCLIENT_PARAM_VERIFY L"verify"
+#define OTPCLIENT_PARAM_RESYNC L"resync"
 
-DWORD __CallMultiOTPExe(int argc, PWSTR *argv[]);
+#define OTPCLIENT_EXIT_SUCCESS        0
+#define OTPCLIENT_EXIT_ERROR          1
+#define OTPCLIENT_EXIT_UNKNOWN_ERROR -1
+
+DWORD __CallOTPClientExe(int argc, PWSTR *argv[]);

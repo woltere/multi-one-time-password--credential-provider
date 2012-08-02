@@ -16,25 +16,22 @@
 **
 ** * * * * * * * * * * * * * * * * * * */
 
-#include "CallExternalMultiOTPExe.h"
+#include "CallExternalOTPClientExe.h"
 
-DWORD __CallMultiOTPExe(int argc, PWSTR *argv[])
+DWORD __CallOTPClientExe(int argc, PWSTR *argv[])
 {
 	DWORD exitCode = (DWORD)-1;
 
 	const int SIZE = 200;
-	PWSTR dir       = CEMOTP_DIR;
-	WCHAR cmd[SIZE] = CEMOTP_EXE;
+	WCHAR dir[SIZE] = L"";
+	WCHAR cmd[SIZE] = OTPCLIENT_EXE;
 	WCHAR app[SIZE] = L"";
 
-	// Append the EXE to the path
-	wcscat_s( app, SIZE, dir ); wcscat_s( app, SIZE, DIR_SEP ); wcscat_s( app, SIZE, cmd );
+	// Get System-directory (e.g. C:\Windows\System32)
+	GetSystemDirectory(dir, SIZE);
 
-	if (LOGGING) 
-	{
-		wcscat_s( cmd, SIZE, PARAM_SEP );
-		wcscat_s( cmd, SIZE, CEMOTP_PARAM_LOG );
-	}
+	// Append the EXE to the path
+    wcscat_s( app, SIZE, dir ); wcscat_s( app, SIZE, DIR_SEP ); wcscat_s( app, SIZE, cmd );
 
 	for (int i=0; i < argc; i++)
 	{
