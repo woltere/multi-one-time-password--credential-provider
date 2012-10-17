@@ -12,7 +12,7 @@
 **    limitations under the License.
 **
 
-VERSION 1.0.0
+VERSION 1.1.1 LOCAL
 
 The MultiOneTimePassword Credential Provider (mOTP-CP) improves 
 the overall security of the Windows logon process by adding an 
@@ -38,7 +38,7 @@ Requirements:
 
   * knowledge of what you are doing and how One-Time-Passwords (OATH/HOTP, OATH/TOTP, ...) work (!)
 
-  * Windows Vista (not tested, yet) or Windows 7 (tested)
+  * Windows Vista (not tested), Windows 7 (tested x64) or Windows Server 2008 R2 (Semi-tested)
 
   * multiotp (http://www.multiotp.net) in C:\multiotp\multiotp.exe
 
@@ -82,6 +82,15 @@ In case that your can not logon to your account using OTPs, you can resynchroniz
 
 
 CHANGELOG:
+
+1.1.1:
+  - bug fix: logonUI.exe crashing (x86) (issue #6)
+  - mOTP library is now static
+
+1.1.0:
+  - support for server-client architecture
+  - domain name part is removed from username (thanks to Matt Hanley)
+  - provider filter improved (thanks to Matt Hanley)
 
 1.0.1:
   - support for users that do not have a Windows account password set. An OTP will still be asked for.

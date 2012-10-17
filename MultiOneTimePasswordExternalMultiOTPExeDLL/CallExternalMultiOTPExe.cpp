@@ -66,10 +66,14 @@ DWORD __CallMultiOTPExe(int argc, PWSTR *argv[])
 	SecureZeroMemory((void*)app, SIZE);
 	SecureZeroMemory((void*)cmd, SIZE);
 
+	// BUG: Does not work (at least for x86)
+	// TODO: Do conditional cleaning.
+	/*
 	for (int i=0; i<SIZE; i++)
 		CoTaskMemFree((void*)app[i]);
 	for (int i=0; i<SIZE; i++)
 		CoTaskMemFree((void*)cmd[i]);
+	*/
 
 	return exitCode;
 }

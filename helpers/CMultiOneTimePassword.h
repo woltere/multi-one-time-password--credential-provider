@@ -27,24 +27,24 @@
 #define E_INVALID ((HRESULT)0x88808002)
 
 #ifdef EXPORTING
-__interface DllExport IMultiOneTimePassword
+__interface /*DllExport*/ IMultiOneTimePassword
 #else
-__interface DllImport IMultiOneTimePassword
+__interface /*DllImport*/ IMultiOneTimePassword
 #endif
 {
 	public:
-		HRESULT __stdcall OTPCheckPassword(PWSTR username, PWSTR otp);
-		HRESULT __stdcall OTPResync(PWSTR username, PWSTR otp1, PWSTR otp2);
+		HRESULT OTPCheckPassword(PWSTR username, PWSTR otp);
+		HRESULT OTPResync(PWSTR username, PWSTR otp1, PWSTR otp2);
 };
 
 #ifndef EXPORTING
-class DllImport CMultiOneTimePassword : public IMultiOneTimePassword
+class /*DllImport*/ CMultiOneTimePassword : public IMultiOneTimePassword
 {
 	public:
 		CMultiOneTimePassword(void);
 		~CMultiOneTimePassword(void);
-		HRESULT __stdcall OTPCheckPassword(PWSTR username, PWSTR otp);
-		HRESULT __stdcall OTPResync(PWSTR username, PWSTR otp1, PWSTR otp2);
+		HRESULT OTPCheckPassword(PWSTR username, PWSTR otp);
+		HRESULT OTPResync(PWSTR username, PWSTR otp1, PWSTR otp2);
 };
 #endif
 

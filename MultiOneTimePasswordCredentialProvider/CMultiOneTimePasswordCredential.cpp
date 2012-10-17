@@ -531,42 +531,52 @@ HRESULT CMultiOneTimePasswordCredential::_CheckOtp()
 		return S_OK;
 #endif
 
-	PWSTR username;
+	PWSTR username, password;
 	HRESULT getUserName = _pWrappedCredential->GetStringValue(PWCP_SFI_USERNAME, &username);
-	PWSTR password = _rgFieldStrings[SFI_OTP_PASSWORD_TEXT];	
+	HRESULT getPassword = GetStringValue(_dwWrappedDescriptorCount + SFI_OTP_PASSWORD_TEXT, &password);
 
-	if (SUCCEEDED(getUserName) && username) {
-		CMultiOneTimePassword pMOTP;
-		PWSTR uname, pass;		
+	if (SUCCEEDED(getUserName) && SUCCEEDED(getPassword) && username  && password) {
+		PWSTR uname, pass;              
 
-		uname = (PWSTR) CoTaskMemAlloc( (lstrlen(username) + 1) * sizeof(WCHAR));
-		pass  = (PWSTR) CoTaskMemAlloc( (lstrlen(password) + 1) * sizeof(WCHAR));
+        uname = (PWSTR) CoTaskMemAlloc( (lstrlen(username) + 1) * sizeof(WCHAR));
+        pass  = (PWSTR) CoTaskMemAlloc( (lstrlen(password) + 1) * sizeof(WCHAR));
 
-		SecureZeroMemory( uname, (lstrlen(username) + 1) * sizeof(WCHAR) );
-		SecureZeroMemory( pass,  (lstrlen(password) + 1) * sizeof(WCHAR) );
+        SecureZeroMemory( uname, (lstrlen(username) + 1) * sizeof(WCHAR) );
+        SecureZeroMemory( pass,  (lstrlen(password) + 1) * sizeof(WCHAR) );
 
-		SHStrDupW( username, &uname );		
-		SHStrDupW( password, &pass );
+        SHStrDupW( username, &uname );          
+        SHStrDupW( password, &pass );
 
-		// Get the last part of the username.
-		// John = John, DOMAIN\John = John, DOMAIN.TLD\John = John
-		wchar_t *token, *next;
-		token = wcstok_s(uname, L"\\", &next);
-		while (token != NULL)
-		{
-			uname = token;
-			token = wcstok_s(NULL, L"\\", &next);
-		}
+        // Get the last part of the username.
+        // John = John, DOMAIN\John = John, DOMAIN.TLD\John = John
+        wchar_t *token, *next;
+        token = wcstok_s(uname, L"\\", &next);
+        while (token != NULL)
+        {
+                uname = token;
+                token = wcstok_s(NULL, L"\\", &next);
+        }
 
-		hr = pMOTP.OTPCheckPassword(uname, pass);
+		CMultiOneTimePassword pMOTP; // At that point username or password get lost (*NULL). Why? user and pass are still alive.
+        hr = pMOTP.OTPCheckPassword(uname, pass);
 
-		// Clean up
-		SecureZeroMemory( uname, (lstrlen(uname) + 1) * sizeof(WCHAR) );
-		SecureZeroMemory( pass,  (lstrlen(pass) + 1) * sizeof(WCHAR) );
+        // Clean up
+        SecureZeroMemory( uname, (lstrlen(uname) + 1) * sizeof(WCHAR) );
+        SecureZeroMemory( pass,  (lstrlen(pass) + 1) * sizeof(WCHAR) );
 
-		CoTaskMemFree(uname);
-		CoTaskMemFree(pass);
+        CoTaskMemFree(uname);
+        CoTaskMemFree(pass);
 	}
+
+	// Clean up
+	// TODO: Do conditional cleaning, when username or password are not pointing to NULL
+	/*
+	SecureZeroMemory( username, (lstrlen(username) + 1) * sizeof(WCHAR) );
+	SecureZeroMemory( password,  (lstrlen(password) + 1) * sizeof(WCHAR) );
+
+	CoTaskMemFree(username);
+	CoTaskMemFree(password);
+	*/
 	
 	return hr;
 }

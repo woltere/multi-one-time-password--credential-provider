@@ -22,13 +22,13 @@
 #include "CMultiOneTimePassword.h"
 #include "CallExternalMultiOTPExe.h"
 
-class DllExport CMultiOneTimePassword : public IMultiOneTimePassword
+class /*DllExport*/ CMultiOneTimePassword : public IMultiOneTimePassword
 {
 	public:
 		CMultiOneTimePassword(void);
 		~CMultiOneTimePassword(void);
-		HRESULT __stdcall OTPCheckPassword(PWSTR username, PWSTR otp);
-		HRESULT __stdcall OTPResync(PWSTR username, PWSTR otp1, PWSTR otp2);
+		HRESULT OTPCheckPassword(PWSTR username, PWSTR otp);
+		HRESULT OTPResync(PWSTR username, PWSTR otp1, PWSTR otp2);
 	private:
 		HRESULT _MultiOTPExitCodeToHRESULT(DWORD exitCode);
 	protected:

@@ -170,11 +170,6 @@
   <ItemGroup>
     <ProjectReference Include="..\MultiOneTimePasswordExternalMultiOTPExeDLL\MultiOneTimePasswordExternalMultiOTPExeDLL.vcxproj">
       <Project>{be441cc2-e0f6-4000-92ee-3abc46bb9c6b}</Project>
-      <Private>true</Private>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <CopyLocalSatelliteAssemblies>false</CopyLocalSatelliteAssemblies>
-      <LinkLibraryDependencies>false</LinkLibraryDependencies>
-      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

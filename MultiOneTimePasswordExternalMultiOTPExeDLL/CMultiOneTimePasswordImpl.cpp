@@ -28,8 +28,12 @@ CMultiOneTimePassword::~CMultiOneTimePassword(void)
 {
 }
 
-HRESULT __stdcall CMultiOneTimePassword::OTPCheckPassword(PWSTR username, PWSTR otp)
+HRESULT CMultiOneTimePassword::OTPCheckPassword(PWSTR username, PWSTR otp)
 {
+	/* DEBUGGING:
+	return E_FAIL;
+	//*/
+
 	const int argc = 2;	
 	PWSTR *argv[argc];
 
@@ -47,7 +51,7 @@ HRESULT __stdcall CMultiOneTimePassword::OTPCheckPassword(PWSTR username, PWSTR 
 	return hr;
 }
 
-HRESULT __stdcall CMultiOneTimePassword::OTPResync(PWSTR username, PWSTR otp1, PWSTR otp2)
+HRESULT CMultiOneTimePassword::OTPResync(PWSTR username, PWSTR otp1, PWSTR otp2)
 {
 	const int argc = 4;	
 	PWSTR *argv[argc];
