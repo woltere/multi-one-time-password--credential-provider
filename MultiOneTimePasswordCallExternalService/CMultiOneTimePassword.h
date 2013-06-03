@@ -26,25 +26,66 @@
 #define E_LOCKED  ((HRESULT)0x88808001)
 #define E_INVALID ((HRESULT)0x88808002)
 
+enum CMOTP_CES_PARAMETER
+{
+	CMOTP_CES_PARAMETER_FUNCTION	= 0,
+	CMOTP_CES_PARAMETER_USERNAME	= 1,
+	CMOTP_CES_PARAMETER_OTP_PASS_1	= 2,
+	CMOTP_CES_PARAMETER_OTP_PASS_2	= 3
+};
+
+enum CMOTP_CES_FUNCTION
+{
+	CMOTP_CES_FUNCTION_AUTH		= 0,
+	CMOTP_CES_FUNCTION_RESYNC	= 1
+};
+
+static const char CMOTP_CES_FUNCTION_VAL[] = 
+{
+	0,
+	1
+};
+
 #ifdef EXPORTING
-__interface /*DllExport*/ IMultiOneTimePassword
+__interface DllExport IMultiOneTimePassword
 #else
-__interface /*DllImport*/ IMultiOneTimePassword
+__interface DllImport IMultiOneTimePassword
 #endif
 {
 	public:
-		HRESULT OTPCheckPassword(char* username, char* otp);
-		HRESULT OTPResync(char* username, char* otp1, char* otp2);
+		HRESULT Invoke(char *args[]);
+
+		HRESULT _stdcall OTPCheckPassword(
+			char *username, 
+			char *otp
+		);
+
+		HRESULT _stdcall OTPResync(
+			char *username, 
+			char *otp1, 
+			char *otp2
+		);
 };
 
 #ifndef EXPORTING
-class /*DllImport*/ CMultiOneTimePassword : public IMultiOneTimePassword
+class DllImport CMultiOneTimePassword : public IMultiOneTimePassword
 {
 	public:
-		CMultiOneTimePassword(void);
-		~CMultiOneTimePassword(void);
-		HRESULT OTPCheckPassword(char* username, char* otp);
-		HRESULT OTPResync(char* username, char* otp1, char* otp2);
+		_stdcall CMultiOneTimePassword(void);
+		_stdcall ~CMultiOneTimePassword(void);
+
+		HRESULT Invoke(char *args[]);
+
+		HRESULT _stdcall OTPCheckPassword(
+			char *username, 
+			char *otp
+		);
+
+		HRESULT _stdcall OTPResync(
+			char *username, 
+			char *otp1, 
+			char *otp2
+		);
 };
 #endif
 

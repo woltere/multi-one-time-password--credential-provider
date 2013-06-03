@@ -18,33 +18,35 @@
 
 #pragma once
 
-#include <windows.h>
+#define EXPORTING
+#include "CMultiOneTimePassword.h"
+#include "CallExternalMultiOTPExe.h"
 
-#define DllExport   __declspec( dllexport )
-#define DllImport   __declspec( dllimport )
+#include "conversions.h"
+#include "registry.h"
 
-#define E_LOCKED  ((HRESULT)0x88808001)
-#define E_INVALID ((HRESULT)0x88808002)
-
-#ifdef EXPORTING
-__interface /*DllExport*/ IMultiOneTimePassword
-#else
-__interface /*DllImport*/ IMultiOneTimePassword
-#endif
+class DllExport CMultiOneTimePassword : public IMultiOneTimePassword
 {
 	public:
-		HRESULT OTPCheckPassword(char* username, char* otp);
-		HRESULT OTPResync(char* username, char* otp1, char* otp2);
+		_stdcall CMultiOneTimePassword(void);
+		_stdcall ~CMultiOneTimePassword(void);
+
+		HRESULT Invoke(char *args[]);
+
+		HRESULT _stdcall OTPCheckPassword(
+			char *username, 
+			char *otp
+		);
+
+		HRESULT _stdcall OTPResync(
+			char *username, 
+			char *otp1, 
+			char *otp2
+		);
+	private:
+		HRESULT _stdcall _MultiOTPExitCodeToHRESULT(DWORD exitCode);
+	protected:
+		const int i; // dummy
 };
 
-#ifndef EXPORTING
-class /*DllImport*/ CMultiOneTimePassword : public IMultiOneTimePassword
-{
-	public:
-		CMultiOneTimePassword(void);
-		~CMultiOneTimePassword(void);
-		HRESULT OTPCheckPassword(char* username, char* otp);
-		HRESULT OTPResync(char* username, char* otp1, char* otp2);
-};
-#endif
 
