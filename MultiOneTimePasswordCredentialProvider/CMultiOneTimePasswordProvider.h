@@ -21,9 +21,12 @@
 #include <credentialprovider.h>
 #include <windows.h>
 #include <strsafe.h>
+#include <Wtsapi32.h>
 
 #include "CMultiOneTimePasswordCredential.h"
 #include "helpers.h"
+
+#define MAX_CREDENTIALS 3
 
 class CMultiOneTimePasswordProvider : public ICredentialProvider
 {
@@ -77,16 +80,15 @@ class CMultiOneTimePasswordProvider : public ICredentialProvider
     __override ~CMultiOneTimePasswordProvider();
     
   private:
-      void _CleanUpAllCredentials();
+	HRESULT				_EnumerateCredentials(
+							__in_opt PWSTR user_name,
+							__in_opt PWSTR domain_name
+						);      
     
-private:
-    LONG                _cRef;
-    CMultiOneTimePasswordCredential   **_rgpCredentials;          // Pointers to the credentials which will be enumerated by this 
-                                                    // Provider.
-
-    ICredentialProvider *_pWrappedProvider;         // Our wrapped provider.
-    DWORD               _dwCredentialCount;         // The number of credentials provided by our wrapped provider.
-    DWORD               _dwWrappedDescriptorCount;  // The number of fields on each tile of our wrapped provider's 
-                                                    // credentials.
-    bool                _bEnumeratedSetSerialization;
+  private:
+    LONG									_cRef;
+	CREDENTIAL_PROVIDER_USAGE_SCENARIO      _cpus;
+    CMultiOneTimePasswordCredential			*_rgpCredentials[MAX_CREDENTIALS];				// Pointers to the credentials which will be enumerated by this 
+																							// Provider.
+    bool									_bEnumeratedSetSerialization;
 };

@@ -28,42 +28,17 @@ CMultiOneTimePasswordProvider::CMultiOneTimePasswordProvider():
 {
     DllAddRef();
 
-    _rgpCredentials = NULL;
-    _dwCredentialCount = 0;
-
-    _pWrappedProvider = NULL;
-    _dwWrappedDescriptorCount = 0;
+    ZeroMemory(_rgpCredentials, sizeof(_rgpCredentials));
 }
 
 CMultiOneTimePasswordProvider::~CMultiOneTimePasswordProvider()
 {
-    _CleanUpAllCredentials();
-    
-    if (_pWrappedProvider)
+	if (_rgpCredentials[0] != NULL)
     {
-        _pWrappedProvider->Release();
+        _rgpCredentials[0]->Release();
     }
 
     DllRelease();
-}
-
-// Cleans up all credentials, including the memory used to allocate the array.
-void CMultiOneTimePasswordProvider::_CleanUpAllCredentials()
-{
-    // Iterate and clean up the array, if it exists.
-    if (_rgpCredentials != NULL)
-    {
-        for (DWORD lcv = 0; lcv < _dwCredentialCount; lcv++)
-        {
-            if (_rgpCredentials[lcv] != NULL)
-            {
-                _rgpCredentials[lcv]->Release();
-                _rgpCredentials[lcv] = NULL;
-            }
-        }
-        delete [] _rgpCredentials;
-        _rgpCredentials = NULL;
-    }
 }
 
 // Ordinarily we would look at the CPUS and decide whether or not we support this scenario.
@@ -74,29 +49,74 @@ HRESULT CMultiOneTimePasswordProvider::SetUsageScenario(
     __in DWORD dwFlags
     )
 {
-    HRESULT hr;
+    UNREFERENCED_PARAMETER(dwFlags);
+	HRESULT hr;
 
-    // Create the password credential provider and query its interface for an
-    // ICredentialProvider we can use. Once it's up and running, ask it about the 
-    // usage scenario being provided.
-    IUnknown *pUnknown = NULL;
-    hr = CoCreateInstance(CLSID_PasswordCredentialProvider, NULL, CLSCTX_ALL, IID_PPV_ARGS(&pUnknown));
-    if (SUCCEEDED(hr))
+	/* DEBUG:
+	bool exit = true;
+	if (exit)
+		return E_NOTIMPL;
+	//*/
+
+    static bool s_bCredsEnumeratedLogon  = false;
+	static bool s_bCredsEnumeratedUnlock = false;
+
+    // Decide which scenarios to support here. Returning E_NOTIMPL simply tells the caller
+    // that we're not designed for that scenario.
+    switch (cpus)
     {
-        hr = pUnknown->QueryInterface(IID_PPV_ARGS(&(_pWrappedProvider)));
-        if (SUCCEEDED(hr))
+    case CPUS_LOGON:
+		if (!s_bCredsEnumeratedLogon)
         {
-            hr = _pWrappedProvider->SetUsageScenario(cpus, dwFlags);
-        }
-        pUnknown->Release();
-    }
-    if (FAILED(hr))
-    {
-        if (_pWrappedProvider != NULL)
+			_cpus = cpus;
+
+			hr = this->_EnumerateCredentials(NULL, NULL);
+
+			s_bCredsEnumeratedLogon  = true;
+			s_bCredsEnumeratedUnlock = false;
+		}
+		else
+			hr = S_OK;
+		break;
+
+	case CPUS_UNLOCK_WORKSTATION:
+        if (!s_bCredsEnumeratedUnlock)
         {
-            _pWrappedProvider->Release();
-            _pWrappedProvider = NULL;
+			_cpus = cpus;
+
+			PWSTR szUserName = NULL;
+			PWSTR szDomainName = NULL;
+			DWORD dwLen;
+
+			if ( ! WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE,
+						WTS_CURRENT_SESSION,
+						WTSUserName,
+						&szUserName,
+						&dwLen)) szUserName = NULL;
+
+			if ( ! WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE,
+						WTS_CURRENT_SESSION,
+						WTSDomainName,
+						&szDomainName,
+						&dwLen)) szDomainName = NULL;
+
+			hr = this->_EnumerateCredentials(szUserName, szDomainName);     
+
+            s_bCredsEnumeratedUnlock = true;
+			s_bCredsEnumeratedLogon  = false;
         }
+        else
+            hr = S_OK;
+        break;
+
+    case CPUS_CREDUI:
+    case CPUS_CHANGE_PASSWORD:
+        hr = E_NOTIMPL;
+        break;
+
+    default:
+        hr = E_INVALIDARG;
+        break;
     }
 
     return hr;
@@ -107,14 +127,8 @@ HRESULT CMultiOneTimePasswordProvider::SetSerialization(
     __in const CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs
     )
 {
-    HRESULT hr = E_UNEXPECTED;
-    
-    if (_pWrappedProvider != NULL)
-    {
-        hr = _pWrappedProvider->SetSerialization(pcpcs);
-    }
-
-    return hr;
+    UNREFERENCED_PARAMETER(pcpcs);
+	return E_NOTIMPL;
 }
 
 // Called by LogonUI to give you a callback. We pass this along to the wrapped provider.
@@ -123,24 +137,17 @@ HRESULT CMultiOneTimePasswordProvider::Advise(
     __in UINT_PTR upAdviseContext
     )
 {
-    HRESULT hr = E_UNEXPECTED;
-    if (_pWrappedProvider != NULL)
-    {
-        hr = _pWrappedProvider->Advise(pcpe, upAdviseContext);
-    }
-    return hr;
+    UNREFERENCED_PARAMETER(pcpe);
+    UNREFERENCED_PARAMETER(upAdviseContext);
+
+    return E_NOTIMPL;
 }
 
 // Called by LogonUI when the ICredentialProviderEvents callback is no longer valid. 
 // We pass this along to the wrapped provider.
 HRESULT CMultiOneTimePasswordProvider::UnAdvise()
 {
-    HRESULT hr = E_UNEXPECTED;
-    if (_pWrappedProvider != NULL)
-    {
-        hr = _pWrappedProvider->UnAdvise();
-    }
-    return hr;
+    return E_NOTIMPL;
 }
 
 // Called by LogonUI to determine the number of fields in your tiles.  This
@@ -154,20 +161,9 @@ HRESULT CMultiOneTimePasswordProvider::GetFieldDescriptorCount(
     __out DWORD* pdwCount
     )
 {
-    HRESULT hr = E_UNEXPECTED;
+    *pdwCount = SFI_NUM_FIELDS;
 
-    if (_pWrappedProvider != NULL)
-    {
-        hr = _pWrappedProvider->GetFieldDescriptorCount(&(_dwWrappedDescriptorCount));
-        if (SUCCEEDED(hr))
-        {
-            // Note that we need to add our own credential count to the wrapped credential's
-            // total count.
-            *pdwCount = _dwWrappedDescriptorCount + SFI_NUM_FIELDS;
-        }
-    }
-
-    return hr;
+    return S_OK;
 }
 
 // Gets the field descriptor for a particular field. If this descriptor refers to one owned
@@ -177,39 +173,22 @@ HRESULT CMultiOneTimePasswordProvider::GetFieldDescriptorAt(
     __deref_out CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR** ppcpfd
     )
 {    
-    HRESULT hr = E_UNEXPECTED;
+    HRESULT hr;
 
-    if (_pWrappedProvider != NULL)
+	/* DEBUG:
+	bool exit = true;
+	if (exit)
+		return E_NOTIMPL;
+	//*/
+
+    // Verify dwIndex is a valid field.
+    if ((dwIndex < SFI_NUM_FIELDS) && ppcpfd)
     {
-        if (ppcpfd != NULL)
-        {
-            // If this field maps to one in the wrapped provider, hand it off.
-            if (dwIndex < _dwWrappedDescriptorCount)
-            {
-                hr = _pWrappedProvider->GetFieldDescriptorAt(dwIndex, ppcpfd);
-            }
-            // Otherwise, check to see if it's ours and then handle it here.
-            else
-            {
-                // Offset into the descriptor count so we can index our own fields.
-                dwIndex -= _dwWrappedDescriptorCount;
-
-                // Verify dwIndex is still a valid field.
-                if (dwIndex < SFI_NUM_FIELDS)
-                {
-                    hr = FieldDescriptorCoAllocCopy(s_rgCredProvFieldDescriptors[dwIndex], ppcpfd);
-                    (*ppcpfd)->dwFieldID += _dwWrappedDescriptorCount;
-                }
-                else
-                { 
-                    hr = E_INVALIDARG;
-                }
-            }
-        }
-        else
-        { 
-            hr = E_INVALIDARG;
-        }
+        hr = FieldDescriptorCoAllocCopy(s_rgCredProvFieldDescriptors[dwIndex], ppcpfd);
+    }
+    else
+    { 
+        hr = E_INVALIDARG;
     }
 
     return hr;
@@ -231,99 +210,17 @@ HRESULT CMultiOneTimePasswordProvider::GetCredentialCount(
     __out BOOL* pbAutoLogonWithDefault
     )
 {
-    HRESULT hr = E_UNEXPECTED;
-    DWORD dwDefault = 0;
-    BOOL bAutoLogonWithDefault = FALSE;
+    HRESULT hr = S_OK;
 
-    // Make sure we've created the provider.
-    if (_pWrappedProvider != NULL)
-    {
-        // This probably shouldn't happen, but in the event that this gets called after
-        // we've already been through once, we want to clean up everything before 
-        // allocating new stuff all over again.
-        if (_rgpCredentials != NULL)
-        {
-            _CleanUpAllCredentials();
-        }
-
-        // We need to know how many fields each credential has in order to initialize
-        // our wrapper credentials, so we might as well do that here before anything else.
-        DWORD count;
-        hr = GetFieldDescriptorCount(&(count));
-
-        if (SUCCEEDED(hr))
-        {
-            // Grab the credential count of the wrapped provider. We'll simply wrap each.
-            hr = _pWrappedProvider->GetCredentialCount(&(_dwCredentialCount), &(dwDefault), &(bAutoLogonWithDefault));
-
-            if (SUCCEEDED(hr))
-            {
-                // Create an array of credentials for use.
-                _rgpCredentials = new CMultiOneTimePasswordCredential*[_dwCredentialCount];
-                if (_rgpCredentials != NULL)
-                {
-                    // Iterate each credential and make a wrapper.
-                    for (DWORD lcv = 0; SUCCEEDED(hr) && (lcv < _dwCredentialCount); lcv++)
-                    {
-                        // Allocate memory for the new credential.
-                        _rgpCredentials[lcv] = new CMultiOneTimePasswordCredential();
-                        if (_rgpCredentials[lcv] != NULL)
-                        {
-                            ICredentialProviderCredential *pCredential;
-                            hr = _pWrappedProvider->GetCredentialAt(lcv, &(pCredential));
-                            if (SUCCEEDED(hr))
-                            {
-                                // Set the Field State Pair and Field Descriptors for ppc's 
-                                // fields to the defaults (s_rgCredProvFieldDescriptors, 
-                                // and s_rgFieldStatePairs) and the value of SFI_USERNAME
-                                // to pwzUsername.
-                                hr = _rgpCredentials[lcv]->Initialize(s_rgCredProvFieldDescriptors, s_rgFieldStatePairs, pCredential, _dwWrappedDescriptorCount);
-                                if (FAILED(hr))
-                                {
-                                    // If initialization failed, clean everything up.
-                                    for (lcv = 0; lcv < _dwCredentialCount; lcv++)
-                                    {
-                                        if (_rgpCredentials[lcv] != NULL)
-                                        {
-                                            // Release the pointer to account for the local reference.
-                                            _rgpCredentials[lcv]->Release();
-                                            _rgpCredentials[lcv] = NULL;
-                                        }
-                                    }
-                                }
-                                pCredential->Release();
-                            } // (End if _pWrappedProvider->GetCredentialAt succeeded.)
-                        } // (End if allocating _rgpCredentials[lcv] succeeded.)
-                        else
-                        {
-                            hr = E_OUTOFMEMORY;
-                        } 
-                    } // (End of _rgpCredentials allocation loop.)
-                } // (End if for allocating _rgpCredentials succeeded.)
-                else
-                {
-                    hr = E_OUTOFMEMORY;
-                }
-            } // (End if _pWrappedProvider->GetCredentialCount succeeded.)
-        } // (End if GetFieldDescriptorCount succeeded.)
-    }
-
-    if (FAILED(hr))
-    {
-        // Clean up.
-        if (_rgpCredentials != NULL)
-        {
-            delete _rgpCredentials;
-            _rgpCredentials = NULL;
-        }
-    }
-    else
-    {
-        *pdwCount = _dwCredentialCount;
-        *pdwDefault = dwDefault;
-        //*pbAutoLogonWithDefault = bAutoLogonWithDefault;
-		*pbAutoLogonWithDefault = FALSE; // This has to be false in order to show a UI to enter an OTP. Password CP does not know about us ;)
-    }
+	/* DEBUG:
+	bool exit = true;
+	if (exit)
+		return E_NOTIMPL;
+	//*/
+    
+    *pdwCount = 1; //_dwNumCreds;
+	*pdwDefault = CREDENTIAL_PROVIDER_NO_DEFAULT;
+    *pbAutoLogonWithDefault = FALSE;
 
     return hr;
 }
@@ -332,16 +229,20 @@ HRESULT CMultiOneTimePasswordProvider::GetCredentialCount(
 // logonUI to enumerate the tiles.
 HRESULT CMultiOneTimePasswordProvider::GetCredentialAt(
     __in DWORD dwIndex, 
-    __in ICredentialProviderCredential** ppcpc
+    __deref_out ICredentialProviderCredential** ppcpc
     )
 {
     HRESULT hr;
 
+	/* DEBUG:
+	bool exit = true;
+	if (exit)
+		return E_NOTIMPL;
+	//*/
+
     // Validate parameters.
-    if ((dwIndex < _dwCredentialCount) && 
-        (ppcpc != NULL) &&
-        (_rgpCredentials != NULL) &&
-        (_rgpCredentials[dwIndex] != NULL))
+    //if((dwIndex < _dwNumCreds) && ppcpc)
+	if((dwIndex == 0) && ppcpc)
     {
         hr = _rgpCredentials[dwIndex]->QueryInterface(IID_ICredentialProviderCredential, reinterpret_cast<void**>(ppcpc));
     }
@@ -349,8 +250,54 @@ HRESULT CMultiOneTimePasswordProvider::GetCredentialAt(
     {
         hr = E_INVALIDARG;
     }
-
+        
     return hr;
+}
+
+// Sets up all the credentials for this provider. Since we always show the same tiles, 
+// we just set it up once.
+HRESULT CMultiOneTimePasswordProvider::_EnumerateCredentials(
+	__in_opt PWSTR user_name,
+	__in_opt PWSTR domain_name
+	)
+{
+	HRESULT hr;
+
+	/* DEBUG:
+	bool exit = true;
+	if (exit)
+		return E_NOTIMPL;
+	//*/
+
+    // Allocate memory for the new credential.
+    CMultiOneTimePasswordCredential* ppc = new CMultiOneTimePasswordCredential();
+
+	if (ppc)
+    {
+        // Set the Field State Pair and Field Descriptors for ppc's fields
+        // to the defaults (s_rgCredProvFieldDescriptors, and s_rgFieldStatePairs).
+		if (_cpus == CPUS_UNLOCK_WORKSTATION)
+			hr = ppc->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairsUnlock, user_name, domain_name);
+		else
+			hr = ppc->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairs, user_name, domain_name);
+        
+        if (SUCCEEDED(hr))
+        {
+            _rgpCredentials[0] = ppc;
+            //_dwNumCreds++;
+        }
+        else
+        {
+            // Release the pointer to account for the local reference.
+            ppc->Release();
+        }
+    }
+    else
+    {
+        hr = E_OUTOFMEMORY;
+    }
+
+	return hr;
 }
 
 // Boilerplate code to create our provider.

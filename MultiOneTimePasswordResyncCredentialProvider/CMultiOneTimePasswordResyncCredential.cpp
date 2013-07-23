@@ -406,35 +406,23 @@ HRESULT CMultiOneTimePasswordResyncCredential::GetSerialization(
     UNREFERENCED_PARAMETER(ppwszOptionalStatusText);
     UNREFERENCED_PARAMETER(pcpsiOptionalStatusIcon);
 
-	// The actors
 	CMultiOneTimePassword pMOTP;
-	PWSTR uname, otp1, otp2;
+	HRESULT hr = E_FAIL;
 
-	// Prepare
-	uname = (PWSTR) CoTaskMemAlloc( (lstrlen(_rgFieldStrings[SFI_USERNAME]) + 1) * sizeof(WCHAR) );
-	otp1  = (PWSTR) CoTaskMemAlloc( (lstrlen(_rgFieldStrings[SFI_OTP_1])    + 1) * sizeof(WCHAR) );
-	otp2  = (PWSTR) CoTaskMemAlloc( (lstrlen(_rgFieldStrings[SFI_OTP_2])    + 1) * sizeof(WCHAR) );
+	INIT_ZERO_CHAR(c_user, 64);
+	INIT_ZERO_CHAR(c_otp1, 64);
+	INIT_ZERO_CHAR(c_otp2, 64);
 
-	SecureZeroMemory( uname, (lstrlen(_rgFieldStrings[SFI_USERNAME]) + 1) * sizeof(WCHAR) );
-	SecureZeroMemory( otp1,  (lstrlen(_rgFieldStrings[SFI_OTP_1])    + 1) * sizeof(WCHAR) );
-	SecureZeroMemory( otp2,  (lstrlen(_rgFieldStrings[SFI_OTP_2])    + 1) * sizeof(WCHAR) );
+	__WideCharToChar(_rgFieldStrings[SFI_USERNAME], sizeof(c_user), c_user);
+	__WideCharToChar(_rgFieldStrings[SFI_OTP_1], sizeof(c_otp1), c_otp1);
+	__WideCharToChar(_rgFieldStrings[SFI_OTP_2], sizeof(c_otp2), c_otp2);
 
-	SHStrDupW( _rgFieldStrings[SFI_USERNAME], &uname );	
-	SHStrDupW( _rgFieldStrings[SFI_OTP_1],    &otp1  );	
-	SHStrDupW( _rgFieldStrings[SFI_OTP_2],    &otp2  );
+	if (c_user[0] && c_otp1[0] && c_otp2[0]) {
+        hr = pMOTP.OTPResync(c_user, c_otp1, c_otp2);
 
-	// Call
-	HRESULT hr = pMOTP.OTPResync(uname, otp1, otp2);
-
-	// Clean up
-	SecureZeroMemory( uname, (lstrlen(uname) + 1) * sizeof(WCHAR) );
-	SecureZeroMemory( otp1,  (lstrlen(otp1)  + 1) * sizeof(WCHAR) );
-	SecureZeroMemory( otp1,  (lstrlen(otp2)  + 1) * sizeof(WCHAR) );
-
-	CoTaskMemFree(uname);
-	CoTaskMemFree(otp1);
-	CoTaskMemFree(otp2);
-	//////////
+		// TODO: Why I have to compile without /GS? Where is the stack being corrupted?
+		//	     Resolve to go out of beta.
+	}
 
 	if (SUCCEEDED(hr)) 
 	{
@@ -449,8 +437,11 @@ HRESULT CMultiOneTimePasswordResyncCredential::GetSerialization(
 		*pcpgsr = CPGSR_NO_CREDENTIAL_NOT_FINISHED;
 	}
 
+	// TODO: Move this to SetDeselected() !!!???
 	if (_rgFieldStrings[SFI_OTP_1])
     {
+		OutputDebugStringA("clean sfi_otp_1"); OutputDebugStringA("\n");
+
         size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_1]);
         SecureZeroMemory(_rgFieldStrings[SFI_OTP_1], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_1]));
     
@@ -466,6 +457,8 @@ HRESULT CMultiOneTimePasswordResyncCredential::GetSerialization(
     }
     if (_rgFieldStrings[SFI_OTP_2])
     {
+		OutputDebugStringA("clean sfi_otp_2"); OutputDebugStringA("\n");
+
         size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_2]);
         SecureZeroMemory(_rgFieldStrings[SFI_OTP_2], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_2]));
     
@@ -476,8 +469,15 @@ HRESULT CMultiOneTimePasswordResyncCredential::GetSerialization(
             _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_2, _rgFieldStrings[SFI_OTP_2]);
         }
     }
+	// END TODO
 
-    return S_FALSE;
+	goto CleanUpAndReturn; // To avoid C4102
+CleanUpAndReturn:
+	ZERO(c_user);
+	ZERO(c_otp1);
+	ZERO(c_otp2);
+
+	return S_OK;
 }
 
 // ReportResult is completely optional.  Its purpose is to allow a credential to customize the string

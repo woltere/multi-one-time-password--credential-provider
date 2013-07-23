@@ -29,127 +29,151 @@
 // CMultiOneTimePasswordCredential ////////////////////////////////////////////////////////
 
 CMultiOneTimePasswordCredential::CMultiOneTimePasswordCredential():
-    _cRef(1)
+    _cRef(1),
+    _pCredProvCredentialEvents(NULL),
+	_user_name(NULL),
+	_domain_name(NULL)
 {
     DllAddRef();
 
-    ZeroMemory(_rgCredProvFieldDescriptors, sizeof(_rgCredProvFieldDescriptors));
-    ZeroMemory(_rgFieldStatePairs, sizeof(_rgFieldStatePairs));
-    ZeroMemory(_rgFieldStrings, sizeof(_rgFieldStrings));
+    ZERO(_rgCredProvFieldDescriptors);
+    ZERO(_rgFieldStatePairs);
+    ZERO(_rgFieldStrings);
+	ZERO(_default_login_text);
 
-    _pWrappedCredential = NULL;
-    _pWrappedCredentialEvents = NULL;
-    _pCredProvCredentialEvents = NULL;
-
-    _dwWrappedDescriptorCount = 0;
-    _dwDatabaseIndex = 0;
+	strcpy_s(_default_login_text, sizeof(_default_login_text), DEFAULT_LOGIN_TEXT);
 }
 
 CMultiOneTimePasswordCredential::~CMultiOneTimePasswordCredential()
 {
+    if (_rgFieldStrings[SFI_OTP_USERNAME])
+    {
+        // CoTaskMemFree (below) deals with NULL, but StringCchLength does not.
+        size_t lenUsername = lstrlen(_rgFieldStrings[SFI_OTP_USERNAME]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_USERNAME], lenUsername * sizeof(*_rgFieldStrings[SFI_OTP_USERNAME]));
+    }
+    if (_rgFieldStrings[SFI_OTP_LDAP_PASS])
+    {
+        // CoTaskMemFree (below) deals with NULL, but StringCchLength does not.
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_LDAP_PASS]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_LDAP_PASS], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_LDAP_PASS]));
+    }
+	if (_rgFieldStrings[SFI_OTP_PASS])
+    {
+        // CoTaskMemFree (below) deals with NULL, but StringCchLength does not.
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_PASS]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_PASS], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_PASS]));
+    }
     for (int i = 0; i < ARRAYSIZE(_rgFieldStrings); i++)
     {
         CoTaskMemFree(_rgFieldStrings[i]);
         CoTaskMemFree(_rgCredProvFieldDescriptors[i].pszLabel);
     }
 
-    _CleanupEvents();
-    
-    if (_pWrappedCredential)
-    {
-        _pWrappedCredential->Release();
-    }
-
     DllRelease();
 }
 
-// Initializes one credential with the field information passed in. We also keep track
-// of our wrapped credential and how many fields it has.
+// Initializes one credential with the field information passed in.
+// Set the value of the SFI_USERNAME field to pwzUsername.
+// Optionally takes a password for the SetSerialization case.
 HRESULT CMultiOneTimePasswordCredential::Initialize(
+	__in CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, 
     __in const CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR* rgcpfd,
     __in const FIELD_STATE_PAIR* rgfsp,
-    __in ICredentialProviderCredential *pWrappedCredential,
-    __in DWORD dwWrappedDescriptorCount
+	__in_opt PWSTR user_name,
+	__in_opt PWSTR domain_name
     )
 {
     HRESULT hr = S_OK;
 
-    // Grab the credential we're wrapping for future reference.
-    if (_pWrappedCredential != NULL)
-    {
-        _pWrappedCredential->Release();
-    }
-    _pWrappedCredential = pWrappedCredential;
-    _pWrappedCredential->AddRef();
+	_cpus = cpus;
 
-    // We also need to remember how many fields the inner credential has.
-    _dwWrappedDescriptorCount = dwWrappedDescriptorCount;
+	if (user_name)
+		_user_name = user_name;
 
-    // Copy the field descriptors for each field. This is useful if you want to vary the field
-    // descriptors based on what Usage scenario the credential was created for.
+	if (domain_name)
+		_domain_name = domain_name;
+
+    // Copy the field descriptors for each field. This is useful if you want to vary the 
+    // field descriptors based on what Usage scenario the credential was created for.
     for (DWORD i = 0; SUCCEEDED(hr) && i < ARRAYSIZE(_rgCredProvFieldDescriptors); i++)
     {
         _rgFieldStatePairs[i] = rgfsp[i];
         hr = FieldDescriptorCopy(rgcpfd[i], &_rgCredProvFieldDescriptors[i]);
     }
 
-    // Initialize the String value of all of our fields.
+    // Initialize the String values of all the fields.
 	if (SUCCEEDED(hr))
     {
-        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_PASSWORD_TEXT]);
+		//if (_openotp_login_text[0] == NULL)
+		//	hr = SHStrDupW(OPENOTP_DEFAULT_LOGIN_TEXT, &_rgFieldStrings[SFI_OTP_LARGE_TEXT]);
+		//else
+		//{
+			wchar_t large_text[sizeof(_default_login_text)];
+
+			int size = MultiByteToWideChar(CP_ACP, 0, _default_login_text, -1, large_text, 0);
+			MultiByteToWideChar(CP_ACP, 0, _default_login_text, -1, large_text, size);
+
+			hr = SHStrDupW(large_text, &_rgFieldStrings[SFI_OTP_LARGE_TEXT]);
+		//}
+
+		//hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_LARGE_TEXT]);
+    }
+	if (SUCCEEDED(hr))
+    {
+		if (_cpus == CPUS_UNLOCK_WORKSTATION)
+			hr = SHStrDupW(WORKSTATION_LOCKED, &_rgFieldStrings[SFI_OTP_SMALL_TEXT]);
+		else
+			hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_SMALL_TEXT]);
+	}
+    if (SUCCEEDED(hr))
+    {
+		if (_cpus == CPUS_UNLOCK_WORKSTATION && _user_name)
+		{
+			hr = SHStrDupW(_user_name, &_rgFieldStrings[SFI_OTP_USERNAME]);
+		}
+		else
+			hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_USERNAME]);
+    }
+    if (SUCCEEDED(hr))
+    {
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_LDAP_PASS]);
+    }
+	if (SUCCEEDED(hr))
+    {
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_PASS]);
+    }
+    if (SUCCEEDED(hr))
+    {
+        hr = SHStrDupW(L"Submit", &_rgFieldStrings[SFI_OTP_SUBMIT_BUTTON]);
     }
 
     return hr;
 }
 
-// LogonUI calls this in order to give us a callback in case we need to notify it of 
-// anything. We'll also provide it to the wrapped credential.
+// LogonUI calls this in order to give us a callback in case we need to notify it of anything.
 HRESULT CMultiOneTimePasswordCredential::Advise(
     __in ICredentialProviderCredentialEvents* pcpce
     )
 {
-    HRESULT hr = S_OK;
-
-    _CleanupEvents();
-
-    // We keep a strong reference on the real ICredentialProviderCredentialEvents
-    // to ensure that the weak reference held by the CWrappedCredentialEvents is valid.
+    if (_pCredProvCredentialEvents != NULL)
+    {
+        _pCredProvCredentialEvents->Release();
+    }
     _pCredProvCredentialEvents = pcpce;
     _pCredProvCredentialEvents->AddRef();
-
-    _pWrappedCredentialEvents = new CWrappedCredentialEvents();
-    
-    if (_pWrappedCredentialEvents != NULL)
-    {
-        _pWrappedCredentialEvents->Initialize(this, pcpce);
-    
-        if (_pWrappedCredential != NULL)
-        {
-            hr = _pWrappedCredential->Advise(_pWrappedCredentialEvents);
-        }
-    }
-    else
-    {
-        hr = E_OUTOFMEMORY;
-    }
-
-    return hr;
+    return S_OK;
 }
 
-// LogonUI calls this to tell us to release the callback. 
-// We'll also provide it to the wrapped credential.
+// LogonUI calls this to tell us to release the callback.
 HRESULT CMultiOneTimePasswordCredential::UnAdvise()
 {
-    HRESULT hr = S_OK;
-    
-    if (_pWrappedCredential != NULL)
+    if (_pCredProvCredentialEvents)
     {
-        _pWrappedCredential->UnAdvise();
+        _pCredProvCredentialEvents->Release();
     }
-
-    _CleanupEvents();
-
-    return hr;
+    _pCredProvCredentialEvents = NULL;
+    return S_OK;
 }
 
 // LogonUI calls this function when our tile is selected (zoomed)
@@ -159,298 +183,229 @@ HRESULT CMultiOneTimePasswordCredential::UnAdvise()
 // wrapped credential in case it wants to do something.
 HRESULT CMultiOneTimePasswordCredential::SetSelected(__out BOOL* pbAutoLogon)  
 {
-    HRESULT hr = E_UNEXPECTED;
-	BOOL bAutoLogon = FALSE;
+    *pbAutoLogon = FALSE;  
 
-    if (_pWrappedCredential != NULL)
-    {
-        hr = _pWrappedCredential->SetSelected(&bAutoLogon);
-    }
-
-	if (bAutoLogon) // Hide Password CP's password field as it seems to be not needed
-		_pCredProvCredentialEvents->SetFieldState(this, PWCP_SFI_PASSWORD, CPFS_HIDDEN);
-	
-	//*pbAutoLogon = bAutoLogon;
-	*pbAutoLogon = FALSE; // This has to be false in order to show a UI to enter an OTP. Password CP does not know about us ;)
-
-    return hr;
+    return S_OK;
 }
 
 // Similarly to SetSelected, LogonUI calls this when your tile was selected
 // and now no longer is. We'll let the wrapped credential do anything it needs.
 HRESULT CMultiOneTimePasswordCredential::SetDeselected()
 {
-    HRESULT hr = E_UNEXPECTED;
-
-    if (_pWrappedCredential != NULL)
+    HRESULT hr = S_OK;
+	if (_cpus != CPUS_UNLOCK_WORKSTATION && _rgFieldStrings[SFI_OTP_USERNAME])
     {
-        hr = _pWrappedCredential->SetDeselected();
-
-	    if (_rgFieldStrings[SFI_OTP_PASSWORD_TEXT])
-        {
-          size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_PASSWORD_TEXT]);
-          SecureZeroMemory(_rgFieldStrings[SFI_OTP_PASSWORD_TEXT], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_PASSWORD_TEXT]));
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_USERNAME]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_USERNAME], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_USERNAME]));
     
-          CoTaskMemFree(_rgFieldStrings[SFI_OTP_PASSWORD_TEXT]);
-          hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_PASSWORD_TEXT]);
-
-          if (SUCCEEDED(hr) && _pCredProvCredentialEvents)
-          {
-  			_pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_PASSWORD_TEXT + _dwWrappedDescriptorCount, _rgFieldStrings[SFI_OTP_PASSWORD_TEXT]);
-          }
+        CoTaskMemFree(_rgFieldStrings[SFI_OTP_USERNAME]);
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_USERNAME]);
+        if (SUCCEEDED(hr) && _pCredProvCredentialEvents)
+        {
+            _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_USERNAME, _rgFieldStrings[SFI_OTP_USERNAME]);
         }
+    }
+	if (_rgFieldStrings[SFI_OTP_LDAP_PASS])
+    {
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_LDAP_PASS]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_LDAP_PASS], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_LDAP_PASS]));
+    
+        CoTaskMemFree(_rgFieldStrings[SFI_OTP_LDAP_PASS]);
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_LDAP_PASS]);
+        if (SUCCEEDED(hr) && _pCredProvCredentialEvents)
+        {
+            _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_LDAP_PASS, _rgFieldStrings[SFI_OTP_LDAP_PASS]);
+        }
+    }
+    if (_rgFieldStrings[SFI_OTP_PASS])
+    {
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_PASS]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_PASS], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_PASS]));
+    
+        CoTaskMemFree(_rgFieldStrings[SFI_OTP_PASS]);
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_PASS]);
+        if (SUCCEEDED(hr) && _pCredProvCredentialEvents)
+        {
+            _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_PASS, _rgFieldStrings[SFI_OTP_PASS]);
+        }
+    }
+
+	if (_cpus == CPUS_UNLOCK_WORKSTATION)
+		_SetFieldScenario(SCENARIO_UNLOCK_BASE);
+	else
+	{
+		_SetFieldScenario(SCENARIO_LOGON_BASE);
 	}
 
     return hr;
 }
 
-// Get info for a particular field of a tile. Called by logonUI to get information to 
-// display the tile. We'll check to see if it's for us or the wrapped credential, and then
-// handle or route it as appropriate.
+// Gets info for a particular field of a tile. Called by logonUI to get information to 
+// display the tile.
 HRESULT CMultiOneTimePasswordCredential::GetFieldState(
     __in DWORD dwFieldID,
     __out CREDENTIAL_PROVIDER_FIELD_STATE* pcpfs,
     __out CREDENTIAL_PROVIDER_FIELD_INTERACTIVE_STATE* pcpfis
     )
 {
-    HRESULT hr = E_UNEXPECTED;
+    HRESULT hr;
 
-    // Make sure we have a wrapped credential.
-    if (_pWrappedCredential != NULL)
+    // Validate paramters.
+    if ((dwFieldID < ARRAYSIZE(_rgFieldStatePairs)) && pcpfs && pcpfis)
     {
-        // Validate parameters.
-        if ((pcpfs != NULL) && (pcpfis != NULL))
-        {
-            // If the field is in the wrapped credential, hand it off.
-            if (_IsFieldInWrappedCredential(dwFieldID))
-            {
-                hr = _pWrappedCredential->GetFieldState(dwFieldID, pcpfs, pcpfis);
-            }
-            // Otherwise, we need to see if it's one of ours.
-            else
-            {
-                FIELD_STATE_PAIR *pfsp = _LookupLocalFieldStatePair(dwFieldID);
-                // If the field ID is valid, give it info it needs.
-                if (pfsp != NULL)
-                {
-                    *pcpfs = pfsp->cpfs;
-                    *pcpfis = pfsp->cpfis;
+        *pcpfs = _rgFieldStatePairs[dwFieldID].cpfs;
+        *pcpfis = _rgFieldStatePairs[dwFieldID].cpfis;
 
-                    hr = S_OK;
-                }
-                else
-                {
-                    hr = E_INVALIDARG;
-                }
-            }
-        }
-        else
-        {
-            hr = E_INVALIDARG;
-        }
+        hr = S_OK;
+    }
+    else
+    {
+        hr = E_INVALIDARG;
     }
     return hr;
 }
 
-// Sets ppwsz to the string value of the field at the index dwFieldID. We'll check to see if 
-// it's for us or the wrapped credential, and then handle or route it as appropriate.
+// Sets ppwsz to the string value of the field at the index dwFieldID.
 HRESULT CMultiOneTimePasswordCredential::GetStringValue(
     __in DWORD dwFieldID, 
     __deref_out PWSTR* ppwsz
     )
 {
-    HRESULT hr = E_UNEXPECTED;
+    HRESULT hr;
 
-    // Make sure we have a wrapped credential.
-    if (_pWrappedCredential != NULL)
+    // Check to make sure dwFieldID is a legitimate index.
+    if (dwFieldID < ARRAYSIZE(_rgCredProvFieldDescriptors) && ppwsz) 
     {
-        // If this field belongs to the wrapped credential, hand it off.
-        if (_IsFieldInWrappedCredential(dwFieldID))
+        // Make a copy of the string and return that. The caller
+        // is responsible for freeing it.
+        hr = SHStrDupW(_rgFieldStrings[dwFieldID], ppwsz);
+    }
+    else
+    {
+        hr = E_INVALIDARG;
+    }
+
+    return hr;
+}
+
+// Gets the image to show in the user tile.
+HRESULT CMultiOneTimePasswordCredential::GetBitmapValue(
+    __in DWORD dwFieldID, 
+    __out HBITMAP* phbmp
+    )
+{
+    HRESULT hr;
+    if ((SFI_OTP_LOGO == dwFieldID) && phbmp)
+    {
+        HBITMAP hbmp = LoadBitmap(HINST_THISDLL, MAKEINTRESOURCE(IDB_TILE_IMAGE));
+        if (hbmp != NULL)
         {
-            hr = _pWrappedCredential->GetStringValue(dwFieldID, ppwsz);
+            hr = S_OK;
+            *phbmp = hbmp;
         }
-        // Otherwise determine if we need to handle it.
         else
         {
-            FIELD_STATE_PAIR *pfsp = _LookupLocalFieldStatePair(dwFieldID);
-            if (pfsp != NULL)
-            {
-				hr = SHStrDupW(_rgFieldStrings[SFI_OTP_PASSWORD_TEXT], ppwsz);
-                //hr = SHStrDupW(_rgFieldStrings[SFI_I_WORK_IN_STATIC], ppwsz);
-            }
-            else
-            {
-                hr = E_INVALIDARG;
-            }
+            hr = HRESULT_FROM_WIN32(GetLastError());
         }
+    }
+    else
+    {
+        hr = E_INVALIDARG;
+    }
+
+    return hr;
+}
+
+// Sets pdwAdjacentTo to the index of the field the submit button should be 
+// adjacent to. We recommend that the submit button is placed next to the last
+// field which the user is required to enter information in. Optional fields
+// should be below the submit button.
+HRESULT CMultiOneTimePasswordCredential::GetSubmitButtonValue(
+    __in DWORD dwFieldID,
+    __out DWORD* pdwAdjacentTo
+    )
+{
+    HRESULT hr;
+
+    // Validate parameters.
+    if ((SFI_OTP_SUBMIT_BUTTON == dwFieldID) && pdwAdjacentTo)
+    {
+        // pdwAdjacentTo is a pointer to the fieldID you want the submit button to appear next to.
+        *pdwAdjacentTo = SFI_OTP_PASS;
+        hr = S_OK;
+    }
+    else
+    {
+        hr = E_INVALIDARG;
     }
     return hr;
 }
 
+// Sets the value of a field which can accept a string as a value.
+// This is called on each keystroke when a user types into an edit field.
 HRESULT CMultiOneTimePasswordCredential::SetStringValue(
-    __in DWORD dwFieldID,
-    __in PCWSTR pwz
-    )
-{
-    HRESULT hr = E_UNEXPECTED;
-
-    if (_pWrappedCredential != NULL)
-    {
-		// If this field belongs to the wrapped credential, hand it off.
-        if (_IsFieldInWrappedCredential(dwFieldID))
-        {
-            hr = _pWrappedCredential->SetStringValue(dwFieldID, pwz);
-        }
-		// Otherwise determine if we need to handle it.
-        else
-        {
-            FIELD_STATE_PAIR *pfsp = _LookupLocalFieldStatePair(dwFieldID);
-			dwFieldID -= _dwWrappedDescriptorCount;
-            if (pfsp != NULL &&
-			   (CPFT_EDIT_TEXT == _rgCredProvFieldDescriptors[dwFieldID].cpft || 
-				CPFT_PASSWORD_TEXT == _rgCredProvFieldDescriptors[dwFieldID].cpft))
-            {
-				PWSTR* ppwszStored = &_rgFieldStrings[dwFieldID];
-                CoTaskMemFree(*ppwszStored);
-                hr = SHStrDupW(pwz, ppwszStored);
-            }
-            else
-            {
-                hr = E_INVALIDARG;
-            }
-        }
-    }
-    return hr;
-}
-
-// Returns the number of items to be included in the combobox (pcItems), as well as the 
-// currently selected item (pdwSelectedItem). We'll check to see if it's for us or the 
-// wrapped credential, and then handle or route it as appropriate.
-HRESULT CMultiOneTimePasswordCredential::GetComboBoxValueCount(
     __in DWORD dwFieldID, 
-    __out DWORD* pcItems, 
-    __out_range(<,*pcItems) DWORD* pdwSelectedItem
+    __in PCWSTR pwz      
     )
 {
-    HRESULT hr = E_UNEXPECTED;
+    HRESULT hr;
 
-    // Make sure we have a wrapped credential.
-    if (_pWrappedCredential != NULL)
+    // Validate parameters.
+    if (dwFieldID < ARRAYSIZE(_rgCredProvFieldDescriptors) && 
+       (CPFT_EDIT_TEXT == _rgCredProvFieldDescriptors[dwFieldID].cpft || 
+        CPFT_PASSWORD_TEXT == _rgCredProvFieldDescriptors[dwFieldID].cpft)) 
     {
-        // If this field belongs to the wrapped credential, hand it off.
-        if (_IsFieldInWrappedCredential(dwFieldID))
-        {
-            hr = _pWrappedCredential->GetComboBoxValueCount(dwFieldID, pcItems, pdwSelectedItem);
-        }
+        PWSTR* ppwszStored = &_rgFieldStrings[dwFieldID];
+        CoTaskMemFree(*ppwszStored);
+        hr = SHStrDupW(pwz, ppwszStored);
     }
-
-    return hr;
-}
-
-// Called iteratively to fill the combobox with the string (ppwszItem) at index dwItem.
-// We'll check to see if it's for us or the wrapped credential, and then handle or route 
-// it as appropriate.
-HRESULT CMultiOneTimePasswordCredential::GetComboBoxValueAt(
-    __in DWORD dwFieldID, 
-    __in DWORD dwItem,
-    __deref_out PWSTR* ppwszItem
-    )
-{
-    HRESULT hr = E_UNEXPECTED;
-
-    // Make sure we have a wrapped credential.
-    if (_pWrappedCredential != NULL)
+    else
     {
-        // If this field belongs to the wrapped credential, hand it off.
-        if (_IsFieldInWrappedCredential(dwFieldID))
-        {
-            hr = _pWrappedCredential->GetComboBoxValueAt(dwFieldID, dwItem, ppwszItem);
-        }
-    }
-
-    return hr;
-}
-
-// Called when the user changes the selected item in the combobox. We'll check to see if 
-// it's for us or the wrapped credential, and then handle or route it as appropriate.
-HRESULT CMultiOneTimePasswordCredential::SetComboBoxSelectedValue(
-    __in DWORD dwFieldID,
-    __in DWORD dwSelectedItem
-    )
-{
-    HRESULT hr = E_UNEXPECTED;
-
-    // Make sure we have a wrapped credential.
-    if (_pWrappedCredential != NULL)
-    {
-        // If this field belongs to the wrapped credential, hand it off.
-        if (_IsFieldInWrappedCredential(dwFieldID))
-        {
-            hr = _pWrappedCredential->SetComboBoxSelectedValue(dwFieldID, dwSelectedItem);
-        }
+        hr = E_INVALIDARG;
     }
 
     return hr;
 }
 
 //------------- 
-// The following methods are for logonUI to get the values of various UI elements and 
-// then communicate to the credential about what the user did in that field. Even though
-// we don't offer these field types ourselves, we need to pass along the request to the
-// wrapped credential.
-
-HRESULT CMultiOneTimePasswordCredential::GetBitmapValue(
-    __in DWORD dwFieldID, 
-    __out HBITMAP* phbmp
-    )
-{
-    HRESULT hr = E_UNEXPECTED;
-
-    if (_pWrappedCredential != NULL)
-    {
-        hr = _pWrappedCredential->GetBitmapValue(dwFieldID, phbmp);
-    }
-
-    return hr;
-}
-
-HRESULT CMultiOneTimePasswordCredential::GetSubmitButtonValue(
-    __in DWORD dwFieldID,
-    __out DWORD* pdwAdjacentTo
-    )
-{
-    HRESULT hr = E_UNEXPECTED;
-
-    if (_pWrappedCredential != NULL)
-    {
-        hr = _pWrappedCredential->GetSubmitButtonValue(dwFieldID, pdwAdjacentTo);
-
-		// We want the submit button adjacent to our last field. Looks better and preserves TAB-order.
-		if (SUCCEEDED(hr)) {
-			*pdwAdjacentTo = SFI_OTP_PASSWORD_TEXT + _dwWrappedDescriptorCount;
-		}
-    }
-
-    return hr;
-}
-
+// The following methods are for logonUI to get the values of various UI elements and then communicate
+// to the credential about what the user did in that field.  However, these methods are not implemented
+// because our tile doesn't contain these types of UI elements
 HRESULT CMultiOneTimePasswordCredential::GetCheckboxValue(
     __in DWORD dwFieldID, 
     __out BOOL* pbChecked,
     __deref_out PWSTR* ppwszLabel
     )
 {
-    HRESULT hr = E_UNEXPECTED;
+    UNREFERENCED_PARAMETER(dwFieldID);
+    UNREFERENCED_PARAMETER(pbChecked);
+    UNREFERENCED_PARAMETER(ppwszLabel);
 
-    if (_pWrappedCredential != NULL)
-    {
-        if (_IsFieldInWrappedCredential(dwFieldID))
-        {
-            hr = _pWrappedCredential->GetCheckboxValue(dwFieldID, pbChecked, ppwszLabel);
-        }
-    }
+    return E_NOTIMPL;
+}
 
-    return hr;
+HRESULT CMultiOneTimePasswordCredential::GetComboBoxValueCount(
+    __in DWORD dwFieldID, 
+    __out DWORD* pcItems, 
+    __out_range(<,*pcItems) DWORD* pdwSelectedItem
+    )
+{
+    UNREFERENCED_PARAMETER(dwFieldID);
+    UNREFERENCED_PARAMETER(pcItems);
+    UNREFERENCED_PARAMETER(pdwSelectedItem);
+    return E_NOTIMPL;
+}
+
+HRESULT CMultiOneTimePasswordCredential::GetComboBoxValueAt(
+    __in DWORD dwFieldID, 
+    __in DWORD dwItem,
+    __deref_out PWSTR* ppwszItem
+    )
+{
+    UNREFERENCED_PARAMETER(dwFieldID);
+    UNREFERENCED_PARAMETER(dwItem);
+    UNREFERENCED_PARAMETER(ppwszItem);
+    return E_NOTIMPL;
 }
 
 HRESULT CMultiOneTimePasswordCredential::SetCheckboxValue(
@@ -458,29 +413,59 @@ HRESULT CMultiOneTimePasswordCredential::SetCheckboxValue(
     __in BOOL bChecked
     )
 {
-    HRESULT hr = E_UNEXPECTED;
+    UNREFERENCED_PARAMETER(dwFieldID);
+    UNREFERENCED_PARAMETER(bChecked);
 
-    if (_pWrappedCredential != NULL)
-    {
-        hr = _pWrappedCredential->SetCheckboxValue(dwFieldID, bChecked);
-    }
+    return E_NOTIMPL;
+}
 
-    return hr;
+HRESULT CMultiOneTimePasswordCredential::SetComboBoxSelectedValue(
+    __in DWORD dwFieldId,
+    __in DWORD dwSelectedItem
+    )
+{
+    UNREFERENCED_PARAMETER(dwFieldId);
+    UNREFERENCED_PARAMETER(dwSelectedItem);
+    return E_NOTIMPL;
 }
 
 HRESULT CMultiOneTimePasswordCredential::CommandLinkClicked(__in DWORD dwFieldID)
 {
-    HRESULT hr = E_UNEXPECTED;
-
-    if (_pWrappedCredential != NULL)
-    {
-        hr = _pWrappedCredential->CommandLinkClicked(dwFieldID);
-    }
-
-    return hr;
+    UNREFERENCED_PARAMETER(dwFieldID);
+    return E_NOTIMPL;
 }
-//------ end of methods for controls we don't have ourselves ----//
+//------ end of methods for controls we don't have in our tile ----//
 
+void CMultiOneTimePasswordCredential::_SeparateUserAndDomainName(
+	__in wchar_t *domain_slash_username,
+	__out wchar_t *username,
+	__in int sizeUsername,
+	__out_opt wchar_t *domain,
+	__in_opt int sizeDomain
+	)
+{
+	int pos;
+	for(pos=0;domain_slash_username[pos]!=L'\\' && domain_slash_username[pos]!=NULL;pos++);
+
+	if (domain_slash_username[pos]!=NULL)
+	{
+		int i;
+		for (i=0;i<pos && i<sizeDomain;i++)
+			domain[i] = domain_slash_username[i];
+		domain[i]=L'\0';
+
+		for (i=0;domain_slash_username[pos+i+1]!=NULL && i<sizeUsername;i++)
+			username[i] = domain_slash_username[pos+i+1];
+		username[i]=L'\0';
+	}
+	else
+	{
+		int i;
+		for (i=0;i<pos && i<sizeUsername;i++)
+			username[i] = domain_slash_username[i];
+		username[i]=L'\0';
+	}
+}
 
 //
 // Collect the username and password into a serialized credential for the correct usage scenario 
@@ -494,17 +479,28 @@ HRESULT CMultiOneTimePasswordCredential::GetSerialization(
     __out CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon
     )
 {
-    HRESULT hr = E_UNEXPECTED;
+    HRESULT otpCheck, hr = E_UNEXPECTED;
 
-    if (_pWrappedCredential != NULL)
-    {
-		HRESULT otpCheck = _CheckOtp();
+	INIT_ZERO_WCHAR(username, 64);
+	INIT_ZERO_WCHAR(domain, 64);
 
-		if (SUCCEEDED(otpCheck))
-          hr = _pWrappedCredential->GetSerialization(pcpgsr, pcpcs, ppwszOptionalStatusText, pcpsiOptionalStatusIcon);
-	    else
-		{
-			switch (otpCheck) {
+	_SeparateUserAndDomainName(_rgFieldStrings[SFI_OTP_USERNAME], username, sizeof(username), domain, sizeof(domain));
+
+	// Set domain name:
+	if (domain[0])
+		// ... user typed DOMAIN\USERNAME, so we set it to DOMAIN
+		_domain_name = _wcsdup(domain);
+
+	otpCheck = _CheckOtp(username, _rgFieldStrings[SFI_OTP_PASS]);
+
+	if (SUCCEEDED(otpCheck))
+	{
+        hr = _DoKerberosLogon(pcpgsr, pcpcs, username, _rgFieldStrings[SFI_OTP_LDAP_PASS]);		
+		//goto CleanUpAndReturn;
+	}
+	else
+	{
+		switch (otpCheck) {
 			case E_FAIL:
 			case E_INVALID:
 				SHStrDupW(I18N_OTP_INVALID, ppwszOptionalStatusText);
@@ -512,77 +508,218 @@ HRESULT CMultiOneTimePasswordCredential::GetSerialization(
 			case E_LOCKED:
 				SHStrDupW(I18N_ACCOUNT_LOCKED, ppwszOptionalStatusText);
 				break;
-			}
-			*pcpgsr = CPGSR_NO_CREDENTIAL_FINISHED;										
-			*pcpsiOptionalStatusIcon = CPSI_ERROR;
-			return S_FALSE;
+			default:
+				SHStrDupW(L"An error occured.", ppwszOptionalStatusText);
 		}
-    } 
+		*pcpgsr = CPGSR_NO_CREDENTIAL_FINISHED;										
+		*pcpsiOptionalStatusIcon = CPSI_ERROR;
+		return S_FALSE;
+	}
 
-    return hr;
+	goto CleanUpAndReturn; // To avoid C4102
+CleanUpAndReturn:
+	ZERO(username);
+	ZERO(domain);
+
+    return S_OK;
 }
 
-HRESULT CMultiOneTimePasswordCredential::_CheckOtp()
+HRESULT CMultiOneTimePasswordCredential::_CheckOtp(
+	__deref_in PWSTR user,
+	__deref_in PWSTR otp
+	)
 {
-	HRESULT hr = E_FAIL;
-
 #ifdef ENABLE_MASTER_LOGON_CODE
-	if ((wcscmp(_rgFieldStrings[SFI_OTP_PASSWORD_TEXT], CMOTPC_MASTER_LOGON_CODE)==0))
+	if (wcscmp(_rgFieldStrings[SFI_OTP_PASSWORD_TEXT], CMOTPC_MASTER_LOGON_CODE)==0)
 		return S_OK;
 #endif
 
-	PWSTR username, password;
-	HRESULT getUserName = _pWrappedCredential->GetStringValue(PWCP_SFI_USERNAME, &username);
-	HRESULT getPassword = GetStringValue(_dwWrappedDescriptorCount + SFI_OTP_PASSWORD_TEXT, &password);
+	CMultiOneTimePassword pMOTP;
 
-	if (SUCCEEDED(getUserName) && SUCCEEDED(getPassword) && username  && password) {
-		PWSTR uname, pass;              
+#ifdef _DEBUG
+	//*************************** DEBUG:
+	OutputDebugStringA("user: "); OutputDebugStringW(user); OutputDebugStringA("\n");	
+	OutputDebugStringA("otp: "); OutputDebugStringW(otp); OutputDebugStringA("\n");	
+	//*/
+#endif
 
-        uname = (PWSTR) CoTaskMemAlloc( (lstrlen(username) + 1) * sizeof(WCHAR));
-        pass  = (PWSTR) CoTaskMemAlloc( (lstrlen(password) + 1) * sizeof(WCHAR));
+	HRESULT hr = E_FAIL;
 
-        SecureZeroMemory( uname, (lstrlen(username) + 1) * sizeof(WCHAR) );
-        SecureZeroMemory( pass,  (lstrlen(password) + 1) * sizeof(WCHAR) );
+	INIT_ZERO_CHAR(c_user, 64);
+	INIT_ZERO_CHAR(c_otp, 64);
 
-        SHStrDupW( username, &uname );          
-        SHStrDupW( password, &pass );
+	__WideCharToChar(user, sizeof(c_user), c_user);
+	__WideCharToChar(otp, sizeof(c_otp), c_otp);
 
-        // Get the last part of the username.
-        // John = John, DOMAIN\John = John, DOMAIN.TLD\John = John
-        wchar_t *token, *next;
-        token = wcstok_s(uname, L"\\", &next);
-        while (token != NULL)
-        {
-                uname = token;
-                token = wcstok_s(NULL, L"\\", &next);
-        }
-
-		CMultiOneTimePassword pMOTP; // At that point username or password get lost (*NULL). Why? user and pass are still alive.
-        hr = pMOTP.OTPCheckPassword(uname, pass);
-
-        // Clean up
-        SecureZeroMemory( uname, (lstrlen(uname) + 1) * sizeof(WCHAR) );
-        SecureZeroMemory( pass,  (lstrlen(pass) + 1) * sizeof(WCHAR) );
-
-        CoTaskMemFree(uname);
-        CoTaskMemFree(pass);
+	if (c_user[0] && c_otp[0]) {
+        hr = pMOTP.OTPCheckPassword(c_user, c_otp);
 	}
 
-	// Clean up
-	// TODO: Do conditional cleaning, when username or password are not pointing to NULL
-	/*
-	SecureZeroMemory( username, (lstrlen(username) + 1) * sizeof(WCHAR) );
-	SecureZeroMemory( password,  (lstrlen(password) + 1) * sizeof(WCHAR) );
-
-	CoTaskMemFree(username);
-	CoTaskMemFree(password);
-	*/
+	goto CleanUpAndReturn; // To avoid C4102
+CleanUpAndReturn:
+	ZERO(c_user);
+	ZERO(c_otp);
 	
 	return hr;
 }
 
-// ReportResult is completely optional. However, we will hand it off to the wrapped
-// credential in case they want to handle it.
+HRESULT CMultiOneTimePasswordCredential::_DoKerberosLogon(
+	__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
+    __out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
+	__in PWSTR username,
+	__in PWSTR password
+	)
+{
+	HRESULT hr;
+
+	WCHAR wsz[64];
+    DWORD cch = ARRAYSIZE(wsz);
+	BOOL  bGetCompName = true;
+
+	if (_domain_name && _domain_name[0])
+		wcscpy_s(wsz, ARRAYSIZE(wsz), _domain_name);
+	else
+		bGetCompName = GetComputerNameW(wsz, &cch);
+
+    if ((_domain_name && _domain_name[0]) || bGetCompName)
+    {
+        PWSTR pwzProtectedPassword;
+
+        hr = ProtectIfNecessaryAndCopyPassword(password, _cpus, &pwzProtectedPassword);
+
+        if (SUCCEEDED(hr))
+        {
+            KERB_INTERACTIVE_UNLOCK_LOGON kiul;
+
+            // Initialize kiul with weak references to our credential.
+            hr = KerbInteractiveUnlockLogonInit(wsz, username, pwzProtectedPassword, _cpus, &kiul);
+
+            if (SUCCEEDED(hr))
+            {
+                // We use KERB_INTERACTIVE_UNLOCK_LOGON in both unlock and logon scenarios.  It contains a
+                // KERB_INTERACTIVE_LOGON to hold the creds plus a LUID that is filled in for us by Winlogon
+                // as necessary.
+                hr = KerbInteractiveUnlockLogonPack(kiul, &pcpcs->rgbSerialization, &pcpcs->cbSerialization);
+
+                if (SUCCEEDED(hr))
+                {
+                    ULONG ulAuthPackage;
+                    hr = RetrieveNegotiateAuthPackage(&ulAuthPackage);
+                    if (SUCCEEDED(hr))
+                    {
+                        pcpcs->ulAuthenticationPackage = ulAuthPackage;
+                        pcpcs->clsidCredentialProvider = CLSID_CSample;
+ 
+                        // At this point the credential has created the serialized credential used for logon
+                        // By setting this to CPGSR_RETURN_CREDENTIAL_FINISHED we are letting logonUI know
+                        // that we have all the information we need and it should attempt to submit the 
+                        // serialized credential.
+                        *pcpgsr = CPGSR_RETURN_CREDENTIAL_FINISHED;
+                    }
+                }
+            }
+
+            CoTaskMemFree(pwzProtectedPassword);
+        }
+    }
+    else
+    {
+        DWORD dwErr = GetLastError();
+        hr = HRESULT_FROM_WIN32(dwErr);
+    }
+
+	return hr;
+}
+
+void CMultiOneTimePasswordCredential::_SetFieldScenario(
+	__in FIELD_SCENARIO scenario
+	)
+{
+	_SetFieldScenario(scenario, NULL, NULL);
+}
+
+void CMultiOneTimePasswordCredential::_SetFieldScenario(
+	__in FIELD_SCENARIO scenario,
+	__in_opt PWSTR large_text,
+	__in_opt PWSTR small_text
+	)
+{
+	switch (scenario)
+	{
+	case SCENARIO_LOGON_BASE:
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_USERNAME,	CPFIS_FOCUSED);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_PASS,		CPFIS_NONE);
+
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT, CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_USERNAME,	CPFS_DISPLAY_IN_SELECTED_TILE);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS,	CPFS_DISPLAY_IN_SELECTED_TILE);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_PASS,		CPFS_DISPLAY_IN_SELECTED_TILE);	
+		break;
+
+	case SCENARIO_UNLOCK_BASE:
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_USERNAME,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS,	CPFIS_FOCUSED);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_PASS,		CPFIS_NONE);
+
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT, CPFS_DISPLAY_IN_BOTH);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_USERNAME,	CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS,	CPFS_DISPLAY_IN_SELECTED_TILE);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_PASS,		CPFS_DISPLAY_IN_SELECTED_TILE);	
+		break;
+
+	case SCENARIO_LOGON_CHALLENGE:
+	case SCENARIO_UNLOCK_CHALLENGE:
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_USERNAME,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_PASS,		CPFIS_NONE);
+
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT, CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_USERNAME,	CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS,	CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_PASS,		CPFS_HIDDEN);	
+		break;
+
+	case SCENARIO_NO_CHANGE:
+	default:
+		break;
+	}
+
+	if (large_text)
+		_pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_LARGE_TEXT, large_text);
+	else
+	{
+		wchar_t text[sizeof(_default_login_text)];
+
+		int size = MultiByteToWideChar(CP_ACP, 0, _default_login_text, -1, text, 0);
+		MultiByteToWideChar(CP_ACP, 0, _default_login_text, -1, text, size);
+
+		_pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_LARGE_TEXT, text);
+	}
+
+	if (small_text)
+	{
+		_pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_SMALL_TEXT, small_text);
+
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT, CPFS_DISPLAY_IN_SELECTED_TILE);
+	}
+	else
+	{		
+		 if (_cpus == CPUS_UNLOCK_WORKSTATION)
+			 _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_SMALL_TEXT, WORKSTATION_LOCKED);
+		 else
+		 {
+			 _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_SMALL_TEXT, L"");
+
+			_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT, CPFS_HIDDEN);
+		 }
+	}
+}
+
+// ReportResult is completely optional.  Its purpose is to allow a credential to customize the string
+// and the icon displayed in the case of a logon failure.  For example, we have chosen to 
+// customize the error shown in the case of bad username/password and in the case of the account
+// being disabled.
 HRESULT CMultiOneTimePasswordCredential::ReportResult(
     __in NTSTATUS ntsStatus, 
     __in NTSTATUS ntsSubstatus,
@@ -590,54 +727,9 @@ HRESULT CMultiOneTimePasswordCredential::ReportResult(
     __out CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon
     )
 {
-    HRESULT hr = E_UNEXPECTED;
-
-    if (_pWrappedCredential != NULL)
-    {
-        hr = _pWrappedCredential->ReportResult(ntsStatus, ntsSubstatus, ppwszOptionalStatusText, pcpsiOptionalStatusIcon);
-    }
-
-    return hr;
-}
-
-BOOL CMultiOneTimePasswordCredential::_IsFieldInWrappedCredential(
-    __in DWORD dwFieldID
-    )
-{
-    return (dwFieldID < _dwWrappedDescriptorCount);
-}
-
-FIELD_STATE_PAIR *CMultiOneTimePasswordCredential::_LookupLocalFieldStatePair(
-    __in DWORD dwFieldID
-    )
-{
-    // Offset into the ID to account for the wrapped fields.
-    dwFieldID -= _dwWrappedDescriptorCount;
-
-    // If the index if valid, give it the info it wants.
-    if (dwFieldID < SFI_NUM_FIELDS)
-    {
-        return &(_rgFieldStatePairs[dwFieldID]);
-    }
-    
-    return NULL;
-}
-
-void CMultiOneTimePasswordCredential::_CleanupEvents()
-{
-    // Call Uninitialize before releasing our reference on the real 
-    // ICredentialProviderCredentialEvents to avoid having an
-    // invalid reference.
-    if (_pWrappedCredentialEvents != NULL)
-    {
-        _pWrappedCredentialEvents->Uninitialize();
-        _pWrappedCredentialEvents->Release();
-        _pWrappedCredentialEvents = NULL;
-    }
-
-    if (_pCredProvCredentialEvents != NULL)
-    {
-        _pCredProvCredentialEvents->Release();
-        _pCredProvCredentialEvents = NULL;
-    }
+	UNREFERENCED_PARAMETER(ntsStatus);
+    UNREFERENCED_PARAMETER(ntsSubstatus);
+	UNREFERENCED_PARAMETER(ppwszOptionalStatusText);
+    UNREFERENCED_PARAMETER(pcpsiOptionalStatusIcon);
+	return E_NOTIMPL;
 }

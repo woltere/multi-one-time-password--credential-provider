@@ -91,8 +91,8 @@ class CMultiOneTimePasswordResyncProvider : public ICredentialProvider
 
 private:
     LONG              _cRef;
-    CMultiOneTimePasswordResyncCredential *_rgpCredentials[MAX_CREDENTIALS];  // Pointers to the credentials which will be enumerated by 
-                                                          // this Provider.
+    CMultiOneTimePasswordResyncCredential	*_rgpCredentials[MAX_CREDENTIALS];  // Pointers to the credentials which will be enumerated by 
+																				// this Provider.
     DWORD                                   _dwNumCreds;
     KERB_INTERACTIVE_UNLOCK_LOGON*          _pkiulSetSerialization;
     DWORD                                   _dwSetSerializationCred; //index into rgpCredentials for the SetSerializationCred

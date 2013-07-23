@@ -28,11 +28,28 @@
 
 #define MAX_ULONG  ((ULONG)(-1))
 
+#define ZERO(NAME) \
+	ZeroMemory(NAME, sizeof(NAME))
+
+#define INIT_ZERO_WCHAR(NAME, SIZE) \
+	wchar_t NAME[SIZE]; \
+	ZERO(NAME)
+
+#define INIT_ZERO_CHAR(NAME, SIZE) \
+	char NAME[SIZE]; \
+	ZERO(NAME)
+
 // The indexes of each of the fields in our credential provider's appended tiles.
 enum SAMPLE_FIELD_ID 
 {
-    SFI_OTP_PASSWORD_TEXT   = 0,
-	SFI_NUM_FIELDS          = 1,
+    SFI_OTP_LOGO			= 0,
+	SFI_OTP_LARGE_TEXT		= 1,
+	SFI_OTP_SMALL_TEXT		= 2,
+	SFI_OTP_USERNAME		= 3,
+	SFI_OTP_LDAP_PASS		= 4,
+    SFI_OTP_PASS			= 5,
+	SFI_OTP_SUBMIT_BUTTON	= 6,
+	SFI_NUM_FIELDS          = 7,
 };
 
 // The first value indicates when the tile is displayed (selected, not selected)
@@ -52,7 +69,24 @@ struct FIELD_STATE_PAIR
 // The Field interactive state indicates when 
 static const FIELD_STATE_PAIR s_rgFieldStatePairs[] = 
 {
-	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },           // SFI_OTP_PASSWORD_TEXT
+	{ CPFS_DISPLAY_IN_BOTH, CPFIS_NONE },					// SFI_OTP_LOGO
+	{ CPFS_DISPLAY_IN_BOTH, CPFIS_NONE },					// SFI_OTP_LARGE_TEXT
+	{ CPFS_HIDDEN, CPFIS_NONE },							// SFI_OTP_SMALL_TEXT
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_FOCUSED },		// SFI_OTP_USERNAME
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },			// SFI_OTP_LDAP_PASS
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },			// SFI_OTP_PASS
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },			// SFI_OTP_SUBMIT_BUTTON
+};
+
+static const FIELD_STATE_PAIR s_rgFieldStatePairsUnlock[] = 
+{
+	{ CPFS_DISPLAY_IN_BOTH, CPFIS_NONE },					// SFI_OTP_LOGO
+	{ CPFS_DISPLAY_IN_BOTH, CPFIS_NONE },					// SFI_OTP_LARGE_TEXT
+	{ CPFS_DISPLAY_IN_BOTH, CPFIS_NONE },					// SFI_OTP_SMALL_TEXT
+	{ CPFS_HIDDEN, CPFIS_NONE },							// SFI_OTP_USERNAME
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_FOCUSED },		// SFI_OTP_LDAP_PASS
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },			// SFI_OTP_PASS
+	{ CPFS_DISPLAY_IN_SELECTED_TILE, CPFIS_NONE },			// SFI_OTP_SUBMIT_BUTTON
 };
 
 // Field descriptors for unlock and logon.
@@ -61,5 +95,11 @@ static const FIELD_STATE_PAIR s_rgFieldStatePairs[] =
 // The third is the name of the field, NOT the value which will appear in the field.
 static const CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR s_rgCredProvFieldDescriptors[] =
 {
-	{ SFI_OTP_PASSWORD_TEXT, CPFT_PASSWORD_TEXT, I18N_CAPTION_EDIT_OTP },
+	{ SFI_OTP_LOGO,				CPFT_TILE_IMAGE,		L"OpenOTPLogo" },
+	{ SFI_OTP_LARGE_TEXT,		CPFT_LARGE_TEXT,		L"LargeText" },
+	{ SFI_OTP_SMALL_TEXT,		CPFT_SMALL_TEXT,		L"SmallText" },
+	{ SFI_OTP_USERNAME,			CPFT_EDIT_TEXT,			L"Username" },
+	{ SFI_OTP_LDAP_PASS,		CPFT_PASSWORD_TEXT,		L"Password" },
+	{ SFI_OTP_PASS,				CPFT_EDIT_TEXT,			L"One-Time Password" },
+	{ SFI_OTP_SUBMIT_BUTTON,	CPFT_SUBMIT_BUTTON,		L"Submit" },
 };

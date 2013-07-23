@@ -28,23 +28,23 @@
 class DllExport CMultiOneTimePassword : public IMultiOneTimePassword
 {
 	public:
-		_stdcall CMultiOneTimePassword(void);
-		_stdcall ~CMultiOneTimePassword(void);
+		CMultiOneTimePassword(void);
+		~CMultiOneTimePassword(void);
 
 		HRESULT Invoke(char *args[]);
 
-		HRESULT _stdcall OTPCheckPassword(
+		HRESULT __cdecl OTPCheckPassword(
 			char *username, 
 			char *otp
 		);
 
-		HRESULT _stdcall OTPResync(
+		HRESULT __cdecl OTPResync(
 			char *username, 
 			char *otp1, 
 			char *otp2
 		);
 	private:
-		HRESULT _stdcall _MultiOTPExitCodeToHRESULT(DWORD exitCode);
+		HRESULT __cdecl _MultiOTPExitCodeToHRESULT(DWORD exitCode);
 	protected:
 		const int i; // dummy
 };

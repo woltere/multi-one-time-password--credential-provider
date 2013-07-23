@@ -92,11 +92,15 @@ HRESULT CMultiOneTimePassword::OTPCheckPassword(
 
 	HRESULT hr = _MultiOTPExitCodeToHRESULT( __CallMultiOTPExe(path_to_multiotp, argc, argv) );
 
+	OutputDebugStringA("back from call"); OutputDebugStringA("\n");
+
 	for (int i=0; i<argc; i++)
 	{
 		argv[i] = NULL;
 		CoTaskMemFree(argv[i]);
 	}
+
+	OutputDebugStringA("everything nice and clean"); OutputDebugStringA("\n");
 
 	return hr;
 }
@@ -147,11 +151,15 @@ HRESULT CMultiOneTimePassword::OTPResync(
 	
 	HRESULT hr = _MultiOTPExitCodeToHRESULT( __CallMultiOTPExe(path_to_multiotp, argc, argv) );
 
+	OutputDebugStringA("back from call"); OutputDebugStringA("\n");
+
 	for (int i=0; i<argc; i++)
 	{
 		argv[i] = NULL;
 		CoTaskMemFree(argv[i]);
 	}
+
+	OutputDebugStringA("everything nice and clean"); OutputDebugStringA("\n");
 
 	return hr;
 }

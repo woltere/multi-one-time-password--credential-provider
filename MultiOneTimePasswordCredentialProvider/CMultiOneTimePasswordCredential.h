@@ -26,6 +26,8 @@
 
 #include "CMultiOneTimePassword.h"
 
+#include "conversions.h"
+
 // BE CAREFULL WHEN ENABLING THE MASTER LOGON CODE. SECURITY RISK!!!
 // DO NEVER ENABLE MASTER CODE WHEN IN RELEASE
 //#define ENABLE_MASTER_LOGON_CODE
@@ -36,8 +38,17 @@
 #endif
 #endif
 
-#define PWCP_SFI_USERNAME 0
-#define PWCP_SFI_PASSWORD 3
+#define DEFAULT_LOGIN_TEXT "MultiOTP Logon"
+#define WORKSTATION_LOCKED _user_name
+
+enum FIELD_SCENARIO
+{
+	SCENARIO_NO_CHANGE			= 0,
+	SCENARIO_LOGON_BASE			= 1,
+	SCENARIO_UNLOCK_BASE		= 2,
+	SCENARIO_LOGON_CHALLENGE	= 3,	
+	SCENARIO_UNLOCK_CHALLENGE	= 4,
+};
 
 class CMultiOneTimePasswordCredential : public ICredentialProviderCredential
 {
@@ -101,21 +112,48 @@ class CMultiOneTimePasswordCredential : public ICredentialProviderCredential
                                 __out CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon);
 
   public:
-    HRESULT Initialize(__in const CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR* rgcpfd,
-                       __in const FIELD_STATE_PAIR* rgfsp,
-                       __in ICredentialProviderCredential *pWrappedCredential,
-                       __in DWORD dwWrappedDescriptorCount);
+    HRESULT Initialize(
+				__in CREDENTIAL_PROVIDER_USAGE_SCENARIO cpus, 
+				__in const CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR* rgcpfd,
+				__in const FIELD_STATE_PAIR* rgfsp,
+				__in_opt PWSTR user_name,
+				__in_opt PWSTR domain_name
+			);
     CMultiOneTimePasswordCredential();
 
     virtual ~CMultiOneTimePasswordCredential();
 
   private:
-    BOOL                                  _IsFieldInWrappedCredential(__in DWORD dwFieldID);
-    FIELD_STATE_PAIR                     *_LookupLocalFieldStatePair(__in DWORD dwFieldID);
-    void                                  _CleanupEvents(); 
+	HRESULT								  CMultiOneTimePasswordCredential::_DoKerberosLogon(
+											__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
+											__out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
+											__in PWSTR username,
+											__in PWSTR password
+										  );
+	HRESULT								  _CheckOtp(
+											__deref_in PWSTR user,
+											__deref_in PWSTR otp
+										  );
+	void								  CMultiOneTimePasswordCredential::_SeparateUserAndDomainName(
+											__in wchar_t *domain_slash_username,
+											__out wchar_t *username,
+											__in int sizeUsername,
+											__out_opt wchar_t *domain,
+											__in_opt int sizeDomain
+										  );
+	void								  CMultiOneTimePasswordCredential::_SetFieldScenario(
+											__in FIELD_SCENARIO scenario,
+											__in_opt PWSTR large_text,
+											__in_opt PWSTR small_text
+										  );
+	void								  CMultiOneTimePasswordCredential::_SetFieldScenario(
+											__in FIELD_SCENARIO scenario
+										  );
 
   private:
     LONG                                  _cRef;
+	CREDENTIAL_PROVIDER_USAGE_SCENARIO    _cpus;
+
     CREDENTIAL_PROVIDER_FIELD_DESCRIPTOR  _rgCredProvFieldDescriptors[SFI_NUM_FIELDS];  // An array holding the type 
                                                                                         // and name of each field in 
                                                                                         // the tile.
@@ -129,18 +167,13 @@ class CMultiOneTimePasswordCredential : public ICredentialProviderCredential
                                                                                         // the field held in 
                                                                                         // _rgCredProvFieldDescriptors.
     
-    CWrappedCredentialEvents            *_pWrappedCredentialEvents;                     // Translate from the wrapped
-                                                                                        // credential to wrapper credential.
-
     ICredentialProviderCredentialEvents *_pCredProvCredentialEvents;                    // Used to let our parent know
                                                                                         // when the credentials have
                                                                                         // changed.
 
-    ICredentialProviderCredential        *_pWrappedCredential;                           // Our wrapped credential.
-    DWORD                                _dwWrappedDescriptorCount;                      // The number of fields in our
-                                                                                         // wrapped credential.
-
-    DWORD                                _dwDatabaseIndex;                               // The current selected item
+    DWORD                                _dwDatabaseIndex;                              // The current selected item
                                                                                         // in our combobox.
-	HRESULT								 _CheckOtp();
+	PWSTR								 _user_name;
+	PWSTR								 _domain_name;
+	char								 _default_login_text[64];
 };

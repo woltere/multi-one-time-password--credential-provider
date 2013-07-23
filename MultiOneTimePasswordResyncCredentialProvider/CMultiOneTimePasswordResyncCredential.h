@@ -24,6 +24,7 @@
 #include "resource.h"
 
 #include "CMultiOneTimePassword.h"
+#include "conversions.h"
 
 class CMultiOneTimePasswordResyncCredential : public ICredentialProviderCredential
 {
