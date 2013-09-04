@@ -38,8 +38,9 @@
 #endif
 #endif
 
-#define DEFAULT_LOGIN_TEXT "MultiOTP Logon"
-#define WORKSTATION_LOCKED _user_name
+#define DEFAULT_LOGIN_TEXT	"MultiOTP Logon"
+#define WORKSTATION_LOCKED	_user_name
+#define CHANGE_PASSWORD		L"Change password"
 
 enum FIELD_SCENARIO
 {
@@ -48,6 +49,7 @@ enum FIELD_SCENARIO
 	SCENARIO_UNLOCK_BASE		= 2,
 	SCENARIO_LOGON_CHALLENGE	= 3,	
 	SCENARIO_UNLOCK_CHALLENGE	= 4,
+	SCENARIO_CHANGE_PASSWORD	= 5,
 };
 
 class CMultiOneTimePasswordCredential : public ICredentialProviderCredential
@@ -149,6 +151,14 @@ class CMultiOneTimePasswordCredential : public ICredentialProviderCredential
 	void								  CMultiOneTimePasswordCredential::_SetFieldScenario(
 											__in FIELD_SCENARIO scenario
 										  );
+	HRESULT								  CMultiOneTimePasswordCredential::_DoKerberosChangePassword(
+											__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
+											__out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
+											__in PWSTR username,
+											__in PWSTR password_old,
+											__in PWSTR password_new
+										  );
+	void								  CMultiOneTimePasswordCredential::_CleanPasswordFields();
 
   private:
     LONG                                  _cRef;

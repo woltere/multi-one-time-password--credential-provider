@@ -20,8 +20,11 @@
 
 #include <Windows.h>
 #include "conversions.h"
+#include "registry.h"
 
 #define LOGGING true
+
+#define DEFAULT_TIMEOUT_SEC 3
 
 #define DIR_SEP   L"\\"
 #define PARAM_SEP L" "

@@ -28,7 +28,8 @@ CMultiOneTimePasswordProvider::CMultiOneTimePasswordProvider():
 {
     DllAddRef();
 
-    ZeroMemory(_rgpCredentials, sizeof(_rgpCredentials));
+    ZERO(_rgpCredentials);
+	_szUserName = _szDomainName = NULL;
 }
 
 CMultiOneTimePasswordProvider::~CMultiOneTimePasswordProvider()
@@ -58,59 +59,58 @@ HRESULT CMultiOneTimePasswordProvider::SetUsageScenario(
 		return E_NOTIMPL;
 	//*/
 
-    static bool s_bCredsEnumeratedLogon  = false;
-	static bool s_bCredsEnumeratedUnlock = false;
+	static int s_iCredsEnumerated = 0; // 1 = Logon; 2 = Unlock; 3 = Change Password
+
+    //static bool s_bCredsEnumeratedLogon  = false;
+	//static bool s_bCredsEnumeratedUnlock = false;
 
     // Decide which scenarios to support here. Returning E_NOTIMPL simply tells the caller
     // that we're not designed for that scenario.
     switch (cpus)
     {
     case CPUS_LOGON:
-		if (!s_bCredsEnumeratedLogon)
+		if (s_iCredsEnumerated != 1)
         {
 			_cpus = cpus;
 
-			hr = this->_EnumerateCredentials(NULL, NULL);
+			//_GetUserAndDomainName();
+			hr = this->_EnumerateCredentials();
 
-			s_bCredsEnumeratedLogon  = true;
-			s_bCredsEnumeratedUnlock = false;
+			s_iCredsEnumerated = 1;
 		}
 		else
 			hr = S_OK;
 		break;
 
 	case CPUS_UNLOCK_WORKSTATION:
-        if (!s_bCredsEnumeratedUnlock)
+        if (s_iCredsEnumerated != 2)
         {
 			_cpus = cpus;
 
-			PWSTR szUserName = NULL;
-			PWSTR szDomainName = NULL;
-			DWORD dwLen;
+			_GetUserAndDomainName();
+			hr = this->_EnumerateCredentials();    
 
-			if ( ! WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE,
-						WTS_CURRENT_SESSION,
-						WTSUserName,
-						&szUserName,
-						&dwLen)) szUserName = NULL;
+            s_iCredsEnumerated = 2;
+        }
+        else
+            hr = S_OK;
+        break;
 
-			if ( ! WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE,
-						WTS_CURRENT_SESSION,
-						WTSDomainName,
-						&szDomainName,
-						&dwLen)) szDomainName = NULL;
+	case CPUS_CHANGE_PASSWORD:
+        if (s_iCredsEnumerated != 3)
+        {
+			_cpus = cpus;
 
-			hr = this->_EnumerateCredentials(szUserName, szDomainName);     
+			_GetUserAndDomainName();
+			hr = this->_EnumerateCredentials();    
 
-            s_bCredsEnumeratedUnlock = true;
-			s_bCredsEnumeratedLogon  = false;
+            s_iCredsEnumerated = 3;
         }
         else
             hr = S_OK;
         break;
 
     case CPUS_CREDUI:
-    case CPUS_CHANGE_PASSWORD:
         hr = E_NOTIMPL;
         break;
 
@@ -120,6 +120,46 @@ HRESULT CMultiOneTimePasswordProvider::SetUsageScenario(
     }
 
     return hr;
+}
+
+// Get user and domain from session information
+void CMultiOneTimePasswordProvider::_GetUserAndDomainName()
+{
+	PWSTR szUserName   = NULL;
+	PWSTR szDomainName = NULL;
+	DWORD dwLen;
+
+#ifdef _DEBUG
+	//*************************** DEBUG:
+	OutputDebugStringA("szUserName: (BEFORE) \t");   if (_szUserName   != NULL) OutputDebugStringW(_szUserName);   else OutputDebugStringA("NULL"); OutputDebugStringA("\n");	
+	OutputDebugStringA("szDomainName: (BEFORE) \t"); if (_szDomainName != NULL) OutputDebugStringW(_szDomainName); else OutputDebugStringA("NULL"); OutputDebugStringA("\n");	
+	//*/
+#endif
+
+	if ( ! WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE,
+				WTS_CURRENT_SESSION,
+				WTSUserName,
+				&szUserName,
+				&dwLen)) szUserName = NULL;
+
+	if ( ! WTSQuerySessionInformation(WTS_CURRENT_SERVER_HANDLE,
+				WTS_CURRENT_SESSION,
+				WTSDomainName,
+				&szDomainName,
+				&dwLen)) szDomainName = NULL;
+
+	_szUserName   = (szUserName   != NULL && szUserName[0]   != NULL) ? StrDupW(szUserName)   : NULL;
+	_szDomainName = (szDomainName != NULL && szDomainName[0] != NULL) ? StrDupW(szDomainName) : NULL;
+
+	if (szUserName != NULL)   WTSFreeMemory(szUserName);
+	if (szDomainName != NULL) WTSFreeMemory(szDomainName);
+
+#ifdef _DEBUG
+	//*************************** DEBUG:
+	OutputDebugStringA("_szUserName: \t");   if (_szUserName   != NULL) OutputDebugStringW(_szUserName);   else OutputDebugStringA("NULL"); OutputDebugStringA("\n");	
+	OutputDebugStringA("_szDomainName: \t"); if (_szDomainName != NULL) OutputDebugStringW(_szDomainName); else OutputDebugStringA("NULL"); OutputDebugStringA("\n");	
+	//*/
+#endif
 }
 
 // We pass this along to the wrapped provider.
@@ -257,8 +297,8 @@ HRESULT CMultiOneTimePasswordProvider::GetCredentialAt(
 // Sets up all the credentials for this provider. Since we always show the same tiles, 
 // we just set it up once.
 HRESULT CMultiOneTimePasswordProvider::_EnumerateCredentials(
-	__in_opt PWSTR user_name,
-	__in_opt PWSTR domain_name
+	/*__in_opt PWSTR user_name,
+	__in_opt PWSTR domain_name*/
 	)
 {
 	HRESULT hr;
@@ -277,9 +317,11 @@ HRESULT CMultiOneTimePasswordProvider::_EnumerateCredentials(
         // Set the Field State Pair and Field Descriptors for ppc's fields
         // to the defaults (s_rgCredProvFieldDescriptors, and s_rgFieldStatePairs).
 		if (_cpus == CPUS_UNLOCK_WORKSTATION)
-			hr = ppc->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairsUnlock, user_name, domain_name);
+			hr = ppc->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairsUnlock, /*user_name*/ _szUserName, /*domain_name*/ _szDomainName);
+		else if (_cpus == CPUS_CHANGE_PASSWORD)
+			hr = ppc->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairsChangePassword, /*user_name*/ _szUserName, /*domain_name*/ _szDomainName);
 		else
-			hr = ppc->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairs, user_name, domain_name);
+			hr = ppc->Initialize(_cpus, s_rgCredProvFieldDescriptors, s_rgFieldStatePairs, /*user_name*/ _szUserName, /*domain_name*/ _szDomainName);
         
         if (SUCCEEDED(hr))
         {

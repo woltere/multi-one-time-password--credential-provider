@@ -58,6 +58,18 @@ CMultiOneTimePasswordCredential::~CMultiOneTimePasswordCredential()
         size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_LDAP_PASS]);
         SecureZeroMemory(_rgFieldStrings[SFI_OTP_LDAP_PASS], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_LDAP_PASS]));
     }
+	if (_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1])
+    {
+        // CoTaskMemFree (below) deals with NULL, but StringCchLength does not.
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1]));
+    }
+	if (_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2])
+    {
+        // CoTaskMemFree (below) deals with NULL, but StringCchLength does not.
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2]));
+    }
 	if (_rgFieldStrings[SFI_OTP_PASS])
     {
         // CoTaskMemFree (below) deals with NULL, but StringCchLength does not.
@@ -123,12 +135,14 @@ HRESULT CMultiOneTimePasswordCredential::Initialize(
     {
 		if (_cpus == CPUS_UNLOCK_WORKSTATION)
 			hr = SHStrDupW(WORKSTATION_LOCKED, &_rgFieldStrings[SFI_OTP_SMALL_TEXT]);
+		else if (_cpus == CPUS_CHANGE_PASSWORD)
+			hr = SHStrDupW(CHANGE_PASSWORD, &_rgFieldStrings[SFI_OTP_SMALL_TEXT]);
 		else
 			hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_SMALL_TEXT]);
 	}
     if (SUCCEEDED(hr))
     {
-		if (_cpus == CPUS_UNLOCK_WORKSTATION && _user_name)
+		if ((_cpus == CPUS_UNLOCK_WORKSTATION || _cpus == CPUS_CHANGE_PASSWORD) && _user_name)
 		{
 			hr = SHStrDupW(_user_name, &_rgFieldStrings[SFI_OTP_USERNAME]);
 		}
@@ -138,6 +152,14 @@ HRESULT CMultiOneTimePasswordCredential::Initialize(
     if (SUCCEEDED(hr))
     {
         hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_LDAP_PASS]);
+    }
+	if (SUCCEEDED(hr))
+    {
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1]);
+    }
+	if (SUCCEEDED(hr))
+    {
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2]);
     }
 	if (SUCCEEDED(hr))
     {
@@ -193,7 +215,7 @@ HRESULT CMultiOneTimePasswordCredential::SetSelected(__out BOOL* pbAutoLogon)
 HRESULT CMultiOneTimePasswordCredential::SetDeselected()
 {
     HRESULT hr = S_OK;
-	if (_cpus != CPUS_UNLOCK_WORKSTATION && _rgFieldStrings[SFI_OTP_USERNAME])
+	if (!(_cpus == CPUS_UNLOCK_WORKSTATION || _cpus == CPUS_CHANGE_PASSWORD) && _rgFieldStrings[SFI_OTP_USERNAME])
     {
         size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_USERNAME]);
         SecureZeroMemory(_rgFieldStrings[SFI_OTP_USERNAME], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_USERNAME]));
@@ -205,37 +227,15 @@ HRESULT CMultiOneTimePasswordCredential::SetDeselected()
             _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_USERNAME, _rgFieldStrings[SFI_OTP_USERNAME]);
         }
     }
-	if (_rgFieldStrings[SFI_OTP_LDAP_PASS])
-    {
-        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_LDAP_PASS]);
-        SecureZeroMemory(_rgFieldStrings[SFI_OTP_LDAP_PASS], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_LDAP_PASS]));
-    
-        CoTaskMemFree(_rgFieldStrings[SFI_OTP_LDAP_PASS]);
-        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_LDAP_PASS]);
-        if (SUCCEEDED(hr) && _pCredProvCredentialEvents)
-        {
-            _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_LDAP_PASS, _rgFieldStrings[SFI_OTP_LDAP_PASS]);
-        }
-    }
-    if (_rgFieldStrings[SFI_OTP_PASS])
-    {
-        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_PASS]);
-        SecureZeroMemory(_rgFieldStrings[SFI_OTP_PASS], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_PASS]));
-    
-        CoTaskMemFree(_rgFieldStrings[SFI_OTP_PASS]);
-        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_PASS]);
-        if (SUCCEEDED(hr) && _pCredProvCredentialEvents)
-        {
-            _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_PASS, _rgFieldStrings[SFI_OTP_PASS]);
-        }
-    }
+
+	_CleanPasswordFields();
 
 	if (_cpus == CPUS_UNLOCK_WORKSTATION)
 		_SetFieldScenario(SCENARIO_UNLOCK_BASE);
+	else if (_cpus == CPUS_CHANGE_PASSWORD)
+		_SetFieldScenario(SCENARIO_CHANGE_PASSWORD);
 	else
-	{
 		_SetFieldScenario(SCENARIO_LOGON_BASE);
-	}
 
     return hr;
 }
@@ -467,6 +467,60 @@ void CMultiOneTimePasswordCredential::_SeparateUserAndDomainName(
 	}
 }
 
+void CMultiOneTimePasswordCredential::_CleanPasswordFields()
+{
+	HRESULT hr;
+
+	if (_rgFieldStrings[SFI_OTP_LDAP_PASS])
+    {
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_LDAP_PASS]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_LDAP_PASS], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_LDAP_PASS]));
+    
+        CoTaskMemFree(_rgFieldStrings[SFI_OTP_LDAP_PASS]);
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_LDAP_PASS]);
+        if (SUCCEEDED(hr) && _pCredProvCredentialEvents)
+        {
+            _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_LDAP_PASS, _rgFieldStrings[SFI_OTP_LDAP_PASS]);
+        }
+    }
+	if (_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1])
+    {
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1]));
+    
+        CoTaskMemFree(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1]);
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1]);
+        if (SUCCEEDED(hr) && _pCredProvCredentialEvents)
+        {
+            _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_LDAP_PASS_NEW_1, _rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1]);
+        }
+    }
+	if (_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2])
+    {
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2]));
+    
+        CoTaskMemFree(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2]);
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2]);
+        if (SUCCEEDED(hr) && _pCredProvCredentialEvents)
+        {
+            _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_LDAP_PASS_NEW_2, _rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2]);
+        }
+    }
+    if (_rgFieldStrings[SFI_OTP_PASS])
+    {
+        size_t lenPassword = lstrlen(_rgFieldStrings[SFI_OTP_PASS]);
+        SecureZeroMemory(_rgFieldStrings[SFI_OTP_PASS], lenPassword * sizeof(*_rgFieldStrings[SFI_OTP_PASS]));
+    
+        CoTaskMemFree(_rgFieldStrings[SFI_OTP_PASS]);
+        hr = SHStrDupW(L"", &_rgFieldStrings[SFI_OTP_PASS]);
+        if (SUCCEEDED(hr) && _pCredProvCredentialEvents)
+        {
+            _pCredProvCredentialEvents->SetFieldString(this, SFI_OTP_PASS, _rgFieldStrings[SFI_OTP_PASS]);
+        }
+    }
+}
+
 //
 // Collect the username and password into a serialized credential for the correct usage scenario 
 // (logon/unlock is what's demonstrated in this sample).  LogonUI then passes these credentials 
@@ -479,7 +533,7 @@ HRESULT CMultiOneTimePasswordCredential::GetSerialization(
     __out CREDENTIAL_PROVIDER_STATUS_ICON* pcpsiOptionalStatusIcon
     )
 {
-    HRESULT otpCheck, hr = E_UNEXPECTED;
+	HRESULT otpCheck, hr = E_UNEXPECTED;
 
 	INIT_ZERO_WCHAR(username, 64);
 	INIT_ZERO_WCHAR(domain, 64);
@@ -491,11 +545,41 @@ HRESULT CMultiOneTimePasswordCredential::GetSerialization(
 		// ... user typed DOMAIN\USERNAME, so we set it to DOMAIN
 		_domain_name = _wcsdup(domain);
 
+	// CPUS_CHANGE_PASSWORD:
+	if (_cpus == CPUS_CHANGE_PASSWORD) {
+		if (StrCmp(_rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1], _rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_2]) == 0)
+			hr = _DoKerberosChangePassword(pcpgsr, pcpcs, username, _rgFieldStrings[SFI_OTP_LDAP_PASS], _rgFieldStrings[SFI_OTP_LDAP_PASS_NEW_1]);
+		else
+			hr = E_FAIL;
+
+		if (SUCCEEDED(hr))
+		{
+			hr = S_OK;
+			//SHStrDupW(L"Password successfully changed.", ppwszOptionalStatusText);						
+			//*pcpsiOptionalStatusIcon = CPSI_SUCCESS;
+		}
+		else
+		{
+			hr = S_FALSE;
+			SHStrDupW(L"Your password could not be changed. Please type your new password twice.", ppwszOptionalStatusText);									
+			*pcpsiOptionalStatusIcon = CPSI_ERROR;
+		}
+
+		goto CleanUpAndReturn;
+	}    
+
+	// CPUS_UNLOCK_WORKSTATION:
+	// CPUS_LOGON:
+
 	otpCheck = _CheckOtp(username, _rgFieldStrings[SFI_OTP_PASS]);
+
+#ifdef _DEBUG
+	//otpCheck = S_OK;
+#endif
 
 	if (SUCCEEDED(otpCheck))
 	{
-        hr = _DoKerberosLogon(pcpgsr, pcpcs, username, _rgFieldStrings[SFI_OTP_LDAP_PASS]);		
+		hr = _DoKerberosLogon(pcpgsr, pcpcs, username, _rgFieldStrings[SFI_OTP_LDAP_PASS]);		
 		//goto CleanUpAndReturn;
 	}
 	else
@@ -513,7 +597,8 @@ HRESULT CMultiOneTimePasswordCredential::GetSerialization(
 		}
 		*pcpgsr = CPGSR_NO_CREDENTIAL_FINISHED;										
 		*pcpsiOptionalStatusIcon = CPSI_ERROR;
-		return S_FALSE;
+		hr = S_FALSE;
+		//return S_FALSE;
 	}
 
 	goto CleanUpAndReturn; // To avoid C4102
@@ -521,7 +606,9 @@ CleanUpAndReturn:
 	ZERO(username);
 	ZERO(domain);
 
-    return S_OK;
+	_CleanPasswordFields();
+
+    return hr;
 }
 
 HRESULT CMultiOneTimePasswordCredential::_CheckOtp(
@@ -560,6 +647,68 @@ CleanUpAndReturn:
 	ZERO(c_user);
 	ZERO(c_otp);
 	
+	return hr;
+}
+
+HRESULT CMultiOneTimePasswordCredential::_DoKerberosChangePassword(
+	__out CREDENTIAL_PROVIDER_GET_SERIALIZATION_RESPONSE* pcpgsr,
+    __out CREDENTIAL_PROVIDER_CREDENTIAL_SERIALIZATION* pcpcs,
+	__in PWSTR username,
+	__in PWSTR password_old,
+	__in PWSTR password_new
+	)
+{
+	KERB_CHANGEPASSWORD_REQUEST kcpr;
+	ZeroMemory(&kcpr, sizeof(kcpr));
+
+	HRESULT hr;
+
+	WCHAR wsz[64];
+    DWORD cch = ARRAYSIZE(wsz);
+	BOOL  bGetCompName = true;
+
+	if (_domain_name && _domain_name[0])
+		wcscpy_s(wsz, ARRAYSIZE(wsz), _domain_name);
+	else
+		bGetCompName = GetComputerNameW(wsz, &cch);
+
+    if ((_domain_name && _domain_name[0]) || bGetCompName)
+    {
+		hr = UnicodeStringInitWithString(wsz, &kcpr.DomainName);
+		if (SUCCEEDED(hr))
+		{
+			hr = UnicodeStringInitWithString(username, &kcpr.AccountName);
+			if (SUCCEEDED(hr))
+			{
+				hr = UnicodeStringInitWithString(password_old, &kcpr.OldPassword);
+				hr = UnicodeStringInitWithString(password_new, &kcpr.NewPassword);
+				if (SUCCEEDED(hr))
+				{
+					kcpr.MessageType = KerbChangePasswordMessage;
+					kcpr.Impersonating=FALSE;
+					hr = KerbChangePasswordPack( kcpr, &pcpcs->rgbSerialization, &pcpcs->cbSerialization);
+					if (SUCCEEDED(hr))
+					{
+						ULONG ulAuthPackage;
+						hr = RetrieveNegotiateAuthPackage(&ulAuthPackage);
+						if (SUCCEEDED(hr))
+						{
+							pcpcs->ulAuthenticationPackage = ulAuthPackage;
+							pcpcs->clsidCredentialProvider = CLSID_CSample;
+  
+							*pcpgsr = CPGSR_RETURN_CREDENTIAL_FINISHED;
+						}
+					}
+				}
+			}
+		}
+	}
+	else
+	{
+		DWORD dwErr = GetLastError();
+		hr = HRESULT_FROM_WIN32(dwErr);
+	}
+
 	return hr;
 }
 
@@ -647,37 +796,64 @@ void CMultiOneTimePasswordCredential::_SetFieldScenario(
 	switch (scenario)
 	{
 	case SCENARIO_LOGON_BASE:
-		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_USERNAME,	CPFIS_FOCUSED);
-		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS,	CPFIS_NONE);
-		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_PASS,		CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_USERNAME,		CPFIS_FOCUSED);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS,		CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS_NEW_1,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS_NEW_2,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_PASS,			CPFIS_NONE);
 
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT, CPFS_HIDDEN);
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_USERNAME,	CPFS_DISPLAY_IN_SELECTED_TILE);
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS,	CPFS_DISPLAY_IN_SELECTED_TILE);
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_PASS,		CPFS_DISPLAY_IN_SELECTED_TILE);	
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT,			CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_USERNAME,			CPFS_DISPLAY_IN_SELECTED_TILE);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS,			CPFS_DISPLAY_IN_SELECTED_TILE);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS_NEW_1,	CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS_NEW_2,	CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_PASS,				CPFS_DISPLAY_IN_SELECTED_TILE);	
+		break;
+
+	case SCENARIO_CHANGE_PASSWORD:
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_USERNAME,		CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS,		CPFIS_FOCUSED);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS_NEW_1,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS_NEW_2,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_PASS,			CPFIS_NONE);
+
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT,			CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_USERNAME,			CPFS_DISPLAY_IN_SELECTED_TILE);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS,			CPFS_DISPLAY_IN_SELECTED_TILE);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS_NEW_1,	CPFS_DISPLAY_IN_SELECTED_TILE);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS_NEW_2,	CPFS_DISPLAY_IN_SELECTED_TILE);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_PASS,				CPFS_HIDDEN);	
 		break;
 
 	case SCENARIO_UNLOCK_BASE:
-		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_USERNAME,	CPFIS_NONE);
-		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS,	CPFIS_FOCUSED);
-		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_PASS,		CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_USERNAME,		CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS,		CPFIS_FOCUSED);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS_NEW_1,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS_NEW_2,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_PASS,			CPFIS_NONE);
 
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT, CPFS_DISPLAY_IN_BOTH);
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_USERNAME,	CPFS_HIDDEN);
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS,	CPFS_DISPLAY_IN_SELECTED_TILE);
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_PASS,		CPFS_DISPLAY_IN_SELECTED_TILE);	
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT,			CPFS_DISPLAY_IN_BOTH);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_USERNAME,			CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS,			CPFS_DISPLAY_IN_SELECTED_TILE);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS_NEW_1,	CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS_NEW_2,	CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_PASS,				CPFS_DISPLAY_IN_SELECTED_TILE);	
 		break;
 
 	case SCENARIO_LOGON_CHALLENGE:
 	case SCENARIO_UNLOCK_CHALLENGE:
-		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_USERNAME,	CPFIS_NONE);
-		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS,	CPFIS_NONE);
-		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_PASS,		CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_USERNAME,		CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS,		CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS_NEW_1,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_LDAP_PASS_NEW_2,	CPFIS_NONE);
+		_pCredProvCredentialEvents->SetFieldInteractiveState(this, SFI_OTP_PASS,			CPFIS_NONE);
 
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT, CPFS_HIDDEN);
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_USERNAME,	CPFS_HIDDEN);
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS,	CPFS_HIDDEN);
-		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_PASS,		CPFS_HIDDEN);	
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_SMALL_TEXT,			CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_USERNAME,			CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS,			CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS_NEW_1,	CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_LDAP_PASS_NEW_2,	CPFS_HIDDEN);
+		_pCredProvCredentialEvents->SetFieldState(this, SFI_OTP_PASS,				CPFS_HIDDEN);	
 		break;
 
 	case SCENARIO_NO_CHANGE:

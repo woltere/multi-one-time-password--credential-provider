@@ -27,6 +27,7 @@
 #include "helpers.h"
 
 #define MAX_CREDENTIALS 3
+#define MAX_SZ_SIZE 200
 
 class CMultiOneTimePasswordProvider : public ICredentialProvider
 {
@@ -81,9 +82,10 @@ class CMultiOneTimePasswordProvider : public ICredentialProvider
     
   private:
 	HRESULT				_EnumerateCredentials(
-							__in_opt PWSTR user_name,
-							__in_opt PWSTR domain_name
+							/*__in_opt PWSTR user_name,
+							__in_opt PWSTR domain_name*/
 						);      
+	void				_GetUserAndDomainName();
     
   private:
     LONG									_cRef;
@@ -91,4 +93,6 @@ class CMultiOneTimePasswordProvider : public ICredentialProvider
     CMultiOneTimePasswordCredential			*_rgpCredentials[MAX_CREDENTIALS];				// Pointers to the credentials which will be enumerated by this 
 																							// Provider.
     bool									_bEnumeratedSetSerialization;
+	wchar_t									*_szUserName;
+	wchar_t									*_szDomainName;
 };

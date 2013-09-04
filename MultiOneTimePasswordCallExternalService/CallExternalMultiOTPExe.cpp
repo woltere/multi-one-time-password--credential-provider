@@ -27,6 +27,9 @@ DWORD __CallMultiOTPExe(char* path_to_multiotp, int argc, wchar_t *argv[])
 	wchar_t cmd[SIZE] = CEMOTP_EXE;
 	wchar_t app[SIZE] = L"";
 
+	int timeout = DEFAULT_TIMEOUT_SEC;
+	readRegistryValueInteger(CONF_TIMEOUT, &timeout);
+
 	__CharToWideChar(path_to_multiotp, dir);
 
 #ifdef _DEBUG
@@ -79,7 +82,7 @@ DWORD __CallMultiOTPExe(char* path_to_multiotp, int argc, wchar_t *argv[])
 
 	if( ::CreateProcessW( app, cmd, NULL, NULL, FALSE, CREATE_NO_WINDOW, NULL, dir, &si, &pi ) ) 
 	{
-		WaitForSingleObject( pi.hProcess, (3 * 1000) );
+		WaitForSingleObject( pi.hProcess, (timeout * 1000) );
 		GetExitCodeProcess( pi.hProcess, &exitCode );
 
 		CloseHandle( pi.hProcess );

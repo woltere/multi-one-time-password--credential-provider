@@ -29,6 +29,9 @@
           <Publish Event="SpawnDialog" Value="PathToMultiOTPInfoDlg">1</Publish>
         </Control>
 
+        <Control Id="SoapTimeoutLabel" Type="Text" X="45" Y="125" Width="220" Height="15" TabSkip="no" Text="&amp;Timeout (secs): (optional)" />
+        <Control Id="SoapTimeoutEdit" Type="Edit" X="45" Y="137" Width="220" Height="18" Property="TIMEOUT" Text="{3}" Integer="yes" />
+
         <Control Id="Back" Type="PushButton" X="180" Y="243" Width="56" Height="17" Text="&amp;Back">
           <Publish Event="NewDialog" Value="CustomizeDlg">1</Publish>
         </Control>

@@ -61,7 +61,19 @@
     <Property Id="PATH_TO_MULTIOTP">
       <RegistrySearch Id="SearchPathToMultiOTP"     Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="path_to_multiotp"     Win64="$(var.Win64)" Type="raw"/>
     </Property>
+
+    <Property Id="TIMEOUT" Value="3">
+      <RegistrySearch Id="SearchTimeout"   Root="HKLM" Key="SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)" Name="timeout"   Win64="$(var.Win64)" Type="raw"/>
+    </Property>
     <!-- END Get registry values -->
+
+    <!-- Sanitize TIMEOUT DWORD-value (e.g. #123 -> 123) -->
+    <Property Id="SANITIZE_DWORD" Value="TIMEOUT" />
+    <CustomAction Id='SanitizeTimeoutDword' BinaryKey='WiXCustomActions' DllEntry='SanitizeDwordFromRegistry' Execute='firstSequence'/>
+    <InstallUISequence>
+      <Custom Action='SanitizeTimeoutDword' After='CostFinalize'>Installed</Custom>
+    </InstallUISequence>
+    <!-- END Sanitize SOAP_TIMEOUT DWORD-value -->
 
     <!-- Check user has administrator privileges -->
     <CustomAction Id='CheckAdministratorPrivileges' BinaryKey='WiXCustomActions' DllEntry='CheckAdministratorPrivileges' Execute='firstSequence' Return='ignore' />
@@ -192,6 +204,7 @@
           <!-- Configuration values (from dialogs/registry/unattended) -->
           <RegistryKey Root='HKLM' Key='SOFTWARE\$(var.Manufacturer)\$(var.SimpleProductName)' ForceCreateOnInstall='yes'>
             <RegistryValue Name='path_to_multiotp'     Type='string'  Value='[PATH_TO_MULTIOTP]'     />
+            <RegistryValue Name='timeout'   Type='integer' Value='[TIMEOUT]'   />
           </RegistryKey>
           <!-- END Configuration values -->
           <!-- END Registry -->

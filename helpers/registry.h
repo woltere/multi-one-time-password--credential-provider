@@ -1,3 +1,5 @@
+#pragma once
+
 #include "windows.h"
 #include <winreg.h>
 #include <stdio.h>
@@ -11,7 +13,8 @@
 
 enum CONF_VALUE
 {
-	CONF_PATH_TO_MULTIOTP	= 0
+	CONF_PATH_TO_MULTIOTP	= 0,
+	CONF_TIMEOUT			= 1,
 	/*
 	CONF_SERVER_URL			= 0,
 	CONF_CLIENT_ID			= 1,
@@ -28,7 +31,8 @@ enum CONF_VALUE
 
 static const PWSTR s_CONF_VALUES[] =
 {
-	L"path_to_multiotp"
+	L"path_to_multiotp",
+	L"timeout"
 	/*
 	L"server_url",
 	L"client_id",
